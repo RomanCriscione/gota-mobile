@@ -21,7 +21,9 @@ class HomeScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
+
             const SizedBox(height: 8),
+
             const Text(
               'Descubrí tu próximo café',
               style: TextStyle(
@@ -29,18 +31,37 @@ class HomeScreen extends StatelessWidget {
                 color: Colors.black54,
               ),
             ),
+
             const SizedBox(height: 30),
+
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                    Navigator.pushNamed(
-                        context,
-                        '/cafes',
-                    );
-                    },
+                  Navigator.pushNamed(
+                    context,
+                    '/cafes',
+                  );
+                },
                 child: const Text(
                   'Explorar cafeterías',
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/my-map',
+                  );
+                },
+                child: const Text(
+                  'Mi mapa cafetero',
                 ),
               ),
             ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'screens/splash_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/cafes_screen.dart';
+import 'screens/my_map_screen.dart';
 
 void main() {
   runApp(const GotaApp());
@@ -30,6 +31,7 @@ class GotaApp extends StatelessWidget {
         '/': (context) => const SplashScreen(),
         '/home': (context) => const HomeScreen(),
         '/cafes': (context) => const CafesScreen(),
+        '/my-map': (context) => const MyMapScreen(),
       },
     );
   }
