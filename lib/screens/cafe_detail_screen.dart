@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
+import '../models/cafe.dart';
+import '../services/app_state.dart';
 
 class CafeDetailScreen extends StatelessWidget {
   final String nombre;
   final String zona;
   final String rating;
+  final String foto;
 
   const CafeDetailScreen({
     super.key,
     required this.nombre,
     required this.zona,
     required this.rating,
+    required this.foto,
   });
 
   @override
@@ -36,7 +40,7 @@ class CafeDetailScreen extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: Image.network(
-                'https://picsum.photos/600/300',
+                foto,
                 height: 200,
                 width: double.infinity,
                 fit: BoxFit.cover,
@@ -84,7 +88,28 @@ class CafeDetailScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () async {
+                  if (!AppState.quieroIr.any((cafe) => cafe.nombre == nombre)) {
+                    AppState.quieroIr.add(
+                      Cafe(
+                        nombre: nombre,
+                        zona: zona,
+                        rating: rating,
+                        foto: foto,
+                      ),
+                    );
+
+                    await AppState.guardarDatos();
+                  }
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Café agregado a Quiero ir',
+                      ),
+                    ),
+                  );
+                },
                 child: const Text('☕ Quiero ir'),
               ),
             ),
@@ -94,8 +119,58 @@ class CafeDetailScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () async {
+                  if (!AppState.quieroVolver.any((cafe) => cafe.nombre == nombre)) {
+                    AppState.quieroVolver.add(
+                      Cafe(
+                        nombre: nombre,
+                        zona: zona,
+                        rating: rating,
+                        foto: foto,
+                      ),
+                    );
+                    await AppState.guardarDatos();
+                  }
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Café agregado a Quiero volver',
+                      ),
+                    ),
+                  );
+                },
                 child: const Text('❤️ Quiero volver'),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  if (!AppState.yaFui.any((cafe) => cafe.nombre == nombre)) {
+                    AppState.yaFui.add(
+                      Cafe(
+                        nombre: nombre,
+                        zona: zona,
+                        rating: rating,
+                        foto: foto,
+                      ),
+                    );
+                    await AppState.guardarDatos();
+                  }
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Café agregado a Ya fui',
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('✔️ Ya fui'),
               ),
             ),
           ],

@@ -3,8 +3,13 @@ import 'screens/splash_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/cafes_screen.dart';
 import 'screens/my_map_screen.dart';
+import 'services/app_state.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await AppState.cargarDatos();
+
   runApp(const GotaApp());
 }
 

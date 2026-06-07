@@ -12,16 +12,19 @@ class CafesScreen extends StatelessWidget {
         nombre: 'Cuervo Café',
         zona: 'Palermo',
         rating: '4.8',
+        foto: 'https://picsum.photos/300?1',
       ),
       Cafe(
         nombre: 'LAB',
         zona: 'Palermo',
         rating: '4.7',
+        foto: 'https://picsum.photos/300?2',
       ),
       Cafe(
         nombre: 'Gorrión',
         zona: 'Chacarita',
         rating: '4.9',
+        foto: 'https://picsum.photos/300?3',
       ),
     ];
 
@@ -48,6 +51,7 @@ class CafesScreen extends StatelessWidget {
                       nombre: cafe.nombre,
                       zona: cafe.zona,
                       rating: cafe.rating,
+                      foto: cafe.foto,
                     ),
                   ),
                 );
@@ -56,7 +60,7 @@ class CafesScreen extends StatelessWidget {
               leading: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.network(
-                  'https://picsum.photos/80',
+                  cafe.foto,
                   width: 60,
                   height: 60,
                   fit: BoxFit.cover,
