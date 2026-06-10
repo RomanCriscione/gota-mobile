@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/cafe.dart';
 import '../services/app_state.dart';
 
+
 class CafeDetailScreen extends StatelessWidget {
   final String nombre;
   final String zona;
