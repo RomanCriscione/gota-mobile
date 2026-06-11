@@ -13,6 +13,8 @@ class CafesScreen extends StatefulWidget {
 class _CafesScreenState extends State<CafesScreen> {
   late Future<List<Cafe>> cafesFuture;
 
+  String busqueda = '';
+
   @override
   void initState() {
     super.initState();
@@ -45,56 +47,86 @@ class _CafesScreenState extends State<CafesScreen> {
 
           final cafes = snapshot.data ?? [];
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: cafes.length,
-            itemBuilder: (context, index) {
-              final cafe = cafes[index];
+          final cafesFiltrados = cafes.where((cafe) {
+            return cafe.nombre
+                .toLowerCase()
+                .contains(busqueda.toLowerCase());
+          }).toList();
 
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(12),
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: TextField(
+                  decoration: const InputDecoration(
+                    hintText: 'Buscar cafetería...',
+                    prefixIcon: Icon(Icons.search),
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      busqueda = value;
+                    });
+                  },
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: cafesFiltrados.length,
+                  itemBuilder: (context, index) {
+                    final cafe = cafesFiltrados[index];
 
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => CafeDetailScreen(
-                          nombre: cafe.nombre,
-                          zona: cafe.zona,
-                          rating: cafe.rating,
-                          foto: cafe.foto,
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(12),
+                        onTap: () {
+                            print(cafe.tags);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CafeDetailScreen(
+                                nombre: cafe.nombre,
+                                zona: cafe.zona,
+                                rating: cafe.rating,
+                                foto: cafe.foto,
+                                foto2: cafe.foto2,
+                                foto3: cafe.foto3,
+                                direccion: cafe.direccion,
+                                tieneWifi: cafe.tieneWifi,
+                                petFriendly: cafe.petFriendly,
+                                veganFriendly: cafe.veganFriendly,
+                                tags: cafe.tags,
+                              ),
+                            ),
+                          );
+                        },
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            cafe.foto,
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        title: Text(
+                          cafe.nombre,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Text(cafe.zona),
+                        trailing: Text(
+                          '⭐ ${cafe.rating}',
                         ),
                       ),
                     );
                   },
-
-                  leading: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      cafe.foto,
-                      width: 60,
-                      height: 60,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-
-                  title: Text(
-                    cafe.nombre,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  subtitle: Text(cafe.zona),
-
-                  trailing: Text(
-                    '⭐ ${cafe.rating}',
-                  ),
                 ),
-              );
-            },
+              ),
+            ],
           );
         },
       ),

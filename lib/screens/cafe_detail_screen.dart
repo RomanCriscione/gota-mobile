@@ -8,6 +8,15 @@ class CafeDetailScreen extends StatelessWidget {
   final String zona;
   final String rating;
   final String foto;
+  final String foto2;
+  final String foto3;
+
+  final String direccion;
+  final bool tieneWifi;
+  final bool petFriendly;
+  final bool veganFriendly;
+
+  final List<String> tags;
 
   const CafeDetailScreen({
     super.key,
@@ -15,6 +24,15 @@ class CafeDetailScreen extends StatelessWidget {
     required this.zona,
     required this.rating,
     required this.foto,
+    required this.foto2,
+    required this.foto3,
+
+    required this.direccion,
+    required this.tieneWifi,
+    required this.petFriendly,
+    required this.veganFriendly,
+
+    required this.tags,
   });
 
   @override
@@ -29,7 +47,7 @@ class CafeDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '☕ $nombre',
+              nombre,
               style: const TextStyle(
                 fontSize: 30,
                 fontWeight: FontWeight.bold,
@@ -38,15 +56,56 @@ class CafeDetailScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.network(
-                foto,
-                height: 200,
-                width: double.infinity,
-                fit: BoxFit.cover,
+            SizedBox(
+              height: 220,
+              child: PageView(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.network(
+                      foto,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+
+                  if (foto2.isNotEmpty)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.network(
+                        foto2,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+
+                  if (foto3.isNotEmpty)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.network(
+                        foto3,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                ],
               ),
             ),
+
+            const SizedBox(height: 8),
+
+            Center(
+              child: Text(
+                '📸 ${[
+                  foto,
+                  if (foto2.isNotEmpty) foto2,
+                  if (foto3.isNotEmpty) foto3,
+                ].length} fotos',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
 
             const SizedBox(height: 20),
 
@@ -57,32 +116,93 @@ class CafeDetailScreen extends StatelessWidget {
 
             const SizedBox(height: 8),
 
+            rating == '0.0'
+                ? const Text(
+                    'Aún sin reseñas',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  )
+                : Text(
+                    '⭐ $rating',
+                    style: const TextStyle(fontSize: 18),
+                  ),
+
+            const SizedBox(height: 16),
+
             Text(
-              '⭐ $rating',
-              style: const TextStyle(fontSize: 18),
+              direccion,
+              style: const TextStyle(
+                fontSize: 16,
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            if (tieneWifi || petFriendly || veganFriendly)
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (tieneWifi)
+                    const Chip(
+                      label: Text('📶 Wifi'),
+                    ),
+
+                  if (petFriendly)
+                    const Chip(
+                      label: Text('🐶 Pet Friendly'),
+                    ),
+
+                  if (veganFriendly)
+                    const Chip(
+                      label: Text('🌱 Vegan Friendly'),
+                    ),
+                ],
+              ),
+                if (tieneWifi)
+                  const Chip(
+                    label: Text('📶 Wifi'),
+                  ),
+
+                if (petFriendly)
+                  const Chip(
+                    label: Text('🐶 Pet Friendly'),
+                  ),
+
+                if (veganFriendly)
+                  const Chip(
+                    label: Text('🌱 Vegan Friendly'),
+                  ),
+              ],
             ),
 
             const SizedBox(height: 24),
 
-            const Text(
-              'Etiquetas',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+            if (tags.isNotEmpty) ...[
+              const Text(
+                'Etiquetas',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
 
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: const [
-                Chip(label: Text('💻 Ideal para trabajar')),
-                Chip(label: Text('📖 Para leer')),
-                Chip(label: Text('☕ Café de especialidad')),
-              ],
-            ),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: tags.map((tag) {
+                  return Chip(
+                    label: Text(tag),
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 24),
+            ],
 
             const SizedBox(height: 32),
 
@@ -97,7 +217,14 @@ class CafeDetailScreen extends StatelessWidget {
                         zona: zona,
                         rating: rating,
                         foto: foto,
-                      ),
+                        foto2: foto2,
+                        foto3: foto3,
+                        direccion: direccion,
+                        tieneWifi: tieneWifi,
+                        petFriendly: petFriendly,
+                        veganFriendly: veganFriendly,
+                        tags: tags,
+                      )
                     );
 
                     await AppState.guardarDatos();
@@ -128,7 +255,14 @@ class CafeDetailScreen extends StatelessWidget {
                         zona: zona,
                         rating: rating,
                         foto: foto,
-                      ),
+                        foto2: foto2,
+                        foto3: foto3,
+                        direccion: direccion,
+                        tieneWifi: tieneWifi,
+                        petFriendly: petFriendly,
+                        veganFriendly: veganFriendly,
+                        tags: tags,
+                      )
                     );
                     await AppState.guardarDatos();
                   }
@@ -158,7 +292,14 @@ class CafeDetailScreen extends StatelessWidget {
                         zona: zona,
                         rating: rating,
                         foto: foto,
-                      ),
+                        foto2: foto2,
+                        foto3: foto3,
+                        direccion: direccion,
+                        tieneWifi: tieneWifi,
+                        petFriendly: petFriendly,
+                        veganFriendly: veganFriendly,
+                        tags: tags,
+                      )
                     );
                     await AppState.guardarDatos();
                   }
