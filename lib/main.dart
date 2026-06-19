@@ -1,3 +1,4 @@
+import 'screens/nearby_cafes_screen.dart';
 import 'package:flutter/material.dart';
 import 'screens/splash_screen.dart';
 import 'screens/home_screen.dart';
@@ -37,6 +38,7 @@ class GotaApp extends StatelessWidget {
         '/home': (context) => const HomeScreen(),
         '/cafes': (context) => const CafesScreen(),
         '/my-map': (context) => const MyMapScreen(),
+        '/nearby': (context) => const NearbyCafesScreen(),
       },
     );
   }
