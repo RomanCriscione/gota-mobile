@@ -98,9 +98,10 @@ class _CafesScreenState extends State<CafesScreen> {
           final cafes = snapshot.data ?? [];
 
           final cafesFiltrados = cafes.where((cafe) {
-            if (!cafe.nombre
-                .toLowerCase()
-                .contains(busqueda.toLowerCase())) {
+            final textoBusqueda = busqueda.toLowerCase();
+
+            if (!cafe.nombre.toLowerCase().contains(textoBusqueda) &&
+                !cafe.zona.toLowerCase().contains(textoBusqueda)) {
               return false;
             }
 
@@ -809,6 +810,49 @@ class _CafesScreenState extends State<CafesScreen> {
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
+                              ),
+
+                              Builder(
+                                builder: (_) {
+
+                                  Cafe? cafeGuardado;
+
+                                  try {
+                                    cafeGuardado = AppState.quieroIr.firstWhere(
+                                      (c) => c.nombre == cafe.nombre,
+                                    );
+                                  } catch (_) {}
+
+                                  try {
+                                    cafeGuardado ??=
+                                        AppState.quieroVolver.firstWhere(
+                                      (c) => c.nombre == cafe.nombre,
+                                    );
+                                  } catch (_) {}
+
+                                  try {
+                                    cafeGuardado ??=
+                                        AppState.yaFui.firstWhere(
+                                      (c) => c.nombre == cafe.nombre,
+                                    );
+                                  } catch (_) {}
+
+                                  if (cafeGuardado?.collection == null) {
+                                    return const SizedBox.shrink();
+                                  }
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      cafeGuardado!.collection!,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.blue,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                           ],
                         ),

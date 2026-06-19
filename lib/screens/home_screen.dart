@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/app_state.dart';
+import 'cafe_detail_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -37,6 +38,120 @@ class HomeScreen extends StatelessWidget {
                 color: Colors.black54,
               ),
             ),
+
+            const SizedBox(height: 16),
+
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '☕ Tu recorrido',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Text(
+                    '$totalGuardados cafeterías guardadas',
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Text(
+                    '☕ ${AppState.quieroIr.length} para visitar',
+                  ),
+
+                  Text(
+                    '❤️ ${AppState.quieroVolver.length} para volver',
+                  ),
+
+                  Text(
+                    '✔️ ${AppState.yaFui.length} visitadas',
+                  ),
+                ],
+              ),
+            ),
+
+            if (AppState.quieroIr.isNotEmpty) ...[
+              const SizedBox(height: 16),
+
+              InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  final cafe = AppState.quieroIr.first;
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CafeDetailScreen(
+                        nombre: cafe.nombre,
+                        zona: cafe.zona,
+                        rating: cafe.rating,
+                        foto: cafe.foto,
+                        foto2: cafe.foto2,
+                        foto3: cafe.foto3,
+                        direccion: cafe.direccion,
+                        latitude: cafe.latitude,
+                        longitude: cafe.longitude,
+                        tieneWifi: cafe.tieneWifi,
+                        petFriendly: cafe.petFriendly,
+                        veganFriendly: cafe.veganFriendly,
+                        enchufes: cafe.enchufes,
+                        cafeEspecialidad: cafe.cafeEspecialidad,
+                        brunch: cafe.brunch,
+                        laptopFriendly: cafe.laptopFriendly,
+                        espacioTranquilo: cafe.espacioTranquilo,
+                        tags: cafe.tags,
+                      ),
+                    ),
+                  );
+                },
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '☕ Tu próxima parada',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      Text(
+                        AppState.quieroIr.first.nombre,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+
+                      Text(
+                        AppState.quieroIr.first.zona,
+                        style: const TextStyle(
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            ],
 
             const SizedBox(height: 32),
 
