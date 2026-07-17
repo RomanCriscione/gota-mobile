@@ -1,5 +1,6 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+
+import '../services/auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,28 +14,43 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    verificarSesion();
+  }
 
-    Timer(
-      const Duration(seconds: 2),
-      () {
-        Navigator.pushReplacementNamed(
-          context,
-          '/home',
-        );
-      },
-    );
+  Future<void> verificarSesion() async {
+
+    final usuario =
+        await AuthService.obtenerUsuarioActual();
+
+    if (!mounted) return;
+
+    if (usuario != null) {
+
+      Navigator.pushReplacementNamed(
+        context,
+        '/home',
+      );
+
+    } else {
+
+      Navigator.pushReplacementNamed(
+        context,
+        '/login',
+      );
+
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       backgroundColor: Colors.white,
 
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
 
-          children: const [
+          children: [
 
             Icon(
               Icons.coffee,
@@ -54,13 +70,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
             SizedBox(height: 10),
 
-            Text(
-              'Descubrí tu próximo café',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.black54,
-              ),
-            ),
+            CircularProgressIndicator(),
+
           ],
         ),
       ),

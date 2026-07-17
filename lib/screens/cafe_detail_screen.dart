@@ -7,6 +7,7 @@ import '../models/cafe.dart';
 import '../services/app_state.dart';
 
 class CafeDetailScreen extends StatefulWidget {
+  final int cafeId;
   final String nombre;
   final String zona;
   final String rating;
@@ -32,6 +33,7 @@ class CafeDetailScreen extends StatefulWidget {
 
   const CafeDetailScreen({
     super.key,
+    required this.cafeId,
     required this.nombre,
     required this.zona,
     required this.rating,

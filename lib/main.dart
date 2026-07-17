@@ -5,6 +5,9 @@ import 'screens/home_screen.dart';
 import 'screens/cafes_screen.dart';
 import 'screens/my_map_screen.dart';
 import 'services/app_state.dart';
+import 'screens/login_screen.dart';
+import 'screens/register_screen.dart';
+import 'screens/profile_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,9 +39,12 @@ class GotaApp extends StatelessWidget {
       routes: {
         '/': (context) => const SplashScreen(),
         '/home': (context) => const HomeScreen(),
+        '/login': (context) => const LoginScreen(),
         '/cafes': (context) => const CafesScreen(),
         '/my-map': (context) => const MyMapScreen(),
         '/nearby': (context) => const NearbyCafesScreen(),
+        '/register': (context) => const RegisterScreen(),
+        '/profile': (context) => const ProfileScreen(),
       },
     );
   }

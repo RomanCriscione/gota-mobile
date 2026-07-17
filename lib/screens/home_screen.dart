@@ -1,20 +1,68 @@
 import 'package:flutter/material.dart';
-import '../services/app_state.dart';
-import 'cafe_detail_screen.dart';
+import '../models/cafe.dart';
+import '../services/api_service.dart';
+import '../services/auth_service.dart';
+import '../models/cafe_relationship.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+    @override
+    State<HomeScreen> createState() => _HomeScreenState();
+  }
+
+  class _HomeScreenState extends State<HomeScreen> {
+
+    late Future<List<Cafe>> cafesFuture;
+    late Future<List<CafeRelationship>> mapaFuture;
+
+  @override
+  void initState() {
+    super.initState();
+
+    cafesFuture = ApiService.obtenerCafes();
+    mapaFuture = ApiService.obtenerMiMapa();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final totalGuardados =
-        AppState.quieroIr.length +
-        AppState.quieroVolver.length +
-        AppState.yaFui.length;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gota'),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              if (value == 'profile') {
+                Navigator.pushNamed(
+                  context,
+                  '/profile',
+                );
+              }
+
+              if (value == 'logout') {
+                await AuthService.logout();
+
+                if (!context.mounted) return;
+
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/login',
+                  (route) => false,
+                );
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'profile',
+                child: Text('Mi perfil'),
+              ),
+              PopupMenuItem(
+                value: 'logout',
+                child: Text('Cerrar sesión'),
+              ),
+            ],
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -31,270 +79,286 @@ class HomeScreen extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            const Text(
-              'Descubrí tu próximo café',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.black54,
+              const Text(
+                'Descubrí tu próximo café',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.black54,
+                ),
               ),
-            ),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 8),
 
-            Container(
+              FutureBuilder<List<Cafe>>(
+                future: cafesFuture,
+                builder: (context, snapshot) {
+
+                  if (!snapshot.hasData) {
+                    return const Text(
+                      'Cargando cafeterías...',
+                      style: TextStyle(
+                        color: Colors.black54,
+                      ),
+                    );
+                  }
+
+                  return Container(
+                    margin: const EdgeInsets.only(top: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF9FAFB),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '☕ ${snapshot.data!.length} cafeterías para explorar',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  );
+                },
+              ),
+
+              const SizedBox(height: 16),
+
+      FutureBuilder<List<CafeRelationship>>(
+        future: mapaFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState ==
+              ConnectionState.waiting) {
+            return Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: const Color(0xFFF9FAFB),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '☕ Tu recorrido',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  Text(
-                    '$totalGuardados cafeterías guardadas',
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  Text(
-                    '☕ ${AppState.quieroIr.length} para visitar',
-                  ),
-
-                  Text(
-                    '❤️ ${AppState.quieroVolver.length} para volver',
-                  ),
-
-                  Text(
-                    '✔️ ${AppState.yaFui.length} visitadas',
-                  ),
-                ],
-              ),
-            ),
-
-            if (AppState.quieroIr.isNotEmpty) ...[
-              const SizedBox(height: 16),
-
-              InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () {
-                  final cafe = AppState.quieroIr.first;
-
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => CafeDetailScreen(
-                        nombre: cafe.nombre,
-                        zona: cafe.zona,
-                        rating: cafe.rating,
-                        foto: cafe.foto,
-                        foto2: cafe.foto2,
-                        foto3: cafe.foto3,
-                        direccion: cafe.direccion,
-                        latitude: cafe.latitude,
-                        longitude: cafe.longitude,
-                        tieneWifi: cafe.tieneWifi,
-                        petFriendly: cafe.petFriendly,
-                        veganFriendly: cafe.veganFriendly,
-                        enchufes: cafe.enchufes,
-                        cafeEspecialidad: cafe.cafeEspecialidad,
-                        brunch: cafe.brunch,
-                        laptopFriendly: cafe.laptopFriendly,
-                        espacioTranquilo: cafe.espacioTranquilo,
-                        tags: cafe.tags,
-                      ),
-                    ),
-                  );
-                },
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '☕ Tu próxima parada',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      Text(
-                        AppState.quieroIr.first.nombre,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-
-                      Text(
-                        AppState.quieroIr.first.zona,
-                        style: const TextStyle(
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
-                  ),
+              child: const Text(
+                'Cargando tu recorrido...',
+                style: TextStyle(
+                  color: Colors.black54,
                 ),
               ),
-            ),
-            ],
+            );
+          }
 
-            const SizedBox(height: 32),
-
-            const Text(
-              'Mi recorrido',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+          if (snapshot.hasError) {
+            return Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(16),
               ),
-            ),
-
-            const SizedBox(height: 12),
-
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Column(
-                      children: [
-                        Text(
-                          '${AppState.quieroIr.length}',
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Text('☕ Quiero ir'),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        Text(
-                          '${AppState.quieroVolver.length}',
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Text('❤️ Volver'),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        Text(
-                          '${AppState.yaFui.length}',
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Text('✔️ Ya fui'),
-                      ],
-                    ),
-                  ],
+              child: const Text(
+                'No pudimos cargar tu recorrido.',
+                style: TextStyle(
+                  color: Colors.black54,
                 ),
               ),
-            ),
+            );
+          }
 
-            const SizedBox(height: 24),
+          final relaciones =
+              snapshot.data ?? <CafeRelationship>[];
 
-            Card(
+          final quieroIr = relaciones
+              .where(
+                (relacion) =>
+                    relacion.status == 'want_to_go',
+              )
+              .length;
+
+          final quieroVolver = relaciones
+              .where(
+                (relacion) =>
+                    relacion.status == 'want_to_return',
+              )
+              .length;
+
+          final yaFui = relaciones
+              .where(
+                (relacion) =>
+                    relacion.status == 'visited',
+              )
+              .length;
+
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
               color: const Color(0xFFF9FAFB),
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (totalGuardados == 0) ...[
-                      const Text(
-                        '☕ Empezá tu mapa cafetero',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '☕ Tu recorrido',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                Text(
+                  '${relaciones.length} cafeterías guardadas',
+                ),
+
+                const SizedBox(height: 12),
+
+                Text(
+                  '☕ $quieroIr para visitar',
+                ),
+
+                Text(
+                  '❤️ $quieroVolver para volver',
+                ),
+
+                Text(
+                  '✔️ $yaFui visitadas',
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+
+            FutureBuilder<List<CafeRelationship>>(
+              future: mapaFuture,
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const SizedBox.shrink();
+                }
+
+                final quieroIr = snapshot.data!
+                    .where(
+                      (relacion) =>
+                          relacion.status == 'want_to_go',
+                    )
+                    .toList();
+
+                if (quieroIr.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+
+                final cafeEnRadar = quieroIr.first;
+
+                return Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        '/my-map',
+                      );
+                    },
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+                            ClipRRect(
+                              borderRadius:
+                                  BorderRadius.circular(12),
+                              child: Image.network(
+                                cafeEnRadar.cafePhoto,
+                                width: double.infinity,
+                                height: 160,
+                                fit: BoxFit.cover,
+                                errorBuilder: (
+                                  context,
+                                  error,
+                                  stackTrace,
+                                ) {
+                                  return Container(
+                                    width: double.infinity,
+                                    height: 160,
+                                    color:
+                                        const Color(0xFFF3F4F6),
+                                    child: const Icon(
+                                      Icons.coffee,
+                                      size: 50,
+                                      color: Colors.black38,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            const Text(
+                              '☕ En tu radar',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+
+                            const SizedBox(height: 8),
+
+                            if (cafeEnRadar.collection != null &&
+                                cafeEnRadar.collection!
+                                    .trim()
+                                    .isNotEmpty)
+                              Container(
+                                margin:
+                                    const EdgeInsets.only(
+                                  bottom: 8,
+                                ),
+                                padding:
+                                    const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color:
+                                      const Color(0xFFF3F4F6),
+                                  borderRadius:
+                                      BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  cafeEnRadar.collection!,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+
+                            Text(
+                              cafeEnRadar.cafeName,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+
+                            Text(
+                              cafeEnRadar.cafeLocation,
+                              style: const TextStyle(
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      const Text(
-                        'Todavía no guardaste cafeterías. Explorá lugares y empezá a construir tu recorrido.',
-                      ),
-                    ],
-
-                    if (totalGuardados > 0 &&
-                        AppState.quieroIr.isNotEmpty) ...[
-                      const Text(
-                        '☕ Próximas visitas',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      Text(
-                        'Tenés ${AppState.quieroIr.length} cafeterías pendientes para visitar.',
-                      ),
-                    ],
-
-                    if (totalGuardados > 0 &&
-                        AppState.quieroIr.isEmpty &&
-                        AppState.yaFui.isNotEmpty) ...[
-                      const Text(
-                        '✔️ Tu recorrido sigue creciendo',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      Text(
-                        'Ya visitaste ${AppState.yaFui.length} cafeterías.',
-                      ),
-                    ],
-
-                    const SizedBox(height: 12),
-
-                    Text(
-                      'Total guardadas: $totalGuardados',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.black54,
                       ),
                     ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             ),
 
-            const SizedBox(height: 32),
-
-            const Text(
-              'Explorar',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
 
             const SizedBox(height: 12),
 

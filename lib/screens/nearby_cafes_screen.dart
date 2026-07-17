@@ -210,6 +210,7 @@ class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
                                         MaterialPageRoute(
                                             builder: (_) =>
                                                 CafeDetailScreen(
+                                            cafeId: cafe.id!,
                                             nombre: cafe.nombre,
                                             zona: cafe.zona,
                                             rating: cafe.rating,
