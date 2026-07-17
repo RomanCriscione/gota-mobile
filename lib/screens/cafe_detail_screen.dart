@@ -2,6 +2,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import '../services/api_service.dart';
 
 import '../models/cafe.dart';
 import '../services/app_state.dart';
@@ -68,6 +69,7 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
   ];
 
   String? selectedCollection;
+  String? estadoActual;
 
   @override
   void initState() {
@@ -94,6 +96,33 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
     } catch (_) {}
 
     selectedCollection = cafeGuardado?.collection;
+
+    cargarEstadoActual();
+  }
+
+  Future<void> cargarEstadoActual() async {
+    try {
+      final relaciones = await ApiService.obtenerMiMapa();
+
+      String? estadoEncontrado;
+
+      for (final relacion in relaciones) {
+        if (relacion.cafeId == widget.cafeId) {
+          estadoEncontrado = relacion.status;
+          break;
+        }
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        estadoActual = estadoEncontrado;
+      });
+    } catch (error) {
+      print(
+        'Error al cargar el estado del café: $error',
+      );
+    }
   }
 
   List<String> get fotosDisponibles {
@@ -105,15 +134,15 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
   }
 
   bool get estaEnQuieroIr {
-    return AppState.quieroIr.any((cafe) => cafe.nombre == widget.nombre);
+    return estadoActual == 'want_to_go';
   }
 
   bool get estaEnQuieroVolver {
-    return AppState.quieroVolver.any((cafe) => cafe.nombre == widget.nombre);
+    return estadoActual == 'want_to_return';
   }
 
   bool get estaEnYaFui {
-    return AppState.yaFui.any((cafe) => cafe.nombre == widget.nombre);
+    return estadoActual == 'visited';
   }
 
   Cafe crearCafeActual() {
@@ -140,6 +169,27 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
   }
 
   Future<void> guardarEnMapa(String estado) async {
+  String apiStatus = '';
+
+  if (estado == 'quiero_ir') {
+    apiStatus = 'want_to_go';
+  } else if (estado == 'quiero_volver') {
+    apiStatus = 'want_to_return';
+  } else if (estado == 'ya_fui') {
+    apiStatus = 'visited';
+  }
+
+  final response = await ApiService.setCafeStatus(
+    cafeId: widget.cafeId,
+    status: apiStatus,
+  );
+
+  if (!mounted) return;
+
+  setState(() {
+    estadoActual = response['status'];
+  });
+
   Cafe cafe = crearCafeActual();
 
   Cafe? cafeExistente;

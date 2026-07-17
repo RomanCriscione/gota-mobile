@@ -78,4 +78,52 @@ class ApiService {
         )
         .toList();
   }
+
+  static Future<Map<String, dynamic>> setCafeStatus({
+    required int cafeId,
+    required String status,
+  }) async {
+    final token = await AuthService.obtenerToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception(
+        'No hay una sesión iniciada',
+      );
+    }
+
+    final response = await http
+        .post(
+          Uri.parse(
+            '$baseUrl/mobile/cafes/$cafeId/set-status/',
+          ),
+          headers: {
+            'Authorization': 'Token $token',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'status': status,
+          }),
+        )
+        .timeout(
+          const Duration(seconds: 15),
+        );
+
+    print(
+      'Set status: ${response.statusCode}',
+    );
+    print(
+      'Set status body: ${response.body}',
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Error al guardar el estado',
+      );
+    }
+
+    return jsonDecode(
+      response.body,
+    ) as Map<String, dynamic>;
+  }
 }
