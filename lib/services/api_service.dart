@@ -126,4 +126,102 @@ class ApiService {
       response.body,
     ) as Map<String, dynamic>;
   }
+
+  static Future<Map<String, dynamic>> setCafeCollection({
+    required int cafeId,
+    required String collection,
+  }) async {
+    final token = await AuthService.obtenerToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception(
+        'No hay una sesión iniciada',
+      );
+    }
+
+    final response = await http
+        .post(
+          Uri.parse(
+            '$baseUrl/mobile/cafes/$cafeId/set-collection/',
+          ),
+          headers: {
+            'Authorization': 'Token $token',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'collection': collection,
+          }),
+        )
+        .timeout(
+          const Duration(seconds: 15),
+        );
+
+    print(
+      'Set collection: ${response.statusCode}',
+    );
+    print(
+      'Set collection body: ${response.body}',
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Error al guardar la colección',
+      );
+    }
+
+    return jsonDecode(
+      response.body,
+    ) as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> obtenerDetalleCafe(
+    int cafeId,
+  ) async {
+    final token = await AuthService.obtenerToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception(
+        'No hay una sesión iniciada',
+      );
+    }
+
+    final response = await http
+        .get(
+          Uri.parse(
+            '$baseUrl/mobile/cafes/$cafeId/',
+          ),
+          headers: {
+            'Authorization': 'Token $token',
+            'Accept': 'application/json',
+          },
+        )
+        .timeout(
+          const Duration(seconds: 15),
+        );
+
+    print(
+      'Detalle café status: ${response.statusCode}',
+    );
+    print(
+      'Detalle café body: ${response.body}',
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Error al cargar el detalle del café',
+      );
+    }
+
+    final dynamic decodedData =
+        jsonDecode(response.body);
+
+    if (decodedData is! Map<String, dynamic>) {
+      throw Exception(
+        'La respuesta del detalle no es válida',
+      );
+    }
+
+    return decodedData;
+  }
 }

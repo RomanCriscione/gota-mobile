@@ -3,56 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../services/api_service.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
-import '../models/cafe.dart';
-import '../services/app_state.dart';
 
 class CafeDetailScreen extends StatefulWidget {
   final int cafeId;
-  final String nombre;
-  final String zona;
-  final String rating;
-  final String foto;
-  final String foto2;
-  final String foto3;
-
-  final String direccion;
-  final double? latitude;
-  final double? longitude;
-
-  final bool tieneWifi;
-  final bool petFriendly;
-  final bool veganFriendly;
-
-  final bool enchufes;
-  final bool cafeEspecialidad;
-  final bool brunch;
-  final bool laptopFriendly;
-  final bool espacioTranquilo;
-
-  final List<String> tags;
 
   const CafeDetailScreen({
     super.key,
     required this.cafeId,
-    required this.nombre,
-    required this.zona,
-    required this.rating,
-    required this.foto,
-    required this.foto2,
-    required this.foto3,
-    required this.direccion,
-    required this.latitude,
-    required this.longitude,
-    required this.tieneWifi,
-    required this.petFriendly,
-    required this.veganFriendly,
-    required this.enchufes,
-    required this.cafeEspecialidad,
-    required this.brunch,
-    required this.laptopFriendly,
-    required this.espacioTranquilo,
-    required this.tags,
   });
 
   @override
@@ -70,34 +29,41 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
 
   String? selectedCollection;
   String? estadoActual;
+  Map<String, dynamic>? detalleCafe;
+  bool cargandoDetalle = true;
 
   @override
   void initState() {
     super.initState();
 
-    Cafe? cafeGuardado;
-
-    try {
-      cafeGuardado = AppState.quieroIr.firstWhere(
-        (cafe) => cafe.nombre == widget.nombre,
-      );
-    } catch (_) {}
-
-    try {
-      cafeGuardado ??= AppState.quieroVolver.firstWhere(
-        (cafe) => cafe.nombre == widget.nombre,
-      );
-    } catch (_) {}
-
-    try {
-      cafeGuardado ??= AppState.yaFui.firstWhere(
-        (cafe) => cafe.nombre == widget.nombre,
-      );
-    } catch (_) {}
-
-    selectedCollection = cafeGuardado?.collection;
-
+    cargarDetalleCafe();
     cargarEstadoActual();
+  }
+
+  Future<void> cargarDetalleCafe() async {
+    try {
+      final detalle =
+          await ApiService.obtenerDetalleCafe(
+        widget.cafeId,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        detalleCafe = detalle;
+        cargandoDetalle = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        cargandoDetalle = false;
+      });
+
+      print(
+        'Error cargando detalle: $e',
+      );
+    }
   }
 
   Future<void> cargarEstadoActual() async {
@@ -105,10 +71,30 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
       final relaciones = await ApiService.obtenerMiMapa();
 
       String? estadoEncontrado;
+      String? coleccionEncontrada;
 
       for (final relacion in relaciones) {
         if (relacion.cafeId == widget.cafeId) {
           estadoEncontrado = relacion.status;
+
+          switch (relacion.collection) {
+            case 'read':
+              coleccionEncontrada = '📚 Para leer';
+              break;
+            case 'work':
+              coleccionEncontrada = '💻 Para trabajar';
+              break;
+            case 'slow':
+              coleccionEncontrada = '🌿 Para bajar un cambio';
+              break;
+            case 'rain':
+              coleccionEncontrada = '☁️ Para días grises';
+              break;
+            case 'talk':
+              coleccionEncontrada = '🫶 Para charlas largas';
+              break;
+          }
+
           break;
         }
       }
@@ -117,6 +103,7 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
 
       setState(() {
         estadoActual = estadoEncontrado;
+        selectedCollection = coleccionEncontrada;
       });
     } catch (error) {
       print(
@@ -125,12 +112,123 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
     }
   }
 
+  String get nombreCafe {
+    return detalleCafe?['name']?.toString() ?? '';
+  }
+
+  String get zonaCafe {
+    return detalleCafe?['location']?.toString() ?? '';
+  }
+
+  String get ratingCafe {
+    return detalleCafe?['average_rating']?.toString() ?? '0.0';
+  }
+
+  String get direccionCafe {
+    return detalleCafe?['address']?.toString() ?? '';
+  }
+
+  double? get latitudeCafe {
+    final valor = detalleCafe?['latitude'];
+
+    if (valor is num) {
+      return valor.toDouble();
+    }
+
+    return null;
+  }
+
+double? get longitudeCafe {
+  final valor = detalleCafe?['longitude'];
+
+  if (valor is num) {
+    return valor.toDouble();
+  }
+
+  return null;
+}
+
+  List<String> get tagsCafe {
+    final dynamic tagsApi = detalleCafe?['tags'];
+
+    if (tagsApi is List) {
+      return tagsApi
+          .map(
+            (tag) => tag.toString(),
+          )
+          .toList();
+    }
+
+    return [];
+  }
+
+  List<dynamic> get reviewsCafe {
+    final dynamic reviewsApi = detalleCafe?['reviews'];
+
+    if (reviewsApi is List) {
+      return reviewsApi;
+    }
+
+    return [];
+  }
+
+  int get reviewsCount {
+    final dynamic total = detalleCafe?['reviews_count'];
+
+    if (total is int) {
+      return total;
+    }
+
+    return 0;
+  }
+
+  bool get tieneWifiCafe {
+    return detalleCafe?['has_wifi'] == true;
+  }
+
+  bool get petFriendlyCafe {
+    return detalleCafe?['is_pet_friendly'] == true;
+  }
+
+  bool get veganFriendlyCafe {
+    return detalleCafe?['is_vegan_friendly'] == true;
+  }
+
+  bool get enchufesCafe {
+    return detalleCafe?['has_power_outlets'] == true;
+  }
+
+  bool get cafeEspecialidadCafe {
+    return detalleCafe?['has_specialty_coffee'] == true;
+  }
+
+  bool get brunchCafe {
+    return detalleCafe?['serves_brunch'] == true;
+  }
+
+  bool get laptopFriendlyCafe {
+    return detalleCafe?['laptop_friendly'] == true;
+  }
+
+  bool get espacioTranquiloCafe {
+    return detalleCafe?['quiet_space'] == true;
+  }
+
   List<String> get fotosDisponibles {
-    return [
-      widget.foto,
-      if (widget.foto2.isNotEmpty) widget.foto2,
-      if (widget.foto3.isNotEmpty) widget.foto3,
-    ];
+    final dynamic fotosApi = detalleCafe?['photos'];
+
+    if (fotosApi is List && fotosApi.isNotEmpty) {
+      return fotosApi
+          .map(
+            (foto) => foto.toString(),
+          )
+          .where(
+            (foto) => foto.isNotEmpty,
+          )
+          .toList();
+    }
+
+    return [];
   }
 
   bool get estaEnQuieroIr {
@@ -143,29 +241,6 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
 
   bool get estaEnYaFui {
     return estadoActual == 'visited';
-  }
-
-  Cafe crearCafeActual() {
-    return Cafe(
-      nombre: widget.nombre,
-      zona: widget.zona,
-      rating: widget.rating,
-      foto: widget.foto,
-      foto2: widget.foto2,
-      foto3: widget.foto3,
-      direccion: widget.direccion,
-      latitude: widget.latitude,
-      longitude: widget.longitude,
-      tieneWifi: widget.tieneWifi,
-      petFriendly: widget.petFriendly,
-      veganFriendly: widget.veganFriendly,
-      enchufes: widget.enchufes,
-      cafeEspecialidad: widget.cafeEspecialidad,
-      brunch: widget.brunch,
-      laptopFriendly: widget.laptopFriendly,
-      espacioTranquilo: widget.espacioTranquilo,
-      tags: widget.tags,
-    );
   }
 
   Future<void> guardarEnMapa(String estado) async {
@@ -190,57 +265,6 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
     estadoActual = response['status'];
   });
 
-  Cafe cafe = crearCafeActual();
-
-  Cafe? cafeExistente;
-
-  try {
-  cafeExistente = AppState.quieroIr.firstWhere(
-  (item) => item.nombre == widget.nombre,
-  );
-  } catch (_) {}
-
-  try {
-  cafeExistente ??= AppState.quieroVolver.firstWhere(
-  (item) => item.nombre == widget.nombre,
-  );
-  } catch (_) {}
-
-  try {
-  cafeExistente ??= AppState.yaFui.firstWhere(
-  (item) => item.nombre == widget.nombre,
-  );
-  } catch (_) {}
-
-  if (cafeExistente != null) {
-  cafe = cafe.copyWith(
-  collection: cafeExistente.collection,
-  );
-  }
-
-  AppState.quieroIr.removeWhere(
-  (item) => item.nombre == widget.nombre,
-  );
-
-  AppState.quieroVolver.removeWhere(
-  (item) => item.nombre == widget.nombre,
-  );
-
-  AppState.yaFui.removeWhere(
-  (item) => item.nombre == widget.nombre,
-  );
-
-  if (estado == 'quiero_ir') {
-  AppState.quieroIr.add(cafe);
-  } else if (estado == 'quiero_volver') {
-  AppState.quieroVolver.add(cafe);
-  } else if (estado == 'ya_fui') {
-  AppState.yaFui.add(cafe);
-  }
-
-  await AppState.guardarDatos();
-
-  setState(() {});
 
   String mensaje = '';
 
@@ -263,39 +287,42 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
 
 
   Future<void> guardarColeccion(String collection) async {
-    bool actualizado = false;
+    String apiCollection = '';
 
-    for (int i = 0; i < AppState.quieroIr.length; i++) {
-      if (AppState.quieroIr[i].nombre == widget.nombre) {
-        AppState.quieroIr[i] =
-            AppState.quieroIr[i].copyWith(
-          collection: collection,
-        );
-        actualizado = true;
-      }
+    if (collection == '📚 Para leer') {
+      apiCollection = 'read';
+    } else if (collection == '💻 Para trabajar') {
+      apiCollection = 'work';
+    } else if (collection == '🌿 Para bajar un cambio') {
+      apiCollection = 'slow';
+    } else if (collection == '☁️ Para días grises') {
+      apiCollection = 'rain';
+    } else if (collection == '🫶 Para charlas largas') {
+      apiCollection = 'talk';
     }
 
-    for (int i = 0; i < AppState.quieroVolver.length; i++) {
-      if (AppState.quieroVolver[i].nombre == widget.nombre) {
-        AppState.quieroVolver[i] =
-            AppState.quieroVolver[i].copyWith(
-          collection: collection,
-        );
-        actualizado = true;
-      }
-    }
+    try {
+      await ApiService.setCafeCollection(
+        cafeId: widget.cafeId,
+        collection: apiCollection,
+      );
 
-    for (int i = 0; i < AppState.yaFui.length; i++) {
-      if (AppState.yaFui[i].nombre == widget.nombre) {
-        AppState.yaFui[i] =
-            AppState.yaFui[i].copyWith(
-          collection: collection,
-        );
-        actualizado = true;
-      }
-    }
+      if (!mounted) return;
 
-    if (!actualizado) {
+      setState(() {
+        selectedCollection = collection;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Guardado en $collection',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -303,27 +330,7 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
           ),
         ),
       );
-      return;
     }
-    for (final cafe in AppState.quieroIr) {
-      print('${cafe.nombre} -> ${cafe.collection}');
-    }
-
-    await AppState.guardarDatos();
-
-    setState(() {
-      selectedCollection = collection;
-    });
-
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Guardado en $collection',
-        ),
-      ),
-    );
   }
 
   Widget etiquetaEstadoActual() {
@@ -371,19 +378,30 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (cargandoDetalle) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Cargando café...'),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     final tieneServicios =
-        widget.tieneWifi ||
-        widget.petFriendly ||
-        widget.veganFriendly ||
-        widget.enchufes ||
-        widget.cafeEspecialidad ||
-        widget.brunch ||
-        widget.laptopFriendly ||
-        widget.espacioTranquilo;
+        tieneWifiCafe ||
+        petFriendlyCafe ||
+        veganFriendlyCafe ||
+        enchufesCafe ||
+        cafeEspecialidadCafe ||
+        brunchCafe ||
+        laptopFriendlyCafe ||
+        espacioTranquiloCafe;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.nombre),
+        title: Text(nombreCafe),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -401,6 +419,35 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
                         foto,
                         fit: BoxFit.cover,
                         width: double.infinity,
+                        loadingBuilder: (
+                          context,
+                          child,
+                          loadingProgress,
+                        ) {
+                          if (loadingProgress == null) {
+                            return child;
+                          }
+
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        },
+                        errorBuilder: (
+                          context,
+                          error,
+                          stackTrace,
+                        ) {
+                          return Container(
+                            color: const Color(0xFFF3F4F6),
+                            child: const Center(
+                              child: Icon(
+                                Icons.coffee,
+                                size: 70,
+                                color: Colors.black38,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     );
                   }).toList(),
@@ -422,7 +469,7 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
             const SizedBox(height: 24),
 
             Text(
-              widget.nombre,
+              nombreCafe,
               style: const TextStyle(
                 fontSize: 30,
                 fontWeight: FontWeight.bold,
@@ -432,9 +479,10 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
             const SizedBox(height: 8),
 
             Text(
-              widget.rating == '0.0'
-                  ? '📍 ${widget.zona} · Aún sin reseñas'
-                  : '📍 ${widget.zona} · ⭐ ${widget.rating}',
+              ratingCafe == '0.0' ||
+                      ratingCafe == 'Sin calificación'
+                  ? '📍 $zonaCafe · Aún sin reseñas'
+                  : '📍 $zonaCafe · ⭐ $ratingCafe',
               style: const TextStyle(
                 fontSize: 17,
                 color: Colors.black87,
@@ -447,7 +495,7 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
 
             const SizedBox(height: 24),
 
-            if (widget.tags.isNotEmpty) ...[
+            if (tagsCafe.isNotEmpty) ...[
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
@@ -492,7 +540,7 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Text(
-                            '✨ ${widget.tags.first}',
+                            '✨ ${tagsCafe.first}',
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -500,7 +548,7 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
                           ),
                         ),
 
-                        if (widget.tags.length > 1) ...[
+                        if (tagsCafe.length > 1) ...[
                           const SizedBox(height: 16),
 
                           const Text(
@@ -515,7 +563,7 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
                           Wrap(
                             spacing: 8,
                             runSpacing: 8,
-                            children: widget.tags.skip(1).map((tag) {
+                            children: tagsCafe.skip(1).map((tag) {
                               return Chip(
                                 label: Text(tag),
                                 backgroundColor: Colors.white,
@@ -630,21 +678,21 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  if (widget.tieneWifi)
+                  if (tieneWifiCafe)
                     const Chip(label: Text('📶 Wifi')),
-                  if (widget.enchufes)
+                  if (enchufesCafe)
                     const Chip(label: Text('🔌 Enchufes')),
-                  if (widget.cafeEspecialidad)
+                  if (cafeEspecialidadCafe)
                     const Chip(label: Text('☕ Especialidad')),
-                  if (widget.brunch)
+                  if (brunchCafe)
                     const Chip(label: Text('🍳 Brunch')),
-                  if (widget.laptopFriendly)
+                  if (laptopFriendlyCafe)
                     const Chip(label: Text('💻 Para trabajar')),
-                  if (widget.espacioTranquilo)
+                  if (espacioTranquiloCafe)
                     const Chip(label: Text('🤫 Tranquilo')),
-                  if (widget.petFriendly)
+                  if (petFriendlyCafe)
                     const Chip(label: Text('🐶 Pet Friendly')),
-                  if (widget.veganFriendly)
+                  if (veganFriendlyCafe)
                     const Chip(label: Text('🌱 Vegan Friendly')),
                 ],
               ),
@@ -652,7 +700,7 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
               const SizedBox(height: 28),
             ],
 
-            if (widget.direccion.isNotEmpty) ...[
+            if (direccionCafe.isNotEmpty) ...[
               const Text(
                 'Ubicación',
                 style: TextStyle(
@@ -664,7 +712,7 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
               const SizedBox(height: 8),
 
               Text(
-                widget.direccion,
+                direccionCafe,
                 style: const TextStyle(
                   fontSize: 16,
                 ),
@@ -673,7 +721,7 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
               const SizedBox(height: 16),
             ],
 
-            if (widget.latitude != null && widget.longitude != null) ...[
+            if (latitudeCafe != null && longitudeCafe != null) ...[
               SizedBox(
                 height: 220,
                 child: ClipRRect(
@@ -681,8 +729,8 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
                   child: FlutterMap(
                     options: MapOptions(
                       initialCenter: LatLng(
-                        widget.latitude!,
-                        widget.longitude!,
+                        latitudeCafe!,
+                        longitudeCafe!,
                       ),
                       initialZoom: 15,
                     ),
@@ -696,8 +744,8 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
                         markers: [
                           Marker(
                             point: LatLng(
-                              widget.latitude!,
-                              widget.longitude!,
+                              latitudeCafe!,
+                              longitudeCafe!,
                             ),
                             width: 40,
                             height: 40,
@@ -721,7 +769,7 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
                 child: OutlinedButton.icon(
                   onPressed: () async {
                     final Uri url = Uri.parse(
-                      'https://www.google.com/maps/search/?api=1&query=${widget.latitude},${widget.longitude}',
+                      'https://www.google.com/maps/search/?api=1&query=${latitudeCafe},${longitudeCafe}',
                     );
 
                     await launchUrl(
@@ -735,6 +783,203 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
               ),
             ],
             
+
+            const SizedBox(height: 32),
+
+            if (reviewsCafe.isNotEmpty) ...[
+              Text(
+                'Reseñas ($reviewsCount)',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              const Text(
+                'Experiencias compartidas por la comunidad de Gota.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black54,
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              ...reviewsCafe.map((review) {
+                final reviewMap = review is Map
+                    ? Map<String, dynamic>.from(review)
+                    : <String, dynamic>{};
+
+                final String usuario =
+                    reviewMap['user']?.toString() ??
+                    'Usuario de Gota';
+
+                final int rating =
+                    reviewMap['rating'] is num
+                    ? (reviewMap['rating'] as num).toInt()
+                    : 0;
+
+                final String comentario =
+                    reviewMap['comment']?.toString() ?? '';
+
+                final String fecha =
+                    reviewMap['created_at']?.toString() ?? '';
+
+                final String respuestaDueno =
+                    reviewMap['owner_reply']?.toString() ?? '';
+
+                return Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(
+                    bottom: 12,
+                  ),
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: const Color(0xFFE5E7EB),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const CircleAvatar(
+                            child: Icon(
+                              Icons.person,
+                            ),
+                          ),
+
+                          const SizedBox(width: 12),
+
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  usuario,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight:
+                                        FontWeight.bold,
+                                  ),
+                                ),
+
+                                if (fecha.isNotEmpty)
+                                  Text(
+                                    fecha,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      Row(
+                        children: [
+                          ...List.generate(5, (index) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 3),
+                              child: Opacity(
+                                opacity: index < rating ? 1 : 0.25,
+                                child: SvgPicture.asset(
+                                  'assets/icons/rating_cup.svg',
+                                  width: 20,
+                                  height: 20,
+                                ),
+                              ),
+                            );
+                          }),
+                          const SizedBox(width: 8),
+                          Text(
+                            '$rating,0',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      if (comentario.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+
+                        Text(
+                          comentario,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+
+                      if (respuestaDueno.isNotEmpty) ...[
+                        const SizedBox(height: 14),
+
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius:
+                                BorderRadius.circular(14),
+                          ),
+                          child: Column(
+                            crossAxisAlignment:
+                                CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Respuesta del café',
+                                style: TextStyle(
+                                  fontWeight:
+                                      FontWeight.bold,
+                                ),
+                              ),
+
+                              const SizedBox(height: 6),
+
+                              Text(
+                                respuestaDueno,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              }),
+            ] else ...[
+              const Text(
+                'Reseñas',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              const Text(
+                'Este café todavía no tiene reseñas.',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.black54,
+                ),
+              ),
+            ],
 
             const SizedBox(height: 32),
 

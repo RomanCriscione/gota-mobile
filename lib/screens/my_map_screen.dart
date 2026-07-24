@@ -33,36 +33,21 @@ class _MyMapScreenState extends State<MyMapScreen> {
     await nuevoFuture;
   }
 
-  void abrirCafe(CafeRelationship relacion) {
-    Navigator.push(
+  Future<void> abrirCafe(
+    CafeRelationship relacion,
+  ) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => CafeDetailScreen(
           cafeId: relacion.cafeId,
-          nombre: relacion.cafeName,
-          zona: relacion.cafeLocation,
-          rating: relacion.averageRating,
-          foto: relacion.cafePhoto,
-          direccion: relacion.cafeAddress,
-
-          // El endpoint de Mi mapa todavía no devuelve
-          // el detalle completo del café.
-          foto2: '',
-          foto3: '',
-          latitude: null,
-          longitude: null,
-          tieneWifi: false,
-          petFriendly: false,
-          veganFriendly: false,
-          tags: const [],
-          enchufes: false,
-          cafeEspecialidad: false,
-          brunch: false,
-          laptopFriendly: false,
-          espacioTranquilo: false,
         ),
       ),
     );
+
+    if (!mounted) return;
+
+    await recargarMapa();
   }
 
   @override

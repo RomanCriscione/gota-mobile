@@ -211,24 +211,7 @@ class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
                                             builder: (_) =>
                                                 CafeDetailScreen(
                                             cafeId: cafe.id!,
-                                            nombre: cafe.nombre,
-                                            zona: cafe.zona,
-                                            rating: cafe.rating,
-                                            foto: cafe.foto,
-                                            foto2: cafe.foto2,
-                                            foto3: cafe.foto3,
-                                            direccion: cafe.direccion,
-                                            latitude: cafe.latitude,
-                                            longitude: cafe.longitude,
-                                            tieneWifi: cafe.tieneWifi,
-                                            petFriendly:cafe.petFriendly,
-                                            veganFriendly:cafe.veganFriendly,
-                                            tags: cafe.tags,
-                                            enchufes: cafe.enchufes,
-                                            cafeEspecialidad: cafe.cafeEspecialidad,
-                                            brunch: cafe.brunch,
-                                            laptopFriendly: cafe.laptopFriendly,
-                                            espacioTranquilo: cafe.espacioTranquilo,
+
                                         ),
                                     ),
                                 );
