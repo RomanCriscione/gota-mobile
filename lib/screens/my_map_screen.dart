@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_svg/flutter_svg.dart';
 import '../models/cafe_relationship.dart';
 import '../services/api_service.dart';
 import 'cafe_detail_screen.dart';
@@ -134,17 +134,93 @@ class _MyMapScreenState extends State<MyMapScreen> {
                   const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
               children: [
-                _FiltrosMapa(
-                  colecciones: colecciones,
-                  relaciones: relaciones,
-                  filtroSeleccionado:
-                      filtroColeccion,
-                  onSeleccionar: (coleccion) {
-                    setState(() {
-                      filtroColeccion = coleccion;
-                    });
-                  },
+                Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(
+                  color: const Color(0xFFE5E7EB),
                 ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '☕ Mi recorrido cafetero',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  Text(
+                    '${relaciones.length} cafeterías guardadas',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.black54,
+                    ),
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _ResumenCard(
+                          icono: Icons.bookmark_add_rounded,
+                          color: Color(0xFFEA580C),
+                          cantidad: quieroIr.length,
+                          titulo: 'Quiero ir',
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      Expanded(
+                        child: _ResumenCard(
+                          icono: Icons.favorite,
+                          color: Color(0xFFE11D48),
+                          cantidad: quieroVolver.length,
+                          titulo: 'Volver',
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      Expanded(
+                        child: _ResumenCard(
+                          icono: Icons.check_circle,
+                          color: Color(0xFF16A34A),
+                          cantidad: yaFui.length,
+                          titulo: 'Visitados',
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            _FiltrosMapa(
+              colecciones: colecciones,
+              relaciones: relaciones,
+              filtroSeleccionado: filtroColeccion,
+              onSeleccionar: (coleccion) {
+                setState(() {
+                  filtroColeccion = coleccion;
+                });
+              },
+            ),
+          ],
+        ),
 
                 _SeccionMapa(
                   titulo: '☕ Quiero ir',
@@ -363,12 +439,11 @@ class _CafeMapaCard extends StatelessWidget {
         minVerticalPadding: 12,
         onTap: onTap,
         leading: ClipRRect(
-          borderRadius:
-              BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(14),
           child: Image.network(
             relacion.cafePhoto,
-            width: 88,
-            height: 88,
+            width: 100,
+            height: 100,
             fit: BoxFit.cover,
             errorBuilder: (
               context,
@@ -376,14 +451,18 @@ class _CafeMapaCard extends StatelessWidget {
               stackTrace,
             ) {
               return Container(
-                width: 88,
-                height: 88,
-                color:
-                    const Color(0xFFF3F4F6),
-                child: const Icon(
-                  Icons.coffee,
-                  size: 36,
-                  color: Colors.black38,
+                width: 100,
+                height: 100,
+                color: const Color(0xFFF3F4F6),
+                child: Center(
+                  child: Opacity(
+                    opacity: 0.35,
+                    child: SvgPicture.asset(
+                      'assets/icons/rating_cup.svg',
+                      width: 42,
+                      height: 42,
+                    ),
+                  ),
                 ),
               );
             },
@@ -488,6 +567,62 @@ class _Etiqueta extends StatelessWidget {
           color: colorTexto,
           fontWeight: FontWeight.w600,
         ),
+      ),
+    );
+  }
+}
+
+class _ResumenCard extends StatelessWidget {
+  final IconData icono;
+  final Color color;
+  final int cantidad;
+  final String titulo;
+
+  const _ResumenCard({
+    required this.icono,
+    required this.color,
+    required this.cantidad,
+    required this.titulo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        vertical: 16,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            icono,
+            color: color,
+            size: 26,
+          ),
+
+          const SizedBox(height: 10),
+
+          Text(
+            '$cantidad',
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 2),
+
+          Text(
+            titulo,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.black54,
+            ),
+          ),
+        ],
       ),
     );
   }

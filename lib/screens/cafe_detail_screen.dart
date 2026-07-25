@@ -334,25 +334,82 @@ double? get longitudeCafe {
   }
 
   Widget etiquetaEstadoActual() {
-    if (estaEnQuieroIr) {
-      return const Chip(
-        label: Text('☕ En tu mapa: Quiero ir'),
-      );
+    if (estadoActual == null) {
+      return const SizedBox.shrink();
     }
 
-    if (estaEnQuieroVolver) {
-      return const Chip(
-        label: Text('❤️ En tu mapa: Quiero volver'),
-      );
+    IconData icono;
+    String titulo;
+    Color color;
+
+    switch (estadoActual) {
+      case 'want_to_go':
+        icono = Icons.bookmark_add_rounded;
+        titulo = 'Quiero ir';
+        color = const Color(0xFFE0F2FE);
+        break;
+
+      case 'want_to_return':
+        icono = Icons.favorite;
+        titulo = 'Quiero volver';
+        color = const Color(0xFFFCE7F3);
+        break;
+
+      case 'visited':
+        icono = Icons.check_circle;
+        titulo = 'Ya fui';
+        color = const Color(0xFFDCFCE7);
+        break;
+
+      default:
+        return const SizedBox.shrink();
     }
 
-    if (estaEnYaFui) {
-      return const Chip(
-        label: Text('✔️ En tu mapa: Ya fui'),
-      );
-    }
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 14,
+      ),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icono,
+            size: 28,
+          ),
 
-    return const SizedBox.shrink();
+          const SizedBox(width: 14),
+
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'EN TU MAPA',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
+                  color: Colors.black54,
+                ),
+              ),
+
+              const SizedBox(height: 2),
+
+              Text(
+                titulo,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Widget botonMapa({
@@ -360,19 +417,129 @@ double? get longitudeCafe {
     required String estado,
     required bool activo,
   }) {
-    return SizedBox(
-      width: double.infinity,
-      child: activo
-          ? OutlinedButton(
-              onPressed: () {},
-              child: Text('$texto · seleccionado'),
-            )
-          : ElevatedButton(
-              onPressed: () {
+    late final IconData icono;
+    late final String titulo;
+    late final String descripcion;
+
+    switch (estado) {
+      case 'quiero_ir':
+        icono = Icons.bookmark_add_rounded;
+        titulo = 'Quiero ir';
+        descripcion = 'Guardalo para visitarlo más adelante.';
+        break;
+
+      case 'quiero_volver':
+        icono = Icons.favorite_rounded;
+        titulo = 'Quiero volver';
+        descripcion = 'Ya fuiste y querés regresar.';
+        break;
+
+      case 'ya_fui':
+        icono = Icons.check_circle_rounded;
+        titulo = 'Ya fui';
+        descripcion = 'Marcá este café como visitado.';
+        break;
+
+      default:
+        icono = Icons.bookmark_outline_rounded;
+        titulo = texto;
+        descripcion = '';
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: activo
+            ? null
+            : () {
                 guardarEnMapa(estado);
               },
-              child: Text(texto),
+        borderRadius: BorderRadius.circular(18),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: activo
+                ? const Color(0xFFEFF6FF)
+                : Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: activo
+                  ? const Color(0xFF1E3A8A)
+                  : const Color(0xFFE5E7EB),
+              width: activo ? 1.5 : 1,
             ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: activo
+                      ? const Color(0xFF1E3A8A)
+                      : const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  icono,
+                  color: activo
+                      ? Colors.white
+                      : const Color(0xFF1E3A8A),
+                  size: 26,
+                ),
+              ),
+
+              const SizedBox(width: 14),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      titulo,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: activo
+                            ? const Color(0xFF172C6D)
+                            : const Color(0xFF111827),
+                      ),
+                    ),
+
+                    const SizedBox(height: 3),
+
+                    Text(
+                      descripcion,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        height: 1.3,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(width: 10),
+
+              if (activo)
+                const Icon(
+                  Icons.check_circle_rounded,
+                  color: Color(0xFF1E3A8A),
+                  size: 24,
+                )
+              else
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: Colors.black38,
+                  size: 26,
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -410,63 +577,95 @@ double? get longitudeCafe {
           children: [
             if (fotosDisponibles.isNotEmpty)
               SizedBox(
-                height: 240,
+                height: 260,
                 child: PageView(
+                  padEnds: false,
+                  controller: PageController(
+                    viewportFraction: 0.94,
+                  ),
                   children: fotosDisponibles.map((foto) {
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Image.network(
-                        foto,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        loadingBuilder: (
-                          context,
-                          child,
-                          loadingProgress,
-                        ) {
-                          if (loadingProgress == null) {
-                            return child;
-                          }
+                    return Padding(
+                      padding: const EdgeInsets.only(
+                        right: 10,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(22),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.network(
+                              foto,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (
+                                context,
+                                child,
+                                loadingProgress,
+                              ) {
+                                if (loadingProgress == null) {
+                                  return child;
+                                }
 
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        },
-                        errorBuilder: (
-                          context,
-                          error,
-                          stackTrace,
-                        ) {
-                          return Container(
-                            color: const Color(0xFFF3F4F6),
-                            child: const Center(
-                              child: Icon(
-                                Icons.coffee,
-                                size: 70,
-                                color: Colors.black38,
+                                return Container(
+                                  color: const Color(0xFFF3F4F6),
+                                  child: const Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (
+                                context,
+                                error,
+                                stackTrace,
+                              ) {
+                                return Container(
+                                  color: const Color(0xFFF3F4F6),
+                                  child: Center(
+                                    child: Opacity(
+                                      opacity: 0.38,
+                                      child: SvgPicture.asset(
+                                        'assets/icons/rating_cup.svg',
+                                        width: 70,
+                                        height: 70,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+
+                            Positioned(
+                              top: 14,
+                              right: 14,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(
+                                    alpha: 0.55,
+                                  ),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  '${fotosDisponibles.length} fotos',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
                             ),
-                          );
-                        },
+                          ],
+                        ),
                       ),
                     );
                   }).toList(),
                 ),
               ),
 
-            const SizedBox(height: 10),
-
-            Center(
-              child: Text(
-                '📸 ${fotosDisponibles.length} fotos',
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 24),
+            const SizedBox(height: 18),
 
             Text(
               nombreCafe,
@@ -478,18 +677,88 @@ double? get longitudeCafe {
 
             const SizedBox(height: 8),
 
-            Text(
-              ratingCafe == '0.0' ||
-                      ratingCafe == 'Sin calificación'
-                  ? '📍 $zonaCafe · Aún sin reseñas'
-                  : '📍 $zonaCafe · ⭐ $ratingCafe',
-              style: const TextStyle(
-                fontSize: 17,
-                color: Colors.black87,
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.location_on_outlined,
+                      size: 19,
+                      color: Colors.black54,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        zonaCafe,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                if (ratingCafe == '0.0' ||
+                    ratingCafe == 'Sin calificación')
+                  const Text(
+                    'Aún sin reseñas',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black54,
+                    ),
+                  )
+                else
+                  Row(
+                    children: [
+                      SvgPicture.asset(
+                        'assets/icons/rating_cup.svg',
+                        width: 24,
+                        height: 24,
+                      ),
+
+                      const SizedBox(width: 8),
+
+                      Text(
+                        ratingCafe.replaceAll('.', ','),
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF172C6D),
+                        ),
+                      ),
+
+                      const SizedBox(width: 10),
+
+                      Container(
+                        width: 4,
+                        height: 4,
+                        decoration: const BoxDecoration(
+                          color: Colors.black38,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+
+                      const SizedBox(width: 10),
+
+                      Text(
+                        reviewsCount == 1
+                            ? '1 reseña'
+                            : '$reviewsCount reseñas',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 18),
 
             etiquetaEstadoActual(),
 
@@ -534,17 +803,45 @@ double? get longitudeCafe {
                       children: [
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Text(
-                            '✨ ${tagsCafe.first}',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                            color: const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: const Color(0xFFBFDBFE),
                             ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1E3A8A),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.format_quote_rounded,
+                                  color: Colors.white,
+                                  size: 22,
+                                ),
+                              ),
+
+                              const SizedBox(width: 14),
+
+                              Expanded(
+                                child: Text(
+                                  tagsCafe.first,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    height: 1.35,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF172C6D),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
 
@@ -622,6 +919,8 @@ double? get longitudeCafe {
               activo: estaEnYaFui,
             ),
 
+            const SizedBox(height: 28),
+
             const Text(
               'Colección',
               style: TextStyle(
@@ -642,23 +941,66 @@ double? get longitudeCafe {
 
             const SizedBox(height: 12),
 
-            DropdownButtonFormField<String>(
-              value: selectedCollection,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-              ),
-              hint: const Text('Elegir colección'),
-              items: collections.map((collection) {
-                return DropdownMenuItem(
-                  value: collection,
-                  child: Text(collection),
+            Column(
+              children: collections.map((collection) {
+                final bool activo =
+                    selectedCollection == collection;
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(18),
+                      onTap: () {
+                        guardarColeccion(collection);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: activo
+                              ? const Color(0xFFEFF6FF)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: activo
+                                ? const Color(0xFF1E3A8A)
+                                : const Color(0xFFE5E7EB),
+                            width: activo ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                collection,
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                  color: activo
+                                      ? const Color(0xFF172C6D)
+                                      : const Color(0xFF111827),
+                                ),
+                              ),
+                            ),
+                            if (activo)
+                              const Icon(
+                                Icons.check_circle_rounded,
+                                color: Color(0xFF1E3A8A),
+                              )
+                            else
+                              const Icon(
+                                Icons.chevron_right_rounded,
+                                color: Colors.black38,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 );
               }).toList(),
-              onChanged: (value) {
-                if (value == null) return;
-
-                guardarColeccion(value);
-              },
             ),
 
             const SizedBox(height: 28),
@@ -815,6 +1157,14 @@ double? get longitudeCafe {
                 final String usuario =
                     reviewMap['user']?.toString() ??
                     'Usuario de Gota';
+                
+                final String? avatarUrl =
+                  reviewMap['avatar']?.toString().trim();
+
+              final bool tieneAvatar =
+                  avatarUrl != null &&
+                  avatarUrl.isNotEmpty &&
+                  avatarUrl != 'null';
 
                 final int rating =
                     reviewMap['rating'] is num
@@ -849,10 +1199,46 @@ double? get longitudeCafe {
                     children: [
                       Row(
                         children: [
-                          const CircleAvatar(
-                            child: Icon(
-                              Icons.person,
-                            ),
+                          CircleAvatar(
+                            radius: 24,
+                            backgroundColor: const Color(0xFF1E3A8A),
+                            child: tieneAvatar
+                                ? ClipOval(
+                                    child: Image.network(
+                                      avatarUrl!,
+                                      width: 48,
+                                      height: 48,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (
+                                        context,
+                                        error,
+                                        stackTrace,
+                                      ) {
+                                        return Center(
+                                          child: Text(
+                                            usuario.isNotEmpty
+                                                ? usuario[0].toUpperCase()
+                                                : '?',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  )
+                                : Text(
+                                    usuario.isNotEmpty
+                                        ? usuario[0].toUpperCase()
+                                        : '?',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
                           ),
 
                           const SizedBox(width: 12),
@@ -885,36 +1271,31 @@ double? get longitudeCafe {
                         ],
                       ),
 
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
 
                       Row(
                         children: [
-                          ...List.generate(5, (index) {
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 3),
-                              child: Opacity(
-                                opacity: index < rating ? 1 : 0.25,
-                                child: SvgPicture.asset(
-                                  'assets/icons/rating_cup.svg',
-                                  width: 20,
-                                  height: 20,
-                                ),
-                              ),
-                            );
-                          }),
-                          const SizedBox(width: 8),
+                          SvgPicture.asset(
+                            'assets/icons/rating_cup.svg',
+                            width: 22,
+                            height: 22,
+                          ),
+
+                          const SizedBox(width: 7),
+
                           Text(
                             '$rating,0',
                             style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF172C6D),
                             ),
                           ),
                         ],
                       ),
 
                       if (comentario.isNotEmpty) ...[
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 16),
 
                         Text(
                           comentario,
@@ -930,28 +1311,55 @@ double? get longitudeCafe {
 
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.all(14),
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius:
-                                BorderRadius.circular(14),
+                            color: const Color(0xFFFFFBEB),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFFFDE68A),
+                            ),
                           ),
                           child: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Respuesta del café',
-                                style: TextStyle(
-                                  fontWeight:
-                                      FontWeight.bold,
-                                ),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 34,
+                                    height: 34,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFD97706),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                      Icons.storefront,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                  ),
+
+                                  const SizedBox(width: 10),
+
+                                  Expanded(
+                                    child: Text(
+                                      'Respuesta de $nombreCafe',
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
 
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 12),
 
                               Text(
                                 respuestaDueno,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  height: 1.45,
+                                ),
                               ),
                             ],
                           ),
@@ -1021,7 +1429,11 @@ double? get longitudeCafe {
                           '/cafes',
                         );
                       },
-                      icon: const Icon(Icons.coffee),
+                      icon: SvgPicture.asset(
+                        'assets/icons/rating_cup.svg',
+                        width: 20,
+                        height: 20,
+                      ),
                       label: const Text(
                         'Seguir explorando',
                       ),
