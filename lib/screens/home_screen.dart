@@ -4,6 +4,9 @@ import '../models/cafe.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import '../models/cafe_relationship.dart';
+import '../widgets/network_image_card.dart';
+import '../widgets/section_title.dart';
+import '../widgets/loading_skeleton.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -198,11 +201,10 @@ class HomeScreen extends StatefulWidget {
                       future: cafesFuture,
                       builder: (context, snapshot) {
                         if (!snapshot.hasData) {
-                          return const Text(
-                            'Cargando cafeterías...',
-                            style: TextStyle(
-                              color: Colors.black54,
-                            ),
+                          return LoadingSkeleton(
+                            width: 190,
+                            height: 38,
+                            borderRadius: BorderRadius.circular(14),
                           );
                         }
 
@@ -257,11 +259,21 @@ class HomeScreen extends StatefulWidget {
                   color: const Color(0xFFF9FAFB),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Text(
-                  'Cargando tu recorrido...',
-                  style: TextStyle(
-                    color: Colors.black54,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LoadingSkeleton(
+                      width: 180,
+                      height: 22,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    const SizedBox(height: 18),
+                    LoadingSkeleton(
+                      width: double.infinity,
+                      height: 70,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ],
                 ),
               );
             }
@@ -513,35 +525,12 @@ class HomeScreen extends StatefulWidget {
                           crossAxisAlignment:
                               CrossAxisAlignment.start,
                           children: [
-                            ClipRRect(
-                              borderRadius:
-                                  BorderRadius.circular(12),
-                              child: Image.network(
-                                cafeEnRadar.cafePhoto,
-                                width: double.infinity,
-                                height: 160,
-                                fit: BoxFit.cover,
-                                errorBuilder: (
-                                  context,
-                                  error,
-                                  stackTrace,
-                                ) {
-                                  return Container(
-                                    width: double.infinity,
-                                    height: 160,
-                                    color: const Color(0xFFF3F4F6),
-                                    alignment: Alignment.center,
-                                    child: Opacity(
-                                      opacity: 0.38,
-                                      child: SvgPicture.asset(
-                                        'assets/icons/rating_cup.svg',
-                                        width: 52,
-                                        height: 52,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
+                            NetworkImageCard(
+                              imageUrl: cafeEnRadar.cafePhoto,
+                              width: double.infinity,
+                              height: 160,
+                              borderRadius: 12,
+                              heroTag: 'radar-${cafeEnRadar.cafeId}',
                             ),
 
                             const SizedBox(height: 12),
@@ -643,13 +632,8 @@ class HomeScreen extends StatefulWidget {
 
             const SizedBox(height: 20),
 
-            const Text(
-              '¿Qué querés hacer?',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF172C6D),
-              ),
+            const SectionTitle(
+              title: '¿Qué querés hacer?',
             ),
 
             const SizedBox(height: 14),

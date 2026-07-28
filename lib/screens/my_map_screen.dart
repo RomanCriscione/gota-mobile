@@ -41,6 +41,7 @@ class _MyMapScreenState extends State<MyMapScreen> {
       MaterialPageRoute(
         builder: (context) => CafeDetailScreen(
           cafeId: relacion.cafeId,
+          heroImageUrl: relacion.cafePhoto,
         ),
       ),
     );
@@ -207,7 +208,7 @@ class _MyMapScreenState extends State<MyMapScreen> {
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 44),
 
             _FiltrosMapa(
               colecciones: colecciones,
@@ -223,7 +224,9 @@ class _MyMapScreenState extends State<MyMapScreen> {
         ),
 
                 _SeccionMapa(
-                  titulo: '☕ Quiero ir',
+                  titulo: 'Quiero ir',
+                  icono: Icons.bookmark_add_rounded,
+                  colorIcono: const Color(0xFFEA580C),
                   estado: '☕ Quiero ir',
                   relaciones: filtrar(quieroIr),
                   colorFondo:
@@ -232,10 +235,12 @@ class _MyMapScreenState extends State<MyMapScreen> {
                   onTap: abrirCafe,
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 44),
 
                 _SeccionMapa(
-                  titulo: '❤️ Quiero volver',
+                  titulo: 'Quiero volver',
+                  icono: Icons.favorite,
+                  colorIcono: const Color(0xFFE11D48),
                   estado: '❤️ Quiero volver',
                   relaciones: filtrar(quieroVolver),
                   colorFondo:
@@ -244,10 +249,12 @@ class _MyMapScreenState extends State<MyMapScreen> {
                   onTap: abrirCafe,
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 44),
 
                 _SeccionMapa(
-                  titulo: '✔️ Ya fui',
+                  titulo: 'Ya fui',
+                  icono: Icons.check_circle,
+                  colorIcono: const Color(0xFF16A34A),
                   estado: '✔️ Ya fui',
                   relaciones: filtrar(yaFui),
                   colorFondo:
@@ -256,7 +263,7 @@ class _MyMapScreenState extends State<MyMapScreen> {
                   onTap: abrirCafe,
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 44),
               ],
             ),
           );
@@ -351,6 +358,8 @@ class _FiltrosMapa extends StatelessWidget {
 
 class _SeccionMapa extends StatelessWidget {
   final String titulo;
+  final IconData icono;
+  final Color colorIcono;
   final String estado;
   final List<CafeRelationship> relaciones;
   final Color colorFondo;
@@ -359,6 +368,8 @@ class _SeccionMapa extends StatelessWidget {
 
   const _SeccionMapa({
     required this.titulo,
+    required this.icono,
+    required this.colorIcono,
     required this.estado,
     required this.relaciones,
     required this.colorFondo,
@@ -372,12 +383,11 @@ class _SeccionMapa extends StatelessWidget {
       crossAxisAlignment:
           CrossAxisAlignment.start,
       children: [
-        Text(
-          '$titulo (${relaciones.length})',
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
+        _TituloSeccion(
+          titulo: titulo,
+          cantidad: relaciones.length,
+          icono: icono,
+          color: colorIcono,
         ),
 
         if (relaciones.isEmpty)
@@ -393,16 +403,25 @@ class _SeccionMapa extends StatelessWidget {
             ),
           ),
 
-        ...relaciones.map(
-          (relacion) => _CafeMapaCard(
-            relacion: relacion,
-            estado: estado,
-            colorFondo: colorFondo,
-            colorTexto: colorTexto,
-            onTap: () {
-              onTap(relacion);
-            },
-          ),
+        ...relaciones.asMap().entries.map(
+          (entry) {
+            final relacion = entry.value;
+
+            return Padding(
+              padding: EdgeInsets.only(
+                top: entry.key == 0 ? 18 : 0,
+              ),
+              child: _CafeMapaCard(
+                relacion: relacion,
+                estado: estado,
+                colorFondo: colorFondo,
+                colorTexto: colorTexto,
+                onTap: () {
+                  onTap(relacion);
+                },
+              ),
+            );
+          },
         ),
       ],
     );
@@ -432,105 +451,246 @@ class _CafeMapaCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(
-        bottom: 12,
+        bottom: 16,
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(12),
-        minVerticalPadding: 12,
+      elevation: 2,
+      shadowColor: Colors.black.withOpacity(.05),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(
+          color: Color(0xFFF1F5F9),
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
         onTap: onTap,
-        leading: ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: Image.network(
-            relacion.cafePhoto,
-            width: 100,
-            height: 100,
-            fit: BoxFit.cover,
-            errorBuilder: (
-              context,
-              error,
-              stackTrace,
-            ) {
-              return Container(
-                width: 100,
-                height: 100,
-                color: const Color(0xFFF3F4F6),
-                child: Center(
-                  child: Opacity(
-                    opacity: 0.35,
-                    child: SvgPicture.asset(
-                      'assets/icons/rating_cup.svg',
-                      width: 42,
-                      height: 42,
+        borderRadius: BorderRadius.circular(20),
+        splashColor: const Color(0xFF1E3A8A).withOpacity(.08),
+        highlightColor: const Color(0xFF1E3A8A).withOpacity(.03),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                height: 185,
+                child: Hero(
+                  tag: 'cafe-${relacion.cafeId}',
+                  child: Image.network(
+                    relacion.cafePhoto,
+                fit: BoxFit.cover,
+                errorBuilder: (
+                  context,
+                  error,
+                  stackTrace,
+                ) {
+                  return Container(
+                    color: const Color(0xFFF3F4F6),
+                    child: Center(
+                      child: Opacity(
+                        opacity: 0.35,
+                        child: SvgPicture.asset(
+                          'assets/icons/rating_cup.svg',
+                          width: 56,
+                          height: 56,
+                        ),
+                      ),
+                      
                     ),
+                  );
+                },
+              ),
+            ),
+            ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                16,
+                15,
+                12,
+                16,
+              ),
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          relacion.cafeName,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 19,
+                            height: 1.15,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF111827),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 8),
+
+                      const Padding(
+                        padding: EdgeInsets.only(
+                          top: 1,
+                        ),
+                        child: Icon(
+                          Icons.chevron_right_rounded,
+                          size: 24,
+                          color: Colors.black38,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 9),
+
+                  Row(
+                    children: [
+                      if (tieneRating) ...[
+                        SvgPicture.asset(
+                          'assets/icons/rating_cup.svg',
+                          width: 17,
+                          height: 17,
+                        ),
+
+                        const SizedBox(width: 5),
+
+                        Text(
+                          relacion.averageRating,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF172C6D),
+                          ),
+                        ),
+
+                        const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                          ),
+                          child: Text(
+                            '•',
+                            style: TextStyle(
+                              color: Colors.black38,
+                            ),
+                          ),
+                        ),
+                      ],
+
+                      Expanded(
+          child: Row(
+            children: [
+              const Icon(
+                Icons.location_on_outlined,
+                size: 16,
+                color: Colors.black45,
+              ),
+
+              const SizedBox(width: 4),
+
+              Expanded(
+                child: Text(
+                  relacion.cafeLocation,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
                   ),
                 ),
-              );
-            },
+              ),
+            ],
           ),
         ),
-        title: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-            Text(
-              relacion.cafeName,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
+                    ],
+                  ),
+
+                  const SizedBox(height: 13),
+
+                  Wrap(
+                    spacing: 7,
+                    runSpacing: 7,
+                    children: [
+                      _Etiqueta(
+                        texto: estado,
+                        colorFondo: colorFondo,
+                        colorTexto: colorTexto,
+                      ),
+
+                      if (relacion.collection != null &&
+                          relacion.collection!
+                              .trim()
+                              .isNotEmpty)
+                        _Etiqueta(
+                          texto: relacion.collection!,
+                          colorFondo:
+                              const Color(0xFFEFF6FF),
+                          colorTexto:
+                              const Color(0xFF1E3A8A),
+                        ),
+                    ],
+                  ),
+
+                  if (relacion.privateNote != null &&
+                      relacion.privateNote!
+                          .trim()
+                          .isNotEmpty) ...[
+                    const SizedBox(height: 13),
+
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9FAFB),
+                        borderRadius:
+                            BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.edit_note_rounded,
+                            size: 18,
+                            color: Colors.black45,
+                          ),
+
+                          const SizedBox(width: 7),
+
+                          Expanded(
+                            child: Text(
+                              relacion.privateNote!,
+                              maxLines: 2,
+                              overflow:
+                                  TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                height: 1.35,
+                                fontStyle:
+                                    FontStyle.italic,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
-
-            const SizedBox(height: 4),
-
-            _Etiqueta(
-              texto: estado,
-              colorFondo: colorFondo,
-              colorTexto: colorTexto,
-            ),
-
-            if (relacion.collection != null &&
-                relacion.collection!
-                    .trim()
-                    .isNotEmpty) ...[
-              const SizedBox(height: 3),
-              _Etiqueta(
-                texto: relacion.collection!,
-                colorFondo:
-                    const Color(0xFFEFF6FF),
-                colorTexto: Colors.blue,
-              ),
-            ],
-
-            if (relacion.privateNote != null &&
-                relacion.privateNote!
-                    .trim()
-                    .isNotEmpty) ...[
-              const SizedBox(height: 5),
-              Text(
-                '📝 ${relacion.privateNote}',
-                maxLines: 2,
-                overflow:
-                    TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontStyle: FontStyle.italic,
-                  color: Colors.black54,
-                ),
-              ),
-            ],
           ],
-        ),
-        subtitle: Padding(
-          padding:
-              const EdgeInsets.only(top: 6),
-          child: Text(
-            tieneRating
-                ? '⭐ ${relacion.averageRating} · '
-                    '${relacion.cafeLocation}'
-                : relacion.cafeLocation,
-          ),
-        ),
-        trailing: const Icon(
-          Icons.chevron_right,
         ),
       ),
     );
@@ -552,8 +712,8 @@ class _Etiqueta extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: 6,
-        vertical: 2,
+        horizontal: 9,
+        vertical: 5,
       ),
       decoration: BoxDecoration(
         color: colorFondo,
@@ -563,7 +723,7 @@ class _Etiqueta extends StatelessWidget {
       child: Text(
         texto,
         style: TextStyle(
-          fontSize: 10,
+          fontSize: 12,
           color: colorTexto,
           fontWeight: FontWeight.w600,
         ),
@@ -620,6 +780,59 @@ class _ResumenCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 12,
               color: Colors.black54,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TituloSeccion extends StatelessWidget {
+  final IconData icono;
+  final Color color;
+  final String titulo;
+  final int cantidad;
+
+  const _TituloSeccion({
+    required this.icono,
+    required this.color,
+    required this.titulo,
+    required this.cantidad,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        bottom: 20,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: color.withOpacity(.10),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icono,
+              color: color,
+              size: 20,
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          Expanded(
+            child: Text(
+              '$titulo ($cantidad)',
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF111827),
+              ),
             ),
           ),
         ],

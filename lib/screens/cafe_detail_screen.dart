@@ -4,14 +4,17 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../services/api_service.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../widgets/network_image_card.dart';
 
 
 class CafeDetailScreen extends StatefulWidget {
   final int cafeId;
+  final String? heroImageUrl;
 
   const CafeDetailScreen({
     super.key,
     required this.cafeId,
+    this.heroImageUrl,
   });
 
   @override
@@ -550,8 +553,51 @@ double? get longitudeCafe {
         appBar: AppBar(
           title: const Text('Cargando café...'),
         ),
-        body: const Center(
-          child: CircularProgressIndicator(),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              if (widget.heroImageUrl != null &&
+                  widget.heroImageUrl!.isNotEmpty)
+                SizedBox(
+                  width: double.infinity,
+                  height: 260,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: Hero(
+                      tag: 'cafe-${widget.cafeId}',
+                      child: Image.network(
+                        widget.heroImageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (
+                          context,
+                          error,
+                          stackTrace,
+                        ) {
+                          return Container(
+                            color: const Color(0xFFF3F4F6),
+                            child: Center(
+                              child: Opacity(
+                                opacity: 0.38,
+                                child: SvgPicture.asset(
+                                  'assets/icons/rating_cup.svg',
+                                  width: 70,
+                                  height: 70,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+
+              const SizedBox(height: 28),
+
+              const CircularProgressIndicator(),
+            ],
+          ),
         ),
       );
     }
@@ -583,7 +629,9 @@ double? get longitudeCafe {
                   controller: PageController(
                     viewportFraction: 0.94,
                   ),
-                  children: fotosDisponibles.map((foto) {
+                  children: fotosDisponibles.asMap().entries.map((entry) {
+                    final indice = entry.key;
+                    final foto = entry.value;
                     return Padding(
                       padding: const EdgeInsets.only(
                         right: 10,
@@ -593,45 +641,16 @@ double? get longitudeCafe {
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                            Image.network(
-                              foto,
-                              fit: BoxFit.cover,
-                              loadingBuilder: (
-                                context,
-                                child,
-                                loadingProgress,
-                              ) {
-                                if (loadingProgress == null) {
-                                  return child;
-                                }
-
-                                return Container(
-                                  color: const Color(0xFFF3F4F6),
-                                  child: const Center(
-                                    child: CircularProgressIndicator(),
+                            indice == 0
+                                ? NetworkImageCard(
+                                    imageUrl: foto,
+                                    height: 260,
+                                    heroTag: 'cafe-${widget.cafeId}',
+                                  )
+                                : NetworkImageCard(
+                                    imageUrl: foto,
+                                    height: 260,
                                   ),
-                                );
-                              },
-                              errorBuilder: (
-                                context,
-                                error,
-                                stackTrace,
-                              ) {
-                                return Container(
-                                  color: const Color(0xFFF3F4F6),
-                                  child: Center(
-                                    child: Opacity(
-                                      opacity: 0.38,
-                                      child: SvgPicture.asset(
-                                        'assets/icons/rating_cup.svg',
-                                        width: 70,
-                                        height: 70,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
 
                             Positioned(
                               top: 14,
@@ -1203,42 +1222,24 @@ double? get longitudeCafe {
                             radius: 24,
                             backgroundColor: const Color(0xFF1E3A8A),
                             child: tieneAvatar
-                                ? ClipOval(
-                                    child: Image.network(
-                                      avatarUrl!,
-                                      width: 48,
-                                      height: 48,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (
-                                        context,
-                                        error,
-                                        stackTrace,
-                                      ) {
-                                        return Center(
-                                          child: Text(
-                                            usuario.isNotEmpty
-                                                ? usuario[0].toUpperCase()
-                                                : '?',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 18,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  )
-                                : Text(
-                                    usuario.isNotEmpty
-                                        ? usuario[0].toUpperCase()
-                                        : '?',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18,
-                                    ),
+                              ? ClipOval(
+                                  child: NetworkImageCard(
+                                    imageUrl: avatarUrl!,
+                                    width: 48,
+                                    height: 48,
+                                    borderRadius: 24,
                                   ),
+                                )
+                              : Text(
+                                  usuario.isNotEmpty
+                                      ? usuario[0].toUpperCase()
+                                      : '?',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
                           ),
 
                           const SizedBox(width: 12),
