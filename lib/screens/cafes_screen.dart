@@ -3,8 +3,10 @@
   import '../models/cafe.dart';
   import '../services/api_service.dart';
   import 'cafes_map_screen.dart';
-  import '../services/app_state.dart';
   import '../widgets/cafe_card.dart';
+  import '../widgets/animated_press.dart';
+  import '../widgets/animated_list_item.dart';
+  import '../widgets/cafe_card_skeleton.dart';
 
   class CafesScreen extends StatefulWidget {
     const CafesScreen({super.key});
@@ -72,6 +74,16 @@
 
       return total;
     }
+
+    Future<void> _recargarCafes() async {
+      final nuevoFuture = ApiService.obtenerCafes();
+
+      setState(() {
+        cafesFuture = nuevoFuture;
+      });
+
+      await nuevoFuture;
+    }
     @override
     Widget build(BuildContext context) {
       return Scaffold(
@@ -82,11 +94,15 @@
           future: cafesFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState ==
-                ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            }
+              ConnectionState.waiting) {
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: 4,
+              itemBuilder: (context, index) {
+                return const CafeCardSkeleton();
+              },
+            );
+          }
 
             if (snapshot.hasError) {
               return Center(
@@ -740,18 +756,19 @@
                     )
                   else
                     Expanded(
-                      child: ListView.builder(
+                      child: RefreshIndicator(
+                        onRefresh: _recargarCafes,
+                        child: ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: cafesFiltrados.length,
                     itemBuilder: (context, index) {
                       final cafe = cafesFiltrados[index];
 
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.all(12),
+                      return AnimatedListItem(
+                        index: index,
+                        child: AnimatedPress(
+                          borderRadius: BorderRadius.circular(22),
                           onTap: () {
-                              print(cafe.tags);
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -761,200 +778,14 @@
                               ),
                             );
                           },
-                          leading: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              cafe.foto,
-                              width: 82,
-                              height: 82,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          title: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                cafe.nombre,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-
-                              const SizedBox(height: 4),
-
-                              Wrap(
-                                spacing: 6,
-                                runSpacing: 4,
-                                children: [
-
-                              if (AppState.quieroIr.any(
-                                (c) => c.nombre == cafe.nombre,
-                              ))
-                                Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 5,
-                                      vertical: 1,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFFFF7ED),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: const Text(
-                                      '☕ Quiero ir',
-                                      style: TextStyle(
-                                        fontSize: 9,
-                                        color: Colors.brown,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                ),
-                              if (AppState.quieroVolver.any(
-                                (c) => c.nombre == cafe.nombre,
-                              ))
-                                Container(
-                                    padding: const EdgeInsets.symmetric(
-                                    horizontal: 5,
-                                      vertical: 1,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFFFF1F2),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: const Text(
-                                      '❤️ Quiero volver',
-                                      style: TextStyle(
-                                        fontSize: 9,
-                                        color: Colors.red,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                ),
-
-                              if (AppState.yaFui.any(
-                                (c) => c.nombre == cafe.nombre,
-                              ))
-                                Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 5,
-                                      vertical: 1,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF0FDF4),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: const Text(
-                                      '✔️ Ya fui',
-                                      style: TextStyle(
-                                        fontSize: 9,
-                                        color: Colors.green,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                ),
-
-                                Builder(
-                                  builder: (_) {
-
-                                    Cafe? cafeGuardado;
-
-                                    try {
-                                      cafeGuardado = AppState.quieroIr.firstWhere(
-                                        (c) => c.nombre == cafe.nombre,
-                                      );
-                                    } catch (_) {}
-
-                                    try {
-                                      cafeGuardado ??=
-                                          AppState.quieroVolver.firstWhere(
-                                        (c) => c.nombre == cafe.nombre,
-                                      );
-                                    } catch (_) {}
-
-                                    try {
-                                      cafeGuardado ??=
-                                          AppState.yaFui.firstWhere(
-                                        (c) => c.nombre == cafe.nombre,
-                                      );
-                                    } catch (_) {}
-
-                                    if (cafeGuardado?.collection == null) {
-                                      return const SizedBox.shrink();
-                                    }
-
-                                    return Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 5,
-                                          vertical: 1,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFEFF6FF),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Text(
-                                          cafeGuardado!.collection!,
-                                          style: const TextStyle(
-                                            fontSize: 9,
-                                            color: Colors.blue,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                    );
-                                  },
-                                ),
-                              ],
-                              ),
-                            ],
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (cafe.tags.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 4),
-                                  child: Text(
-                                    '🏷️ ${cafe.tags.first}',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.black54,
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  ),
-                                ),
-
-                              Text(
-                                cafe.zona,
-                                style: const TextStyle(
-                                  color: Colors.black54,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                          trailing: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFF7ED),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              '⭐ ${cafe.rating}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.brown,
-                                fontSize: 12,
-                              ),
-                            ),
+                          child: CafeCard(
+                            cafe: cafe,
                           ),
                         ),
                       );
                     },
                   ),
+                ),
                 ),
               ],
             );

@@ -73,6 +73,8 @@ class CafeCard extends StatelessWidget {
                 borderRadius: 0,
                 heroTag: 'cafe-${cafe.id}',
               ),
+              if (double.tryParse(cafe.rating) != null &&
+                double.parse(cafe.rating) > 0)
               Positioned(
                 top: 14,
                 right: 14,

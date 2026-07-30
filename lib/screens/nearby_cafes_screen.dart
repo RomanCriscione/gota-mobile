@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../models/cafe.dart';
 import '../services/api_service.dart';
-import '../services/app_state.dart';
 import 'cafe_detail_screen.dart';
+import '../widgets/cafe_card.dart';
+import '../widgets/animated_press.dart';
+import '../widgets/animated_list_item.dart';
+import '../widgets/cafe_card_skeleton.dart';
 
 class NearbyCafesScreen extends StatefulWidget {
     const NearbyCafesScreen({super.key});
@@ -14,6 +17,7 @@ class NearbyCafesScreen extends StatefulWidget {
 
 class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
     String estado = 'Obteniendo ubicación...';
+    bool cargando = true;
 
     List<Cafe> cafesCercanos = [];
     List<Cafe> todosLosCafes = [];
@@ -29,13 +33,18 @@ class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
     }
 
     Future<void> obtenerUbicacion() async {
+        setState(() {
+            cargando = true;
+            estado = 'Obteniendo ubicación...';
+        });
         bool servicioHabilitado =
             await Geolocator.isLocationServiceEnabled();
 
         if (!servicioHabilitado) {
         setState(() {
+            cargando = false;
             estado = 'Activá la ubicación del teléfono';
-        });
+            });
         return;
         }
 
@@ -48,8 +57,9 @@ class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
 
         if (permiso == LocationPermission.deniedForever) {
             setState(() {
+                cargando = false;
                 estado = 'Permiso denegado';
-            });
+                });
             return;
         }
 
@@ -58,19 +68,27 @@ class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
 
         final cafes = await ApiService.obtenerCafes();
 
-        cafes.sort((a, b) {
+        final cafesConUbicacion = cafes
+            .where(
+            (cafe) =>
+                cafe.latitude != null &&
+                cafe.longitude != null,
+            )
+            .toList();
+
+        cafesConUbicacion.sort((a, b) {
             final distanciaA = Geolocator.distanceBetween(
                 posicion.latitude,
                 posicion.longitude,
-                a.latitude ?? posicion.latitude,
-                a.longitude ?? posicion.longitude,
+                a.latitude!,
+                a.longitude!,
             );
 
             final distanciaB = Geolocator.distanceBetween(
                 posicion.latitude,
                 posicion.longitude,
-                b.latitude ?? posicion.latitude,
-                b.longitude ?? posicion.longitude,
+                b.latitude!,
+                b.longitude!,
             );
 
             return distanciaA.compareTo(distanciaB);
@@ -78,10 +96,11 @@ class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
 
         setState(() {
             posicionActual = posicion;
-            todosLosCafes = cafes;
+            todosLosCafes = cafesConUbicacion;
             filtrarPorRadio();
+            cargando = false;
             estado = '';
-        });
+            });
     }
 
     void filtrarPorRadio() {
@@ -105,121 +124,309 @@ class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
         appBar: AppBar(
             title: const Text('📍 Cerca mío'),
         ),
-            body: estado.isNotEmpty
-                ? Center(
-                    child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Text(
-                            estado,
-                            textAlign: TextAlign.center,
-                        ),
-                    ),
+            body: cargando
+                ? ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: 4,
+                    itemBuilder: (context, index) {
+                    return const CafeCardSkeleton();
+                    },
                 )
+                : estado.isNotEmpty
+                    ? Center(
+                        child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                            const Icon(
+                                Icons.location_off_outlined,
+                                size: 56,
+                                color: Colors.black45,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                                estado,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w600,
+                                ),
+                            ),
+                            const SizedBox(height: 20),
+                            OutlinedButton.icon(
+                                onPressed: obtenerUbicacion,
+                                icon: const Icon(
+                                Icons.refresh_rounded,
+                                ),
+                                label: const Text(
+                                'Reintentar',
+                                ),
+                            ),
+                            ],
+                        ),
+                        ),
+                    )
                     : Column(
                         children: [
-                            Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Wrap(
-                                    spacing: 8,
-                                    children: [3, 5, 10, 20].map((km) {
-                                        return ChoiceChip(
-                                    label: Text('$km km'),
-                                        selected:
-                                            radioSeleccionado == km.toDouble(),
-                                    onSelected: (_) {
-                                        setState(() {
-                                            radioSeleccionado =
-                                                km.toDouble();
-                                            filtrarPorRadio();
-                                        });
-                                    },
-                                );
-                            }).toList(),
-                        ),
-                    ),
+                            Container(
+                                width: double.infinity,
+                                margin: const EdgeInsets.fromLTRB(
+                                    16,
+                                    16,
+                                    16,
+                                    10,
+                                ),
+                                padding: const EdgeInsets.all(18),
+                                decoration: BoxDecoration(
+                                    color: const Color(0xFF172C6D),
+                                    borderRadius: BorderRadius.circular(22),
+                                ),
+                                child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                    const Text(
+                                        'Cafeterías cerca tuyo',
+                                        style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w800,
+                                        ),
+                                    ),
 
-                        Text(
-                            '${cafesCercanos.length} cafeterías encontradas',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                            ),
-                        ),
+                                    const SizedBox(height: 6),
 
-                        const SizedBox(height: 8),
+                                    Text(
+                                        cafesCercanos.length == 1
+                                            ? 'Encontramos 1 cafetería a menos de '
+                                                '${radioSeleccionado.toInt()} km.'
+                                            : 'Encontramos ${cafesCercanos.length} cafeterías '
+                                                'a menos de ${radioSeleccionado.toInt()} km.',
+                                        style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 14,
+                                        height: 1.35,
+                                        ),
+                                    ),
+
+                                    const SizedBox(height: 16),
+
+                                    Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: [3, 5, 10, 20].map((km) {
+                                            final seleccionado =
+                                                radioSeleccionado == km.toDouble();
+
+                                            return GestureDetector(
+                                            onTap: () {
+                                                setState(() {
+                                                radioSeleccionado = km.toDouble();
+                                                filtrarPorRadio();
+                                                });
+                                            },
+                                            child: AnimatedContainer(
+                                                duration: const Duration(milliseconds: 180),
+                                                padding: const EdgeInsets.symmetric(
+                                                horizontal: 16,
+                                                vertical: 10,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                color: seleccionado
+                                                    ? Colors.white
+                                                    : Colors.white.withValues(alpha: .14),
+                                                borderRadius: BorderRadius.circular(20),
+                                                border: Border.all(
+                                                    color: seleccionado
+                                                        ? Colors.white
+                                                        : Colors.white.withValues(alpha: .55),
+                                                    width: 1.2,
+                                                ),
+                                                ),
+                                                child: Text(
+                                                '$km km',
+                                                style: TextStyle(
+                                                    color: seleccionado
+                                                        ? const Color(0xFF172C6D)
+                                                        : Colors.white,
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w700,
+                                                ),
+                                                ),
+                                            ),
+                                            );
+                                        }).toList(),
+                                        ),
+
+                                        const SizedBox(height: 14),
+
+                                        GestureDetector(
+                                        onTap: obtenerUbicacion,
+                                        child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                            horizontal: 14,
+                                            vertical: 10,
+                                            ),
+                                            decoration: BoxDecoration(
+                                            color: Colors.white.withValues(alpha: .12),
+                                            borderRadius: BorderRadius.circular(14),
+                                            border: Border.all(
+                                                color: Colors.white.withValues(alpha: .35),
+                                            ),
+                                            ),
+                                            child: const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                                Icon(
+                                                Icons.my_location_rounded,
+                                                size: 17,
+                                                color: Colors.white,
+                                                ),
+                                                SizedBox(width: 7),
+                                                Text(
+                                                'Actualizar ubicación',
+                                                style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w700,
+                                                ),
+                                                ),
+                                            ],
+                                            ),
+                                        ),
+                                        ),
+                                    ],
+                                ),
+                                ),
+
+                                const SizedBox(height: 2),
 
                             Expanded(
-                                child: ListView.builder(
-                                    itemCount: cafesCercanos.length,
-                                    itemBuilder: (context, index) {
-                                        final cafe = cafesCercanos[index];
+                                child: cafesCercanos.isEmpty
+                                    ? RefreshIndicator(
+                                        onRefresh: obtenerUbicacion,
+                                        child: ListView(
+                                            physics:
+                                                const AlwaysScrollableScrollPhysics(),
+                                            padding: const EdgeInsets.all(24),
+                                            children: [
+                                            const SizedBox(height: 70),
 
-                                        final distanciaKm =
-                                            Geolocator.distanceBetween(
-                                                posicionActual!.latitude,
-                                                posicionActual!.longitude,
-                                                cafe.latitude ??
-                                                    posicionActual!.latitude,
-                                                cafe.longitude ??
-                                                    posicionActual!.longitude,
-                                            ) /
-                                                1000;
-                                        String? estadoCafe;
+                                            const Icon(
+                                                Icons.location_searching_rounded,
+                                                size: 58,
+                                                color: Colors.black38,
+                                            ),
 
-                                if (AppState.quieroIr.any((c) => c.nombre == cafe.nombre)) {
-                                estadoCafe = '☕ Quiero ir';
-                                } else if (AppState.quieroVolver.any((c) => c.nombre == cafe.nombre)) {
-                                estadoCafe = '❤️ Quiero volver';
-                                } else if (AppState.yaFui.any((c) => c.nombre == cafe.nombre)) {
-                                estadoCafe = '✔️ Ya fui';
-                                }        
+                                            const SizedBox(height: 18),
 
-                            return ListTile(
-                                leading: CircleAvatar(
-                                    backgroundImage:
-                                        NetworkImage(cafe.foto),
-                                ),
-                                    title: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                            Text(cafe.nombre),
+                                            const Text(
+                                                'No encontramos cafeterías en este radio',
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                fontSize: 19,
+                                                fontWeight: FontWeight.w700,
+                                                color: Color(0xFF111827),
+                                                ),
+                                            ),
 
-                                            if (estadoCafe != null) ...[
-                                            const SizedBox(height: 4),
+                                            const SizedBox(height: 8),
 
-                                            Chip(
-                                                label: Text(
-                                                estadoCafe,
+                                            Text(
+                                                'Probá ampliando la búsqueda a más de '
+                                                '${radioSeleccionado.toInt()} km.',
+                                                textAlign: TextAlign.center,
                                                 style: const TextStyle(
-                                                    fontSize: 11,
+                                                fontSize: 14,
+                                                height: 1.4,
+                                                color: Colors.black54,
                                                 ),
-                                                ),
-                                                visualDensity: VisualDensity.compact,
                                             ),
                                             ],
-                                        ],
                                         ),
+                                        )
+                                    : RefreshIndicator(
+                                        onRefresh: obtenerUbicacion,
+                                        child: ListView.builder(
+                                            physics:
+                                                const AlwaysScrollableScrollPhysics(),
+                                            padding: const EdgeInsets.fromLTRB(
+                                            16,
+                                            8,
+                                            16,
+                                            24,
+                                            ),
+                                            itemCount: cafesCercanos.length,
+                                            itemBuilder: (context, index) {
+                                            final cafe = cafesCercanos[index];
 
-                                    subtitle: Text(
-                                    cafe.rating == '0.0'
-                                        ? '${cafe.zona} · ${distanciaKm.toStringAsFixed(1)} km'
-                                        : '⭐ ${cafe.rating} · ${cafe.zona} · ${distanciaKm.toStringAsFixed(1)} km',
-                                    ),
-                                onTap: () {
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (_) =>
-                                                CafeDetailScreen(
-                                            cafeId: cafe.id!,
+                                            final distanciaKm =
+                                                Geolocator.distanceBetween(
+                                                    posicionActual!.latitude,
+                                                    posicionActual!.longitude,
+                                                    cafe.latitude!,
+                                                    cafe.longitude!,
+                                                ) /
+                                                1000;
 
+                                            return AnimatedListItem(
+                                                index: index,
+                                                child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                    Padding(
+                                                    padding: const EdgeInsets.only(
+                                                        left: 4,
+                                                        bottom: 7,
+                                                    ),
+                                                    child: Row(
+                                                        children: [
+                                                        const Icon(
+                                                            Icons.near_me_outlined,
+                                                            size: 16,
+                                                            color: Color(0xFF172C6D),
+                                                        ),
+
+                                                        const SizedBox(width: 5),
+
+                                                        Text(
+                                                            '${distanciaKm.toStringAsFixed(1)} km de distancia',
+                                                            style: const TextStyle(
+                                                            fontSize: 13,
+                                                            fontWeight: FontWeight.w600,
+                                                            color: Color(0xFF172C6D),
+                                                            ),
+                                                        ),
+                                                        ],
+                                                    ),
+                                                    ),
+
+                                                    AnimatedPress(
+                                                    borderRadius:
+                                                        BorderRadius.circular(22),
+                                                    onTap: () {
+                                                        Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                            builder: (_) =>
+                                                                CafeDetailScreen(
+                                                            cafeId: cafe.id!,
+                                                            ),
+                                                        ),
+                                                        );
+                                                    },
+                                                    child: CafeCard(
+                                                        cafe: cafe,
+                                                    ),
+                                                    ),
+                                                ],
+                                                ),
+                                            );
+                                            },
                                         ),
-                                    ),
-                                );
-                            },
-                        );
-                    },
-                ),
-            ),
+                                        ),
+                                ),
         ],
     ),
     );
