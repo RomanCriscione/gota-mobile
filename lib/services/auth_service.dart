@@ -31,11 +31,14 @@ class AuthService {
             const Duration(seconds: 15),
           );
 
-      print('Login status: ${response.statusCode}');
-      print('Login body: ${response.body}');
+      if (response.statusCode == 400) {
+        return false;
+      }
 
       if (response.statusCode != 200) {
-        return false;
+        throw Exception(
+          'Error del servidor (${response.statusCode})',
+        );
       }
 
       final dynamic decodedData = jsonDecode(response.body);
@@ -58,8 +61,7 @@ class AuthService {
       );
 
       return true;
-    } catch (e) {
-      print('Error durante el login: $e');
+    } catch (_) {
       rethrow;
     }
   }
@@ -87,16 +89,13 @@ class AuthService {
             const Duration(seconds: 15),
           );
 
-      print('Register status: ${response.statusCode}');
-      print('Register body: ${response.body}');
-
       final dynamic decodedData = jsonDecode(response.body);
 
       if (decodedData is! Map<String, dynamic>) {
         return 'La respuesta del servidor no es válida.';
       }
 
-      if (response.statusCode != 201) {
+      if (response.statusCode == 400) {
         final message = decodedData['message'];
 
         if (message is String && message.isNotEmpty) {
@@ -104,6 +103,12 @@ class AuthService {
         }
 
         return 'No pudimos crear la cuenta.';
+      }
+
+      if (response.statusCode != 201) {
+        throw Exception(
+          'Error del servidor (${response.statusCode})',
+        );
       }
 
       final token = decodedData['token'];
@@ -120,8 +125,7 @@ class AuthService {
       );
 
       return null;
-    } catch (e) {
-      print('Error durante el registro: $e');
+    } catch (_) {
       rethrow;
     }
   }
@@ -154,9 +158,7 @@ class AuthService {
             .timeout(
               const Duration(seconds: 15),
             );
-      } catch (e) {
-        print('Error durante el logout: $e');
-      }
+      } catch (_) {}
     }
 
     final prefs = await SharedPreferences.getInstance();
@@ -165,14 +167,9 @@ class AuthService {
   }
 
   static Future<User?> obtenerUsuarioActual() async {
-    print('=== obtenerUsuarioActual ===');
-
     final token = await obtenerToken();
-
-    print('Token: $token');
-
+    
     if (token == null || token.isEmpty) {
-      print('No hay token');
       return null;
     }
 
@@ -190,9 +187,6 @@ class AuthService {
             const Duration(seconds: 10),
           );
 
-      print('Status: ${response.statusCode}');
-      print('Body: ${response.body}');
-
       if (response.statusCode != 200) {
         return null;
       }
@@ -204,8 +198,7 @@ class AuthService {
       }
 
       return User.fromJson(decodedData);
-    } catch (e) {
-      print('ERROR: $e');
+    } catch (_) {
       return null;
     }
   }

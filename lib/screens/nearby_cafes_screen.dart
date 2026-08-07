@@ -55,52 +55,89 @@ class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
             permiso = await Geolocator.requestPermission();
         }
 
-        if (permiso == LocationPermission.deniedForever) {
+        if (permiso == LocationPermission.denied) {
+        if (!mounted) return;
+
             setState(() {
                 cargando = false;
-                estado = 'Permiso denegado';
-                });
+                estado =
+                    'Necesitamos acceso a tu ubicación para mostrarte cafeterías cercanas.';
+            });
+
             return;
         }
 
-        final posicion =
-            await Geolocator.getCurrentPosition();
+        if (permiso == LocationPermission.deniedForever) {
+            if (!mounted) return;
 
-        final cafes = await ApiService.obtenerCafes();
+            setState(() {
+                cargando = false;
+                estado =
+                    'El permiso de ubicación está desactivado. Activálo desde los ajustes del teléfono.';
+            });
 
-        final cafesConUbicacion = cafes
-            .where(
-            (cafe) =>
-                cafe.latitude != null &&
-                cafe.longitude != null,
-            )
-            .toList();
+            return;
+        }
 
-        cafesConUbicacion.sort((a, b) {
-            final distanciaA = Geolocator.distanceBetween(
+        try {
+            final posicion =
+                await Geolocator.getCurrentPosition();
+
+            final cafes =
+                await ApiService.obtenerCafes();
+
+            final cafesConUbicacion = cafes
+                .where(
+                    (cafe) =>
+                        cafe.latitude != null &&
+                        cafe.longitude != null,
+                )
+                .toList();
+
+            cafesConUbicacion.sort((a, b) {
+                final distanciaA =
+                    Geolocator.distanceBetween(
                 posicion.latitude,
                 posicion.longitude,
                 a.latitude!,
                 a.longitude!,
-            );
+                );
 
-            final distanciaB = Geolocator.distanceBetween(
+                final distanciaB =
+                    Geolocator.distanceBetween(
                 posicion.latitude,
                 posicion.longitude,
                 b.latitude!,
                 b.longitude!,
-            );
+                );
 
-            return distanciaA.compareTo(distanciaB);
-        });
-
-        setState(() {
-            posicionActual = posicion;
-            todosLosCafes = cafesConUbicacion;
-            filtrarPorRadio();
-            cargando = false;
-            estado = '';
+                return distanciaA.compareTo(
+                distanciaB,
+                );
             });
+
+            if (!mounted) return;
+
+            setState(() {
+                posicionActual = posicion;
+                todosLosCafes = cafesConUbicacion;
+                filtrarPorRadio();
+                cargando = false;
+                estado = '';
+            });
+            } catch (e) {
+            if (!mounted) return;
+
+            setState(() {
+                cargando = false;
+                estado =
+                    'No pudimos obtener tu ubicación en este momento.';
+            });
+
+            debugPrint(
+                'Error Nearby: $e',
+            );
+            }
     }
 
     void filtrarPorRadio() {
@@ -122,7 +159,7 @@ class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
     Widget build(BuildContext context) {
         return Scaffold(
         appBar: AppBar(
-            title: const Text('📍 Cerca mío'),
+            title: const Text('Cerca mío'),
         ),
             body: cargando
                 ? ListView.builder(
@@ -173,11 +210,16 @@ class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
                                 width: double.infinity,
                                 margin: const EdgeInsets.fromLTRB(
                                     16,
+                                    12,
                                     16,
-                                    16,
-                                    10,
+                                    8,
                                 ),
-                                padding: const EdgeInsets.all(18),
+                                    padding: const EdgeInsets.fromLTRB(
+                                    16,
+                                    14,
+                                    16,
+                                    14,
+                                ),
                                 decoration: BoxDecoration(
                                     color: const Color(0xFF172C6D),
                                     borderRadius: BorderRadius.circular(22),
@@ -188,13 +230,11 @@ class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
                                     const Text(
                                         'Cafeterías cerca tuyo',
                                         style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w800,
+                                            color: Colors.white,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w800,
                                         ),
-                                    ),
-
-                                    const SizedBox(height: 6),
+                                        ),
 
                                     Text(
                                         cafesCercanos.length == 1
@@ -209,7 +249,7 @@ class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
                                         ),
                                     ),
 
-                                    const SizedBox(height: 16),
+                                    const SizedBox(height: 11),
 
                                     Wrap(
                                         spacing: 8,
@@ -228,9 +268,9 @@ class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
                                             child: AnimatedContainer(
                                                 duration: const Duration(milliseconds: 180),
                                                 padding: const EdgeInsets.symmetric(
-                                                horizontal: 16,
-                                                vertical: 10,
-                                                ),
+                                                    horizontal: 13,
+                                                    vertical: 7,
+                                                    ),
                                                 decoration: BoxDecoration(
                                                 color: seleccionado
                                                     ? Colors.white
@@ -258,7 +298,7 @@ class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
                                         }).toList(),
                                         ),
 
-                                        const SizedBox(height: 14),
+                                        const SizedBox(height: 10),
 
                                         GestureDetector(
                                         onTap: obtenerUbicacion,

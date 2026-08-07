@@ -39,7 +39,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    if (!email.contains('@') || !email.contains('.')) {
+    final emailRegex = RegExp(
+      r'^[^@]+@[^@]+\.[^@]+$',
+    );
+
+    if (!emailRegex.hasMatch(email)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -71,6 +75,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
       return;
     }
+
+    FocusScope.of(context).unfocus();
 
     setState(() {
       cargando = true;
@@ -227,11 +233,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: confirmPasswordController,
                   obscureText: ocultarConfirmacion,
                   textInputAction: TextInputAction.done,
-                  onSubmitted: cargando
-                      ? null
-                      : (_) {
-                          crearCuenta();
-                        },
+                  onSubmitted: (_) {
+                    FocusScope.of(context).unfocus();
+
+                    if (!cargando) {
+                      crearCuenta();
+                    }
+                  },
                   decoration: InputDecoration(
                     labelText: 'Repetir contraseña',
                     border: const OutlineInputBorder(),

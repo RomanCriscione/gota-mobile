@@ -38,6 +38,9 @@
     bool filtroAlcohol = false;
     bool filtroPasteleria = false;
 
+    final TextEditingController _searchController =
+        TextEditingController();
+
     String busqueda = '';
 
     @override
@@ -76,7 +79,9 @@
     }
 
     Future<void> _recargarCafes() async {
-      final nuevoFuture = ApiService.obtenerCafes();
+      final nuevoFuture = ApiService.obtenerCafes(
+        forzarActualizacion: true,
+      );
 
       setState(() {
         cafesFuture = nuevoFuture;
@@ -209,12 +214,60 @@
               return Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(
+                      16,
+                      12,
+                      16,
+                      8,
+                    ),
                     child: TextField(
-                      decoration: const InputDecoration(
+                      controller: _searchController,
+                      decoration: InputDecoration(
                         hintText: 'Buscar cafetería...',
-                        prefixIcon: Icon(Icons.search),
-                        border: OutlineInputBorder(),
+                        hintStyle: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 15,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search_rounded,
+                          color: Colors.grey.shade600,
+                          size: 22,
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade100,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(18),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(18),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(18),
+                          borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.primary,
+                            width: 1.5,
+                          ),
+                        ),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 13,
+                        ),
+                        suffixIcon: busqueda.isEmpty
+                            ? null
+                            : IconButton(
+                                icon: const Icon(Icons.close),
+                                splashRadius: 20,
+                                onPressed: () {
+                                  _searchController.clear();
+
+                                  setState(() {
+                                    busqueda = '';
+                                  });
+                                },
+                              ),
                       ),
                       onChanged: (value) {
                         setState(() {
@@ -229,12 +282,17 @@
                       horizontal: 16,
                     ),
                     child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                      spacing: 6,
+                      runSpacing: 6,
                       children: [
                         FilterChip(
                           label: const Text('☕ Especialidad'),
                           selected: filtroEspecialidad,
+                          visualDensity: const VisualDensity(
+                            horizontal: -2,
+                            vertical: -2,
+                          ),
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           onSelected: (value) {
                             setState(() {
                               filtroEspecialidad = value;
@@ -245,6 +303,11 @@
                         FilterChip(
                           label: const Text('💻 Trabajar'),
                           selected: filtroLaptop,
+                          visualDensity: const VisualDensity(
+                            horizontal: -2,
+                            vertical: -2,
+                          ),
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           onSelected: (value) {
                             setState(() {
                               filtroLaptop = value;
@@ -255,6 +318,11 @@
                         FilterChip(
                           label: const Text('🍳 Brunch'),
                           selected: filtroBrunch,
+                          visualDensity: const VisualDensity(
+                            horizontal: -2,
+                            vertical: -2,
+                          ),
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           onSelected: (value) {
                             setState(() {
                               filtroBrunch = value;
@@ -265,6 +333,11 @@
                         FilterChip(
                           label: const Text('🐶 Pet Friendly'),
                           selected: filtroMascotas,
+                          visualDensity: const VisualDensity(
+                            horizontal: -2,
+                            vertical: -2,
+                          ),
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           onSelected: (value) {
                             setState(() {
                               filtroMascotas = value;
@@ -275,33 +348,52 @@
                         FilterChip(
                           label: const Text('📶 Wifi'),
                           selected: filtroWifi,
+                          visualDensity: const VisualDensity(
+                            horizontal: -2,
+                            vertical: -2,
+                          ),
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           onSelected: (value) {
                             setState(() {
                               filtroWifi = value;
                             });
                           },
                         ),
-                      ],
+                                            ],
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                    ),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.tune),
-                        label: Text(
-                          filtrosActivos == 0
-                              ? 'Más filtros'
-                              : 'Más filtros ($filtrosActivos)',
-                        ),
-                        onPressed: () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            builder: (context) {
+
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: _recargarCafes,
+                      child: CustomScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        slivers: [
+                          SliverToBoxAdapter(
+                            child: Column(
+                              children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                16,
+                                12,
+                                16,
+                                0,
+                              ),
+                              child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.tune),
+                            label: Text(
+                              filtrosActivos == 0
+                                  ? 'Más filtros'
+                                  : 'Más filtros ($filtrosActivos)',
+                            ),
+                            onPressed: () {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                builder: (context) {
                               return StatefulBuilder(
                                 builder: (context, setModalState) {
                                   return SizedBox(
@@ -326,22 +418,70 @@
                                           ),
 
                                           const SizedBox(height: 8),
-                                          const Text(
-                                            'Más filtros',
+                                          Text(
+                                            'Filtros',
                                             style: TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold,
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.w700,
+                                              color: Theme.of(context).colorScheme.primary,
                                             ),
                                           ),
 
                                           const SizedBox(height: 16),
 
-                                          const Text(
-                                            'Principales',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
+                                          if (filtrosActivos > 0)
+                                            Container(
+                                              width: double.infinity,
+                                              margin: const EdgeInsets.only(bottom: 20),
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 14,
+                                                vertical: 12,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .primary
+                                                    .withValues(alpha: 0.08),
+                                                borderRadius: BorderRadius.circular(14),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.tune,
+                                                    size: 20,
+                                                    color: Theme.of(context).colorScheme.primary,
+                                                  ),
+                                                  const SizedBox(width: 10),
+                                                  Expanded(
+                                                    child: Text(
+                                                      '$filtrosActivos filtro${filtrosActivos == 1 ? '' : 's'} aplicado${filtrosActivos == 1 ? '' : 's'}',
+                                                      style: TextStyle(
+                                                        color: Theme.of(context).colorScheme.primary,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
+
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.star_rounded,
+                                                size: 20,
+                                                color: Theme.of(context).colorScheme.primary,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                'Principales',
+                                                style: TextStyle(
+                                                  fontSize: 17,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Theme.of(context).colorScheme.primary,
+                                                ),
+                                              ),
+                                            ],
                                           ),
 
                                           const SizedBox(height: 8),
@@ -403,14 +543,25 @@
                                             ],
                                           ),
 
-                                          const SizedBox(height: 24),
+                                          const SizedBox(height: 28),
 
-                                          const Text(
-                                            'Experiencia',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                            ),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.sentiment_satisfied_alt,
+                                                size: 20,
+                                                color: Theme.of(context).colorScheme.primary,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                'Experiencia',
+                                                style: TextStyle(
+                                                  fontSize: 17,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Theme.of(context).colorScheme.primary,
+                                                ),
+                                              ),
+                                            ],
                                           ),
 
                                           const SizedBox(height: 8),
@@ -456,15 +607,26 @@
                                               ],
                                               ),
 
-                                              const SizedBox(height: 24),
+                                              const SizedBox(height: 28),
 
 
-                                          const Text(
-                                            'Comida y bebida',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                            ),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.restaurant_menu,
+                                                size: 20,
+                                                color: Theme.of(context).colorScheme.primary,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                'Comida y bebida',
+                                                style: TextStyle(
+                                                  fontSize: 17,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Theme.of(context).colorScheme.primary,
+                                                ),
+                                              ),
+                                            ],
                                           ),
 
                                           const SizedBox(height: 8),
@@ -532,14 +694,25 @@
                                             ],
                                           ),
 
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 28),
 
-                          const Text(
-                            'Servicios',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.room_preferences_outlined,
+                                size: 20,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Servicios',
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w700,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                            ],
                           ),
 
                           const SizedBox(height: 8),
@@ -606,14 +779,25 @@
                             ],
                           ),
 
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 28),
 
-                          const Text(
-                            'Cafetería',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.coffee_outlined,
+                                size: 20,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Cafetería',
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w700,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                            ],
                           ),
 
                           const SizedBox(height: 8),
@@ -647,7 +831,7 @@
                             ],
                             ),
 
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 28),
 
                             Center(
                               child: OutlinedButton.icon(
@@ -685,7 +869,7 @@
                               ),
                             ),
 
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 28),
                                           ],
                                         ),
                                       ),
@@ -698,32 +882,30 @@
                         },
                       ),
                     ),
-                  ),
 
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                    ),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: OutlinedButton.icon(
-                        icon: const Icon(Icons.map),
-                        label: const Text('Ver mapa'),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => CafesMapScreen(
-                                cafes: cafesFiltrados,
+                      const SizedBox(width: 8),
+
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.map),
+                          label: const Text('Ver mapa'),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => CafesMapScreen(
+                                  cafes: cafesFiltrados,
+                                ),
                               ),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-
-                  Padding(
+                ),
+                        
+                                    Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 8,
@@ -731,64 +913,84 @@
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        '☕ ${cafesFiltrados.length} para descubrir',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                        '${cafesFiltrados.length} cafeterías para descubrir',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface,
                         ),
                       ),
                     ),
                   ),
 
                   const SizedBox(height: 8),
+                ],
+              ),
+            ),
 
-
-                  if (cafesFiltrados.isEmpty)
-                    const Expanded(
-                      child: Center(
-                        child: Text(
-                          'No encontramos cafeterías con esos filtros ☕',
-                          style: TextStyle(
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    )
-                  else
-                    Expanded(
-                      child: RefreshIndicator(
-                        onRefresh: _recargarCafes,
-                        child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: cafesFiltrados.length,
-                    itemBuilder: (context, index) {
-                      final cafe = cafesFiltrados[index];
-
-                      return AnimatedListItem(
-                        index: index,
-                        child: AnimatedPress(
-                          borderRadius: BorderRadius.circular(22),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => CafeDetailScreen(
-                                  cafeId: cafe.id!,
-                                ),
-                              ),
-                            );
-                          },
-                          child: CafeCard(
-                            cafe: cafe,
-                          ),
-                        ),
-                      );
-                    },
+          if (cafesFiltrados.isEmpty)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text(
+                    'No encontramos cafeterías con esos filtros ☕',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                    ),
                   ),
                 ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                16,
+                0,
+                16,
+                24,
+              ),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final cafe = cafesFiltrados[index];
+
+                    return AnimatedListItem(
+                      index: index,
+                      child: AnimatedPress(
+                        borderRadius:
+                            BorderRadius.circular(22),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  CafeDetailScreen(
+                                cafeId: cafe.id!,
+                              ),
+                            ),
+                          );
+                        },
+                        child: CafeCard(
+                          cafe: cafe,
+                        ),
+                      ),
+                    );
+                  },
+                  childCount: cafesFiltrados.length,
                 ),
-              ],
-            );
+              ),
+            ),
+        ],
+      ),
+    ),
+  ),
+],
+);
           },
         ),
       );

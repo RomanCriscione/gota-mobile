@@ -17,19 +17,7 @@ class CafesMapScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    for (final cafe in cafes) {
-        if (cafe.latitude == null ||
-            cafe.longitude == null ||
-            !cafe.latitude!.isFinite ||
-            !cafe.longitude!.isFinite) {
-            print(
-            'COORDENADAS INVALIDAS: ${cafe.nombre} '
-            '(${cafe.latitude}, ${cafe.longitude})',
-            );
-        }
-        }
-
-        final cafesConUbicacion = cafes.where((cafe) {
+    final cafesConUbicacion = cafes.where((cafe) {
         return cafe.latitude != null &&
             cafe.longitude != null &&
             cafe.latitude!.isFinite &&
@@ -44,12 +32,18 @@ class CafesMapScreen extends StatelessWidget {
       ),
         body: FlutterMap(
         options: MapOptions(
-            initialCenter: const LatLng(
-            -34.6037,
-            -58.3816,
-            ),
-            initialZoom: 11,
-            maxZoom: 18,
+          initialCenter: cafesConUbicacion.isNotEmpty
+              ? LatLng(
+                  cafesConUbicacion.first.latitude!,
+                  cafesConUbicacion.first.longitude!,
+                )
+              : const LatLng(
+                  -34.6037,
+                  -58.3816,
+                ),
+          initialZoom:
+              cafesConUbicacion.isNotEmpty ? 12 : 11,
+          maxZoom: 18,
         ),
         children: [
             TileLayer(

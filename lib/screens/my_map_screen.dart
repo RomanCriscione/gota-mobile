@@ -78,6 +78,84 @@ class _MyMapScreenState extends State<MyMapScreen> {
           final relaciones =
               snapshot.data ?? <CafeRelationship>[];
 
+          if (relaciones.isEmpty) {
+            return RefreshIndicator(
+              onRefresh: recargarMapa,
+              child: ListView(
+                physics:
+                    const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(24),
+                children: [
+                  const SizedBox(height: 90),
+
+                  Center(
+                    child: Container(
+                      width: 86,
+                      height: 86,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(28),
+                      ),
+                      child: SvgPicture.asset(
+                        'assets/icons/rating_cup.svg',
+                        width: 48,
+                        height: 48,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  const Text(
+                    'Todavía no empezaste tu recorrido',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 23,
+                      fontWeight: FontWeight.w800,
+                      height: 1.2,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  const Text(
+                    'Guardá cafeterías para volver a encontrarlas cuando quieras.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 15,
+                      height: 1.45,
+                      color: Colors.black54,
+                    ),
+                  ),
+
+                  const SizedBox(height: 26),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/cafes',
+                        );
+                      },
+                      icon: SvgPicture.asset(
+                        'assets/icons/rating_cup.svg',
+                        width: 20,
+                        height: 20,
+                      ),
+                      label: const Text(
+                        'Explorar cafeterías',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
           final quieroIr = relaciones
               .where(
                 (relacion) =>
@@ -150,12 +228,36 @@ class _MyMapScreenState extends State<MyMapScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    '☕ Mi recorrido cafetero',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: SvgPicture.asset(
+                          'assets/icons/rating_cup.svg',
+                          width: 25,
+                          height: 25,
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      const Expanded(
+                        child: Text(
+                          'Mi recorrido cafetero',
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            height: 1.1,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 6),
@@ -454,7 +556,9 @@ class _CafeMapaCard extends StatelessWidget {
         bottom: 16,
       ),
       elevation: 2,
-      shadowColor: Colors.black.withOpacity(.05),
+      shadowColor: Colors.black.withValues(
+        alpha: .05,
+      ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: const BorderSide(
@@ -465,8 +569,12 @@ class _CafeMapaCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
-        splashColor: const Color(0xFF1E3A8A).withOpacity(.08),
-        highlightColor: const Color(0xFF1E3A8A).withOpacity(.03),
+        splashColor: const Color(0xFF1E3A8A).withValues(
+          alpha: .08,
+        ),
+        highlightColor: const Color(0xFF1E3A8A).withValues(
+          alpha: .03,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -813,7 +921,9 @@ class _TituloSeccion extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: color.withOpacity(.10),
+              color: color.withValues(
+                alpha: .10,
+              ),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(

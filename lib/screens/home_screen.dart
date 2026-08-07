@@ -7,6 +7,8 @@ import '../models/cafe_relationship.dart';
 import '../widgets/network_image_card.dart';
 import '../widgets/section_title.dart';
 import '../widgets/loading_skeleton.dart';
+import 'cafes_map_screen.dart';
+import 'cafe_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,6 +21,7 @@ class HomeScreen extends StatefulWidget {
 
     late Future<List<Cafe>> cafesFuture;
     late Future<List<CafeRelationship>> mapaFuture;
+    late Future<Cafe?> radarFuture;
 
   @override
   void initState() {
@@ -26,7 +29,179 @@ class HomeScreen extends StatefulWidget {
 
     cafesFuture = ApiService.obtenerCafes();
     mapaFuture = ApiService.obtenerMiMapa();
+    radarFuture = calcularCafeEnRadar();
   }
+
+  Future<Cafe?> calcularCafeEnRadar() async {
+    final cafes = await cafesFuture;
+    final relaciones = await mapaFuture;
+
+    if (cafes.isEmpty) {
+      return null;
+    }
+
+    final cafesPorId = <int, Cafe>{};
+
+    for (final cafe in cafes) {
+      if (cafe.id != null) {
+        cafesPorId[cafe.id!] = cafe;
+      }
+    }
+
+    final cafesReferencia = <Cafe>[];
+
+    final idsYaVisitados = <int>{};
+
+    for (final relacion in relaciones) {
+      final cafe = cafesPorId[relacion.cafeId];
+
+      if (cafe == null) {
+        continue;
+      }
+
+      if (relacion.status == 'want_to_return') {
+        cafesReferencia.add(cafe);
+        cafesReferencia.add(cafe);
+        cafesReferencia.add(cafe);
+
+        idsYaVisitados.add(relacion.cafeId);
+      } else if (relacion.status == 'visited') {
+        cafesReferencia.add(cafe);
+
+        idsYaVisitados.add(relacion.cafeId);
+      } else if (relacion.status == 'want_to_go') {
+        cafesReferencia.add(cafe);
+      }
+    }
+
+    final candidatos = cafes.where((cafe) {
+      if (cafe.id == null) {
+        return false;
+      }
+
+      return !idsYaVisitados.contains(cafe.id);
+    }).toList();
+
+    if (candidatos.isEmpty) {
+      return null;
+    }
+
+    if (cafesReferencia.isEmpty) {
+      final indice =
+          DateTime.now().day % candidatos.length;
+
+      return candidatos[indice];
+    }
+
+    int puntajeCafe(Cafe candidato) {
+      int puntaje = 0;
+
+      for (final referencia in cafesReferencia) {
+        if (candidato.id == referencia.id) {
+          continue;
+        }
+
+        if (candidato.zona == referencia.zona) {
+          puntaje += 3;
+        }
+
+        if (candidato.cafeEspecialidad &&
+            referencia.cafeEspecialidad) {
+          puntaje += 3;
+        }
+
+        if (candidato.brunch &&
+            referencia.brunch) {
+          puntaje += 2;
+        }
+
+        if (candidato.desayuno &&
+            referencia.desayuno) {
+          puntaje += 2;
+        }
+
+        if (candidato.pasteleriaArtesanal &&
+            referencia.pasteleriaArtesanal) {
+          puntaje += 2;
+        }
+
+        if (candidato.laptopFriendly &&
+            referencia.laptopFriendly) {
+          puntaje += 4;
+        }
+
+        if (candidato.espacioTranquilo &&
+            referencia.espacioTranquilo) {
+          puntaje += 4;
+        }
+
+        if (candidato.petFriendly &&
+            referencia.petFriendly) {
+          puntaje += 2;
+        }
+
+        if (candidato.tieneWifi &&
+            referencia.tieneWifi) {
+          puntaje += 2;
+        }
+
+        if (candidato.librosOJuegos &&
+            referencia.librosOJuegos) {
+          puntaje += 2;
+        }
+
+        final tagsReferencia =
+            referencia.tags.map((tag) => tag.toString()).toSet();
+
+        final tagsCandidato =
+            candidato.tags.map((tag) => tag.toString()).toSet();
+
+        final coincidencias =
+            tagsCandidato.intersection(tagsReferencia).length;
+
+        puntaje += coincidencias * 4;
+      }
+
+      return puntaje;
+    }
+
+    candidatos.sort(
+      (a, b) => puntajeCafe(b).compareTo(
+        puntajeCafe(a),
+      ),
+    );
+
+    final mejores =
+        candidatos.take(5).toList();
+
+    final indice =
+        DateTime.now().day % mejores.length;
+
+    return mejores[indice];
+  }
+
+    Future<void> recargarHome() async {
+      final nuevoCafesFuture =
+          ApiService.obtenerCafes(
+        forzarActualizacion: true,
+      );
+
+      final nuevoMapaFuture =
+          ApiService.obtenerMiMapa(
+        forzarActualizacion: true,
+      );
+
+      setState(() {
+        cafesFuture = nuevoCafesFuture;
+        mapaFuture = nuevoMapaFuture;
+        radarFuture = calcularCafeEnRadar();
+      });
+
+      await Future.wait([
+        nuevoCafesFuture,
+        nuevoMapaFuture,
+      ]);
+    }
 
   @override
   Widget build(BuildContext context) {
@@ -119,14 +294,20 @@ class HomeScreen extends StatefulWidget {
           ),
         ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            24,
-            24,
-            24,
-            32,
-          ),
+        
+              body: SafeArea(
+                child: RefreshIndicator(
+                  onRefresh: recargarHome,
+                  child: SingleChildScrollView(
+                    physics:
+                        const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(
+                      24,
+                      24,
+                      24,
+                      32,
+                    ),
+                    
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -245,7 +426,221 @@ class HomeScreen extends StatefulWidget {
                 ),
               ),
 
-              const SizedBox(height: 18),
+            const SizedBox(height: 18),
+
+            const SectionTitle(
+            title: '¿Cuál es el plan de hoy?',
+          ),
+
+          const SizedBox(height: 14),
+
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(18),
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        '/cafes',
+                      );
+                    },
+                    child: Container(
+                      height: 110,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: const Color(0xFFBFDBFE),
+                        ),
+                      ),
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.search_rounded,
+                            size: 30,
+                            color: Color(0xFF172C6D),
+                          ),
+
+                          SizedBox(height: 8),
+
+                          Text(
+                            'Explorar\ncafeterías',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              height: 1.2,
+                              color: Color(0xFF172C6D),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(18),
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        '/nearby',
+                      );
+                    },
+                    child: Container(
+                      height: 110,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: const Color(0xFFBFDBFE),
+                        ),
+                      ),
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.near_me_rounded,
+                            size: 30,
+                            color: Color(0xFF172C6D),
+                          ),
+
+                          SizedBox(height: 8),
+
+                          Text(
+                            'Cafés\ncerca mío',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              height: 1.2,
+                              color: Color(0xFF172C6D),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(18),
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        '/my-map',
+                      );
+                    },
+                    child: Container(
+                      height: 110,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: const Color(0xFFBFDBFE),
+                        ),
+                      ),
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.favorite_rounded,
+                            size: 30,
+                            color: Color(0xFF172C6D),
+                          ),
+
+                          SizedBox(height: 8),
+
+                          Text(
+                            'Mi mapa\ncafetero',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              height: 1.2,
+                              color: Color(0xFF172C6D),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(18),
+                    onTap: () async {
+                      final cafes = await cafesFuture;
+
+                      if (!context.mounted) return;
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CafesMapScreen(
+                            cafes: cafes,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      height: 110,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9FAFB),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: const Color(0xFFE5E7EB),
+                        ),
+                      ),
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.map_rounded,
+                            size: 30,
+                            color: Color(0xFF172C6D),
+                          ),
+
+                          SizedBox(height: 8),
+
+                          Text(
+                            'Ver mapa\nde cafés',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              height: 1.2,
+                              color: Color(0xFF172C6D),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
 
         FutureBuilder<List<CafeRelationship>>(
           future: mapaFuture,
@@ -363,10 +758,13 @@ class HomeScreen extends StatefulWidget {
                 const SizedBox(height: 18),
 
                 Text(
-                  '${relaciones.length} cafeterías guardadas',
+                  relaciones.isEmpty
+                      ? 'Tu recorrido empieza con un café.'
+                      : '${relaciones.length} cafeterías forman parte de tu recorrido.',
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    height: 1.4,
+                    color: Colors.black54,
                   ),
                 ),
 
@@ -385,21 +783,30 @@ class HomeScreen extends StatefulWidget {
                         ),
                         child: Column(
                           children: [
-                            const Text(
-                              '☕',
-                              style: TextStyle(fontSize: 20),
+                            const Icon(
+                              Icons.favorite_border_rounded,
+                              size: 22,
+                              color: Color(0xFF172C6D),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 6),
+
                             Text(
                               '$quieroIr',
                               style: const TextStyle(
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w800,
                                 fontSize: 20,
+                                color: Color(0xFF111827),
                               ),
                             ),
+
+                            const SizedBox(height: 2),
+
                             const Text(
                               'Quiero ir',
-                              style: TextStyle(fontSize: 12),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.black54,
+                              ),
                             ),
                           ],
                         ),
@@ -432,7 +839,7 @@ class HomeScreen extends StatefulWidget {
                               ),
                             ),
                             const Text(
-                              'Volver',
+                              'Quiero volver',
                               style: TextStyle(fontSize: 12),
                             ),
                           ],
@@ -453,9 +860,10 @@ class HomeScreen extends StatefulWidget {
                         ),
                         child: Column(
                           children: [
-                            const Text(
-                              '✔️',
-                              style: TextStyle(fontSize: 20),
+                            const Icon(
+                              Icons.check_circle_outline_rounded,
+                              size: 22,
+                              color: Color(0xFF172C6D),
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -466,7 +874,7 @@ class HomeScreen extends StatefulWidget {
                               ),
                             ),
                             const Text(
-                              'Visitados',
+                              'Ya fui',
                               style: TextStyle(fontSize: 12),
                             ),
                           ],
@@ -481,34 +889,56 @@ class HomeScreen extends StatefulWidget {
         },
       ),
 
-            FutureBuilder<List<CafeRelationship>>(
-              future: mapaFuture,
+      const SizedBox(height: 22),
+
+      const SectionTitle(
+        title: '✨ En tu radar',
+      ),
+
+      const SizedBox(height: 6),
+
+      const Text(
+        'Una cafetería que creemos que puede gustarte.',
+        style: TextStyle(
+          fontSize: 15,
+          color: Colors.black54,
+          height: 1.4,
+        ),
+      ),
+
+      const SizedBox(height: 16),
+
+            FutureBuilder<Cafe?>(
+              future: radarFuture,
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
+                if (snapshot.connectionState ==
+                    ConnectionState.waiting) {
+                  return LoadingSkeleton(
+                    width: double.infinity,
+                    height: 230,
+                    borderRadius: BorderRadius.circular(18),
+                  );
+                }
+
+                if (snapshot.hasError || !snapshot.hasData) {
                   return const SizedBox.shrink();
                 }
 
-                final quieroIr = snapshot.data!
-                    .where(
-                      (relacion) =>
-                          relacion.status == 'want_to_go',
-                    )
-                    .toList();
-
-                if (quieroIr.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-
-                final cafeEnRadar = quieroIr.first;
+                final cafeEnRadar = snapshot.data!;
 
                 return Padding(
-                  padding: const EdgeInsets.only(top: 16),
+                  padding: EdgeInsets.zero,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(12),
                     onTap: () {
-                      Navigator.pushNamed(
+                      Navigator.push(
                         context,
-                        '/my-map',
+                        MaterialPageRoute(
+                          builder: (_) => CafeDetailScreen(
+                            cafeId: cafeEnRadar.id!,
+                            heroImageUrl: cafeEnRadar.foto,
+                          ),
+                        ),
                       );
                     },
                     child: Container(
@@ -526,57 +956,14 @@ class HomeScreen extends StatefulWidget {
                               CrossAxisAlignment.start,
                           children: [
                             NetworkImageCard(
-                              imageUrl: cafeEnRadar.cafePhoto,
+                              imageUrl: cafeEnRadar.foto,
                               width: double.infinity,
                               height: 160,
                               borderRadius: 12,
-                              heroTag: 'radar-${cafeEnRadar.cafeId}',
+                              heroTag: 'radar-${cafeEnRadar.id!}',
                             ),
 
-                            const SizedBox(height: 12),
-
-                            Row(
-                              children: [
-                                Container(
-                                  width: 38,
-                                  height: 38,
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFEFF6FF),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: SvgPicture.asset(
-                                    'assets/icons/rating_cup.svg',
-                                  ),
-                                ),
-
-                                const SizedBox(width: 12),
-
-                                const Expanded(
-                                  child: Text(
-                                    'En tu radar',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF172C6D),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 8),
-
-                            const Text(
-                              'Uno de los próximos cafés que querés descubrir.',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.black54,
-                              ),
-                            ),
-
-                            const SizedBox(height: 14),
-
+                            
                             if (cafeEnRadar.collection != null &&
                                 cafeEnRadar.collection!
                                     .trim()
@@ -607,7 +994,7 @@ class HomeScreen extends StatefulWidget {
                               ),
 
                             Text(
-                              cafeEnRadar.cafeName,
+                              cafeEnRadar.nombre,
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -615,7 +1002,7 @@ class HomeScreen extends StatefulWidget {
                             ),
 
                             Text(
-                              cafeEnRadar.cafeLocation,
+                              cafeEnRadar.zona,
                               style: const TextStyle(
                                 color: Colors.black54,
                               ),
@@ -630,205 +1017,12 @@ class HomeScreen extends StatefulWidget {
             ),
 
 
-            const SizedBox(height: 20),
-
-            const SectionTitle(
-              title: '¿Qué querés hacer?',
-            ),
-
-            const SizedBox(height: 14),
-
-            Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(18),
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        '/cafes',
-                      );
-                    },
-                    child: Container(
-                      height: 120,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: const Color(0xFFBFDBFE),
-                        ),
-                      ),
-                      child: const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Icon(
-                            Icons.search_rounded,
-                            size: 30,
-                            color: Color(0xFF172C6D),
-                          ),
-                          Text(
-                            'Explorar\ncafeterías',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              height: 1.2,
-                              color: Color(0xFF172C6D),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(width: 12),
-
-                Expanded(
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(18),
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        '/nearby',
-                      );
-                    },
-                    child: Container(
-                      height: 120,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: const Color(0xFFBFDBFE),
-                        ),
-                      ),
-                      child: const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Icon(
-                            Icons.near_me_rounded,
-                            size: 30,
-                            color: Color(0xFF172C6D),
-                          ),
-                          Text(
-                            'Cafés\ncerca mío',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              height: 1.2,
-                              color: Color(0xFF172C6D),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(18),
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        '/my-map',
-                      );
-                    },
-                    child: Container(
-                      height: 120,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: const Color(0xFFBFDBFE),
-                        ),
-                      ),
-                      child: const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Icon(
-                            Icons.favorite_rounded,
-                            size: 30,
-                            color: Color(0xFF172C6D),
-                          ),
-                          Text(
-                            'Mi mapa\ncafetero',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              height: 1.2,
-                              color: Color(0xFF172C6D),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(width: 12),
-
-                Expanded(
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(18),
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        '/map',
-                      );
-                    },
-                    child: Container(
-                      height: 120,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF9FAFB),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: const Color(0xFFE5E7EB),
-                        ),
-                      ),
-                      child: const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Icon(
-                            Icons.map_rounded,
-                            size: 30,
-                            color: Color(0xFF172C6D),
-                          ),
-                          Text(
-                            'Ver mapa\nde cafés',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              height: 1.2,
-                              color: Color(0xFF172C6D),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
+            
           ],
         ),
       ),
     ),
-  );
-}
+  ),
+);
+  }
 }

@@ -118,108 +118,135 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 const SizedBox(height: 12),
 
-                Center(
-                  child: CircleAvatar(
-                    radius: 54,
-                    backgroundColor: const Color(0xFFE8EEF9),
-                    backgroundImage:
-                        usuario.avatar != null &&
-                                usuario.avatar!.trim().isNotEmpty
-                            ? NetworkImage(usuario.avatar!)
-                            : null,
-                    child:
-                        usuario.avatar == null ||
-                                usuario.avatar!.trim().isEmpty
-                            ? Text(
-                                nombre.substring(0, 1).toUpperCase(),
-                                style: const TextStyle(
-                                  fontSize: 38,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1E3A8A),
-                                ),
-                              )
-                            : null,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                Text(
-                  nombre,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 6),
-
-                Text(
-                  usuario.email,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.black54,
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 7,
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(22),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: const Color(0xFFE5E7EB),
                     ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      usuario.isOwner
-                          ? 'Dueño de cafetería'
-                          : 'Usuario de Gota',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFEFF6FF),
+                          shape: BoxShape.circle,
+                        ),
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundColor: const Color(0xFFE8EEF9),
+                          backgroundImage:
+                              usuario.avatar != null &&
+                                      usuario.avatar!.trim().isNotEmpty
+                                  ? NetworkImage(usuario.avatar!)
+                                  : null,
+                          child:
+                              usuario.avatar == null ||
+                                      usuario.avatar!.trim().isEmpty
+                                  ? Text(
+                                      nombre.substring(0, 1).toUpperCase(),
+                                      style: const TextStyle(
+                                        fontSize: 36,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF1E3A8A),
+                                      ),
+                                    )
+                                  : null,
+                        ),
                       ),
-                    ),
+
+                      const SizedBox(height: 18),
+
+                      Text(
+                        nombre,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF111827),
+                        ),
+                      ),
+
+                      const SizedBox(height: 6),
+
+                      Text(
+                        usuario.email,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Colors.black54,
+                        ),
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          usuario.isOwner
+                              ? 'Dueño de cafetería'
+                              : 'Usuario de Gota',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF172C6D),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
 
                 const SizedBox(height: 32),
 
                 Container(
+                  width: double.infinity,
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF9FAFB),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFFE5E7EB),
+                    ),
                   ),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.person_outline),
-                        title: const Text('Nombre'),
-                        subtitle: Text(nombre),
-                      ),
-                      const Divider(),
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.email_outlined),
-                        title: const Text('Email'),
-                        subtitle: Text(usuario.email),
-                      ),
-                      const Divider(),
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.badge_outlined),
-                        title: const Text('Tipo de cuenta'),
-                        subtitle: Text(
-                          usuario.isOwner
-                              ? 'Dueño de cafetería'
-                              : 'Usuario',
+                      const Text(
+                        'Tu cuenta',
+                        style: TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF111827),
                         ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      _ProfileInfoRow(
+                        icon: Icons.email_outlined,
+                        label: 'Email',
+                        value: usuario.email,
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      _ProfileInfoRow(
+                        icon: Icons.badge_outlined,
+                        label: 'Tipo de cuenta',
+                        value: usuario.isOwner
+                            ? 'Dueño de cafetería'
+                            : 'Usuario de Gota',
                       ),
                     ],
                   ),
@@ -246,6 +273,69 @@ class _ProfileScreenState extends State<ProfileScreen> {
           );
         },
       ),
+    );
+  }
+}
+
+class _ProfileInfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _ProfileInfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 38,
+          height: 38,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: const Color(0xFFEFF6FF),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            icon,
+            size: 20,
+            color: const Color(0xFF1E3A8A),
+          ),
+        ),
+
+        const SizedBox(width: 12),
+
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Colors.black54,
+                ),
+              ),
+
+              const SizedBox(height: 3),
+
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF111827),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

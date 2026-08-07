@@ -7,27 +7,74 @@ import 'auth_service.dart';
 class ApiService {
   static const String baseUrl = 'https://gogota.ar/api';
 
-  static Future<List<Cafe>> obtenerCafes() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/cafes/'),
-    );
+  static List<Cafe>? _cafesCache;
+  static Future<List<Cafe>>? _cafesRequest;
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-
-      return data
-          .map(
-            (item) => Cafe.fromJson(item),
-          )
-          .toList();
+  static Future<List<Cafe>> obtenerCafes({
+    bool forzarActualizacion = false,
+  }) async {
+    if (!forzarActualizacion && _cafesCache != null) {
+      return _cafesCache!;
     }
 
-    throw Exception(
-      'Error al cargar cafeterías',
-    );
+    if (!forzarActualizacion && _cafesRequest != null) {
+      return _cafesRequest!;
+    }
+
+    final request = _descargarCafes();
+
+    _cafesRequest = request;
+
+    try {
+      final cafes = await request;
+
+      _cafesCache = cafes;
+
+      return cafes;
+    } finally {
+      if (identical(_cafesRequest, request)) {
+        _cafesRequest = null;
+      }
+    }
   }
-  static Future<List<CafeRelationship>>
-      obtenerMiMapa() async {
+
+  static Future<List<Cafe>> _descargarCafes() async {
+    final response = await http
+        .get(
+          Uri.parse('$baseUrl/cafes/'),
+        )
+        .timeout(
+          const Duration(seconds: 15),
+        );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Error al cargar cafeterías',
+      );
+    }
+
+    final dynamic decodedData = jsonDecode(
+      response.body,
+    );
+
+    if (decodedData is! List) {
+      throw Exception(
+        'La respuesta de cafeterías no es válida',
+      );
+    }
+
+    return decodedData
+        .map(
+          (item) => Cafe.fromJson(
+            item as Map<String, dynamic>,
+          ),
+        )
+        .toList();
+  }
+
+  static Future<List<Cafe>> obtenerCafesRelacionados(
+    int cafeId,
+  ) async {
     final token = await AuthService.obtenerToken();
 
     if (token == null || token.isEmpty) {
@@ -38,7 +85,9 @@ class ApiService {
 
     final response = await http
         .get(
-          Uri.parse('$baseUrl/mobile/my-map/'),
+          Uri.parse(
+            '$baseUrl/mobile/cafes/$cafeId/related/',
+          ),
           headers: {
             'Authorization': 'Token $token',
             'Accept': 'application/json',
@@ -48,12 +97,97 @@ class ApiService {
           const Duration(seconds: 15),
         );
 
-    print(
-      'Mi mapa status: ${response.statusCode}',
-    );
-    print(
-      'Mi mapa body: ${response.body}',
-    );
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Error al cargar cafeterías relacionadas',
+      );
+    }
+
+    final dynamic decodedData =
+        jsonDecode(response.body);
+
+    if (decodedData is! List) {
+      throw Exception(
+        'La respuesta de cafeterías relacionadas no es válida',
+      );
+    }
+
+    return decodedData
+        .map(
+          (item) => Cafe.fromJson(
+            item as Map<String, dynamic>,
+          ),
+        )
+
+        .toList();
+  }
+
+  static List<CafeRelationship>? _miMapaCache;
+  static Future<List<CafeRelationship>>? _miMapaRequest;
+  static String? _miMapaToken;
+
+  static Future<List<CafeRelationship>> obtenerMiMapa({
+    bool forzarActualizacion = false,
+  }) async {
+    final token = await AuthService.obtenerToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception(
+        'No hay una sesión iniciada',
+      );
+    }
+
+    final cambioDeUsuario = _miMapaToken != token;
+
+    if (cambioDeUsuario) {
+      _miMapaCache = null;
+      _miMapaRequest = null;
+      _miMapaToken = token;
+    }
+
+    if (!forzarActualizacion &&
+        _miMapaCache != null) {
+      return _miMapaCache!;
+    }
+
+    if (!forzarActualizacion &&
+        _miMapaRequest != null) {
+      return _miMapaRequest!;
+    }
+
+    final request = _descargarMiMapa(token);
+
+    _miMapaRequest = request;
+
+    try {
+      final relaciones = await request;
+
+      _miMapaCache = relaciones;
+
+      return relaciones;
+    } finally {
+      if (identical(_miMapaRequest, request)) {
+        _miMapaRequest = null;
+      }
+    }
+  }
+
+  static Future<List<CafeRelationship>>
+      _descargarMiMapa(
+    String token,
+  ) async {
+
+      final response = await http
+          .get(
+            Uri.parse('$baseUrl/mobile/my-map/'),
+          headers: {
+            'Authorization': 'Token $token',
+            'Accept': 'application/json',
+          },
+        )
+        .timeout(
+          const Duration(seconds: 15),
+        );
 
     if (response.statusCode != 200) {
       throw Exception(
@@ -109,13 +243,6 @@ class ApiService {
           const Duration(seconds: 15),
         );
 
-    print(
-      'Set status: ${response.statusCode}',
-    );
-    print(
-      'Set status body: ${response.body}',
-    );
-
     if (response.statusCode != 200) {
       throw Exception(
         'Error al guardar el estado',
@@ -157,13 +284,6 @@ class ApiService {
           const Duration(seconds: 15),
         );
 
-    print(
-      'Set collection: ${response.statusCode}',
-    );
-    print(
-      'Set collection body: ${response.body}',
-    );
-
     if (response.statusCode != 200) {
       throw Exception(
         'Error al guardar la colección',
@@ -200,12 +320,6 @@ class ApiService {
           const Duration(seconds: 15),
         );
 
-    print(
-      'Detalle café status: ${response.statusCode}',
-    );
-    print(
-      'Detalle café body: ${response.body}',
-    );
 
     if (response.statusCode != 200) {
       throw Exception(

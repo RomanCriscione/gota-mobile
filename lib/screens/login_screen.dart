@@ -12,6 +12,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final emailFocus = FocusNode();
+  final passwordFocus = FocusNode();
 
   bool cargando = false;
 
@@ -29,6 +31,23 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       return;
     }
+
+    final emailRegex = RegExp(
+      r'^[^@]+@[^@]+\.[^@]+$',
+    );
+
+    if (!emailRegex.hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Ingresá un email válido.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
 
     setState(() {
       cargando = true;
@@ -80,6 +99,9 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
+
+    emailFocus.dispose();
+    passwordFocus.dispose();
     super.dispose();
   }
 
@@ -126,7 +148,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 TextField(
                   controller: emailController,
+                  focusNode: emailFocus,
                   keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  onSubmitted: (_) {
+                    FocusScope.of(context).requestFocus(
+                      passwordFocus,
+                    );
+                  },
                   decoration: const InputDecoration(
                     labelText: 'Email',
                     border: OutlineInputBorder(),
@@ -137,7 +166,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 TextField(
                   controller: passwordController,
+                  focusNode: passwordFocus,
                   obscureText: true,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) {
+                    FocusScope.of(context).unfocus();
+
+                    if (!cargando) {
+                      ingresar();
+                    }
+                  },
                   decoration: const InputDecoration(
                     labelText: 'Contraseña',
                     border: OutlineInputBorder(),
@@ -172,13 +210,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: double.infinity,
                   height: 52,
                   child: OutlinedButton.icon(
-                    onPressed: () {
-                      // Lo conectamos después
-                    },
-                    icon: const Icon(Icons.login),
+                    onPressed: null,
+                    icon: const Icon(
+                      Icons.login,
+                    ),
                     label: const Text(
-                      'Continuar con Google',
-                      style: TextStyle(fontSize: 16),
+                      'Continuar con Google · Próximamente',
+                      style: TextStyle(
+                        fontSize: 15,
+                      ),
                     ),
                   ),
                 ),

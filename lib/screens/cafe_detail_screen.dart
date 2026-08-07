@@ -5,7 +5,9 @@ import 'package:latlong2/latlong.dart';
 import '../services/api_service.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/network_image_card.dart';
-
+import '../models/cafe.dart';
+import '../widgets/feature_card.dart';
+import '../widgets/mini_cafe_card.dart';
 
 class CafeDetailScreen extends StatefulWidget {
   final int cafeId;
@@ -35,12 +37,18 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
   Map<String, dynamic>? detalleCafe;
   bool cargandoDetalle = true;
 
+  List<Cafe> cafesRelacionados = [];
+  bool cargandoRelacionados = true;
+
+  int fotoActual = 0;
+
   @override
   void initState() {
     super.initState();
 
     cargarDetalleCafe();
     cargarEstadoActual();
+    cargarCafesRelacionados();
   }
 
   Future<void> cargarDetalleCafe() async {
@@ -56,16 +64,13 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
         detalleCafe = detalle;
         cargandoDetalle = false;
       });
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
 
       setState(() {
         cargandoDetalle = false;
       });
 
-      print(
-        'Error cargando detalle: $e',
-      );
     }
   }
 
@@ -108,10 +113,36 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
         estadoActual = estadoEncontrado;
         selectedCollection = coleccionEncontrada;
       });
-    } catch (error) {
-      print(
-        'Error al cargar el estado del café: $error',
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        estadoActual = null;
+        selectedCollection = null;
+      });
+    }
+  }
+
+  Future<void> cargarCafesRelacionados() async {
+    try {
+      final relacionados =
+          await ApiService.obtenerCafesRelacionados(
+        widget.cafeId,
       );
+
+      if (!mounted) return;
+
+      setState(() {
+        cafesRelacionados = relacionados;
+        cargandoRelacionados = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        cargandoRelacionados = false;
+      });
+
     }
   }
 
@@ -461,7 +492,10 @@ double? get longitudeCafe {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
           decoration: BoxDecoration(
             color: activo
                 ? const Color(0xFFEFF6FF)
@@ -477,8 +511,8 @@ double? get longitudeCafe {
           child: Row(
             children: [
               Container(
-                width: 52,
-                height: 52,
+                width: 46,
+                height: 46,
                 decoration: BoxDecoration(
                   color: activo
                       ? const Color(0xFF1E3A8A)
@@ -490,7 +524,7 @@ double? get longitudeCafe {
                   color: activo
                       ? Colors.white
                       : const Color(0xFF1E3A8A),
-                  size: 26,
+                  size: 22,
                 ),
               ),
 
@@ -503,7 +537,7 @@ double? get longitudeCafe {
                     Text(
                       titulo,
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 17,
                         fontWeight: FontWeight.w700,
                         color: activo
                             ? const Color(0xFF172C6D)
@@ -511,7 +545,7 @@ double? get longitudeCafe {
                       ),
                     ),
 
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 2),
 
                     Text(
                       descripcion,
@@ -622,16 +656,24 @@ double? get longitudeCafe {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (fotosDisponibles.isNotEmpty)
-              SizedBox(
-                height: 260,
-                child: PageView(
+          SizedBox(
+            height: 260,
+            child: Stack(
+              children: [
+                PageView(
                   padEnds: false,
                   controller: PageController(
                     viewportFraction: 0.94,
                   ),
+                  onPageChanged: (index) {
+                    setState(() {
+                      fotoActual = index;
+                    });
+                  },
                   children: fotosDisponibles.asMap().entries.map((entry) {
                     final indice = entry.key;
                     final foto = entry.value;
+
                     return Padding(
                       padding: const EdgeInsets.only(
                         right: 10,
@@ -682,7 +724,38 @@ double? get longitudeCafe {
                     );
                   }).toList(),
                 ),
-              ),
+
+                if (fotosDisponibles.length > 1)
+                  Positioned(
+                    left: 0,
+                    right: 10,
+                    bottom: 14,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(
+                            alpha: 0.62,
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${fotoActual + 1} / ${fotosDisponibles.length}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
 
             const SizedBox(height: 18),
 
@@ -699,29 +772,57 @@ double? get longitudeCafe {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      size: 19,
-                      color: Colors.black54,
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        zonaCafe,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.location_on_outlined,
+                                      size: 19,
+                                      color: Colors.black54,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        zonaCafe,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
 
-                const SizedBox(height: 10),
+                                if (direccionCafe.isNotEmpty) ...[
+                                  const SizedBox(height: 7),
 
-                if (ratingCafe == '0.0' ||
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Icon(
+                                        Icons.signpost_outlined,
+                                        size: 18,
+                                        color: Colors.black45,
+                                      ),
+
+                                      const SizedBox(width: 5),
+
+                                      Expanded(
+                                        child: Text(
+                                          direccionCafe,
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            height: 1.3,
+                                            color: Colors.black54,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+
+                                const SizedBox(height: 12),
+
+                                if (ratingCafe == '0.0' ||
                     ratingCafe == 'Sin calificación')
                   const Text(
                     'Aún sin reseñas',
@@ -917,7 +1018,7 @@ double? get longitudeCafe {
             const SizedBox(height: 16),
 
             botonMapa(
-              texto: '☕ Quiero ir',
+              texto: 'Quiero ir',
               estado: 'quiero_ir',
               activo: estaEnQuieroIr,
             ),
@@ -925,7 +1026,7 @@ double? get longitudeCafe {
             const SizedBox(height: 10),
 
             botonMapa(
-              texto: '❤️ Quiero volver',
+              texto: 'Quiero volver',
               estado: 'quiero_volver',
               activo: estaEnQuieroVolver,
             ),
@@ -933,98 +1034,154 @@ double? get longitudeCafe {
             const SizedBox(height: 10),
 
             botonMapa(
-              texto: '✔️ Ya fui',
+              texto: 'Ya fui',
               estado: 'ya_fui',
               activo: estaEnYaFui,
             ),
 
             const SizedBox(height: 28),
 
-            const Text(
-              'Colección',
-              style: TextStyle(
-                fontSize: 21,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            const Text(
-              'Organizá este café dentro de tu recorrido.',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.black54,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            Column(
-              children: collections.map((collection) {
-                final bool activo =
-                    selectedCollection == collection;
-
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(18),
-                      onTap: () {
-                        guardarColeccion(collection);
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: activo
-                              ? const Color(0xFFEFF6FF)
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(
-                            color: activo
-                                ? const Color(0xFF1E3A8A)
-                                : const Color(0xFFE5E7EB),
-                            width: activo ? 1.5 : 1,
+                        const Text(
+                          'Colección',
+                          style: TextStyle(
+                            fontSize: 21,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                collection,
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w600,
-                                  color: activo
-                                      ? const Color(0xFF172C6D)
-                                      : const Color(0xFF111827),
-                                ),
-                              ),
-                            ),
-                            if (activo)
-                              const Icon(
-                                Icons.check_circle_rounded,
-                                color: Color(0xFF1E3A8A),
-                              )
-                            else
-                              const Icon(
-                                Icons.chevron_right_rounded,
-                                color: Colors.black38,
-                              ),
-                          ],
+
+                        const SizedBox(height: 8),
+
+                        const Text(
+                          '¿Para qué momento guardarías este café?',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.black54,
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
 
-            const SizedBox(height: 28),
+                        const SizedBox(height: 14),
 
-            if (tieneServicios) ...[
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF9FAFB),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xFFE5E7EB),
+                            ),
+                          ),
+                          child: Column(
+                            children: collections.asMap().entries.map((entry) {
+                              final int index = entry.key;
+                              final String collection = entry.value;
+                              final bool activo =
+                                  selectedCollection == collection;
+
+                              final String emoji =
+                                  collection.substring(0, collection.indexOf(' '));
+
+                              final String titulo =
+                                  collection.substring(collection.indexOf(' ') + 1);
+
+                              return Padding(
+                                padding: EdgeInsets.only(
+                                  bottom: index == collections.length - 1 ? 0 : 8,
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(16),
+                                    onTap: () {
+                                      guardarColeccion(collection);
+                                    },
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 180),
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 12,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: activo
+                                            ? const Color(0xFFEFF6FF)
+                                            : Colors.white,
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: activo
+                                              ? const Color(0xFF1E3A8A)
+                                              : const Color(0xFFE5E7EB),
+                                          width: activo ? 1.5 : 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 40,
+                                            height: 40,
+                                            alignment: Alignment.center,
+                                            decoration: BoxDecoration(
+                                              color: activo
+                                                  ? const Color(0xFFDBEAFE)
+                                                  : const Color(0xFFF3F4F6),
+                                              borderRadius: BorderRadius.circular(13),
+                                            ),
+                                            child: Text(
+                                              emoji,
+                                              style: const TextStyle(
+                                                fontSize: 20,
+                                              ),
+                                            ),
+                                          ),
+
+                                          const SizedBox(width: 12),
+
+                                          Expanded(
+                                            child: Text(
+                                              titulo,
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: activo
+                                                    ? FontWeight.w700
+                                                    : FontWeight.w600,
+                                                color: activo
+                                                    ? const Color(0xFF172C6D)
+                                                    : const Color(0xFF111827),
+                                              ),
+                                            ),
+                                          ),
+
+                                          AnimatedSwitcher(
+                                            duration: const Duration(
+                                              milliseconds: 160,
+                                            ),
+                                            child: activo
+                                                ? const Icon(
+                                                    Icons.check_circle_rounded,
+                                                    key: ValueKey('activo'),
+                                                    color: Color(0xFF1E3A8A),
+                                                    size: 23,
+                                                  )
+                                                : const Icon(
+                                                    Icons.add_circle_outline_rounded,
+                                                    key: ValueKey('inactivo'),
+                                                    color: Colors.black38,
+                                                    size: 22,
+                                                  ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+
+                        const SizedBox(height: 28),
+
+                        if (tieneServicios) ...[
               const Text(
                 'Lo que ofrece',
                 style: TextStyle(
@@ -1033,35 +1190,70 @@ double? get longitudeCafe {
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
 
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 2.25,
                 children: [
-                  if (tieneWifiCafe)
-                    const Chip(label: Text('📶 Wifi')),
-                  if (enchufesCafe)
-                    const Chip(label: Text('🔌 Enchufes')),
                   if (cafeEspecialidadCafe)
-                    const Chip(label: Text('☕ Especialidad')),
+                    const FeatureCard(
+                      label: 'Especialidad',
+                      svgAsset: 'assets/icons/rating_cup.svg',
+                    ),
+
+                  if (tieneWifiCafe)
+                    const FeatureCard(
+                      label: 'Wifi',
+                      icon: Icons.wifi_rounded,
+                    ),
+
+                  if (enchufesCafe)
+                    const FeatureCard(
+                      label: 'Enchufes',
+                      icon: Icons.power_rounded,
+                    ),
+
                   if (brunchCafe)
-                    const Chip(label: Text('🍳 Brunch')),
+                    const FeatureCard(
+                      label: 'Brunch',
+                      icon: Icons.brunch_dining_rounded,
+                    ),
+
                   if (laptopFriendlyCafe)
-                    const Chip(label: Text('💻 Para trabajar')),
+                    const FeatureCard(
+                      label: 'Para trabajar',
+                      icon: Icons.laptop_mac_rounded,
+                    ),
+
                   if (espacioTranquiloCafe)
-                    const Chip(label: Text('🤫 Tranquilo')),
+                    const FeatureCard(
+                      label: 'Tranquilo',
+                      icon: Icons.volume_off_rounded,
+                    ),
+
                   if (petFriendlyCafe)
-                    const Chip(label: Text('🐶 Pet Friendly')),
+                    const FeatureCard(
+                      label: 'Pet Friendly',
+                      icon: Icons.pets_rounded,
+                    ),
+
                   if (veganFriendlyCafe)
-                    const Chip(label: Text('🌱 Vegan Friendly')),
+                    const FeatureCard(
+                      label: 'Vegan Friendly',
+                      icon: Icons.eco_rounded,
+                    ),
                 ],
               ),
 
               const SizedBox(height: 28),
             ],
 
-            if (direccionCafe.isNotEmpty) ...[
+                        if (latitudeCafe != null && longitudeCafe != null) ...[
               const Text(
                 'Ubicación',
                 style: TextStyle(
@@ -1070,19 +1262,8 @@ double? get longitudeCafe {
                 ),
               ),
 
-              const SizedBox(height: 8),
-
-              Text(
-                direccionCafe,
-                style: const TextStyle(
-                  fontSize: 16,
-                ),
-              ),
-
               const SizedBox(height: 16),
-            ],
 
-            if (latitudeCafe != null && longitudeCafe != null) ...[
               SizedBox(
                 height: 220,
                 child: ClipRRect(
@@ -1130,7 +1311,7 @@ double? get longitudeCafe {
                 child: OutlinedButton.icon(
                   onPressed: () async {
                     final Uri url = Uri.parse(
-                      'https://www.google.com/maps/search/?api=1&query=${latitudeCafe},${longitudeCafe}',
+                      'https://www.google.com/maps/search/?api=1&query=$latitudeCafe,$longitudeCafe',
                     );
 
                     await launchUrl(
@@ -1224,7 +1405,7 @@ double? get longitudeCafe {
                             child: tieneAvatar
                               ? ClipOval(
                                   child: NetworkImageCard(
-                                    imageUrl: avatarUrl!,
+                                    imageUrl: avatarUrl,
                                     width: 48,
                                     height: 48,
                                     borderRadius: 24,
@@ -1390,59 +1571,83 @@ double? get longitudeCafe {
               ),
             ],
 
-            const SizedBox(height: 32),
+                        const SizedBox(height: 32),
 
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: const Color(0xFFE5E7EB),
+            if (cargandoRelacionados)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    vertical: 24,
+                  ),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (cafesRelacionados.isNotEmpty) ...[
+              const Text(
+                'También podría gustarte',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '¿Y después de este?',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Cada café tiene algo distinto para ofrecer.',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.black54,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/cafes',
-                        );
-                      },
-                      icon: SvgPicture.asset(
-                        'assets/icons/rating_cup.svg',
-                        width: 20,
-                        height: 20,
-                      ),
-                      label: const Text(
-                        'Seguir explorando',
-                      ),
-                    ),
-                  ),
-                ],
+
+              const SizedBox(height: 8),
+
+              const Text(
+                'Otros lugares para seguir descubriendo.',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.black54,
+                ),
               ),
-            ),
+
+              const SizedBox(height: 16),
+
+              ...cafesRelacionados.map(
+                (cafe) => Padding(
+                  padding: const EdgeInsets.only(
+                    bottom: 10,
+                  ),
+                  child: MiniCafeCard(
+                    cafe: cafe,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              CafeDetailScreen(
+                            cafeId: cafe.id!,
+                            heroImageUrl: cafe.foto,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      '/cafes',
+                    );
+                  },
+                  icon: SvgPicture.asset(
+                    'assets/icons/rating_cup.svg',
+                    width: 20,
+                    height: 20,
+                  ),
+                  label: const Text(
+                    'Ver todas las cafeterías',
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
