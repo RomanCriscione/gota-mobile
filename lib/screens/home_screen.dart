@@ -10,6 +10,16 @@ import '../widgets/loading_skeleton.dart';
 import 'cafes_map_screen.dart';
 import 'cafe_detail_screen.dart';
 
+class RadarRecommendation {
+  final Cafe cafe;
+  final String motivo;
+
+  const RadarRecommendation({
+    required this.cafe,
+    required this.motivo,
+  });
+}
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -21,18 +31,46 @@ class HomeScreen extends StatefulWidget {
 
     late Future<List<Cafe>> cafesFuture;
     late Future<List<CafeRelationship>> mapaFuture;
-    late Future<Cafe?> radarFuture;
+    late Future<RadarRecommendation?> radarFuture;
+  
+  Future<T> medirTiempo<T>(
+    String nombre,
+    Future<T> Function() tarea,
+  ) async {
+    final stopwatch = Stopwatch()..start();
+
+    try {
+      return await tarea();
+    } finally {
+      stopwatch.stop();
+
+      debugPrint(
+        '⏱️ HOME $nombre: ${stopwatch.elapsedMilliseconds} ms',
+      );
+    }
+  }
 
   @override
   void initState() {
     super.initState();
 
-    cafesFuture = ApiService.obtenerCafes();
-    mapaFuture = ApiService.obtenerMiMapa();
-    radarFuture = calcularCafeEnRadar();
+    cafesFuture = medirTiempo(
+      'CAFÉS',
+      () => ApiService.obtenerCafes(),
+    );
+
+    mapaFuture = medirTiempo(
+      'MI MAPA',
+      () => ApiService.obtenerMiMapa(),
+    );
+
+    radarFuture = medirTiempo(
+      'RADAR',
+      () => calcularCafeEnRadar(),
+    );
   }
 
-  Future<Cafe?> calcularCafeEnRadar() async {
+  Future<RadarRecommendation?> calcularCafeEnRadar() async {
     final cafes = await cafesFuture;
     final relaciones = await mapaFuture;
 
@@ -48,9 +86,8 @@ class HomeScreen extends StatefulWidget {
       }
     }
 
-    final cafesReferencia = <Cafe>[];
-
-    final idsYaVisitados = <int>{};
+    final idsConRelacion = <int>{};
+    final pesosPorCafe = <int, double>{};
 
     for (final relacion in relaciones) {
       final cafe = cafesPorId[relacion.cafeId];
@@ -59,18 +96,14 @@ class HomeScreen extends StatefulWidget {
         continue;
       }
 
+      idsConRelacion.add(relacion.cafeId);
+
       if (relacion.status == 'want_to_return') {
-        cafesReferencia.add(cafe);
-        cafesReferencia.add(cafe);
-        cafesReferencia.add(cafe);
-
-        idsYaVisitados.add(relacion.cafeId);
+        pesosPorCafe[relacion.cafeId] = 3;
       } else if (relacion.status == 'visited') {
-        cafesReferencia.add(cafe);
-
-        idsYaVisitados.add(relacion.cafeId);
+        pesosPorCafe[relacion.cafeId] = 2;
       } else if (relacion.status == 'want_to_go') {
-        cafesReferencia.add(cafe);
+        pesosPorCafe[relacion.cafeId] = 1;
       }
     }
 
@@ -79,90 +112,269 @@ class HomeScreen extends StatefulWidget {
         return false;
       }
 
-      return !idsYaVisitados.contains(cafe.id);
+      return !idsConRelacion.contains(cafe.id);
     }).toList();
 
     if (candidatos.isEmpty) {
       return null;
     }
 
-    if (cafesReferencia.isEmpty) {
+    if (pesosPorCafe.isEmpty) {
       final indice =
           DateTime.now().day % candidatos.length;
 
-      return candidatos[indice];
+      return RadarRecommendation(
+        cafe: candidatos[indice],
+        motivo:
+            'Una opción distinta para seguir descubriendo.',
+      );
     }
 
-    int puntajeCafe(Cafe candidato) {
-      int puntaje = 0;
+    double pesoTotal = 0;
 
-      for (final referencia in cafesReferencia) {
-        if (candidato.id == referencia.id) {
+    for (final peso in pesosPorCafe.values) {
+      pesoTotal += peso;
+    }
+
+    double afinidadCaracteristica(
+      bool Function(Cafe cafe) cumple,
+    ) {
+      double puntos = 0;
+
+      pesosPorCafe.forEach((cafeId, peso) {
+        final cafe = cafesPorId[cafeId];
+
+        if (cafe != null && cumple(cafe)) {
+          puntos += peso;
+        }
+      });
+
+      if (pesoTotal == 0) {
+        return 0;
+      }
+
+      return puntos / pesoTotal;
+    }
+
+    final afinidadEspecialidad =
+        afinidadCaracteristica(
+      (cafe) => cafe.cafeEspecialidad,
+    );
+
+    final afinidadBrunch =
+        afinidadCaracteristica(
+      (cafe) => cafe.brunch,
+    );
+
+    final afinidadDesayuno =
+        afinidadCaracteristica(
+      (cafe) => cafe.desayuno,
+    );
+
+    final afinidadPasteleria =
+        afinidadCaracteristica(
+      (cafe) => cafe.pasteleriaArtesanal,
+    );
+
+    final afinidadTrabajar =
+        afinidadCaracteristica(
+      (cafe) => cafe.laptopFriendly,
+    );
+
+    final afinidadTranquilidad =
+        afinidadCaracteristica(
+      (cafe) => cafe.espacioTranquilo,
+    );
+
+    final afinidadPet =
+        afinidadCaracteristica(
+      (cafe) => cafe.petFriendly,
+    );
+
+    final afinidadWifi =
+        afinidadCaracteristica(
+      (cafe) => cafe.tieneWifi,
+    );
+
+    final afinidadLibros =
+        afinidadCaracteristica(
+      (cafe) => cafe.librosOJuegos,
+    );
+
+    final pesoTags = <String, double>{};
+    final pesoZonas = <String, double>{};
+
+    pesosPorCafe.forEach((cafeId, peso) {
+      final cafe = cafesPorId[cafeId];
+
+      if (cafe == null) {
+        return;
+      }
+
+      if (cafe.zona.trim().isNotEmpty) {
+        pesoZonas[cafe.zona] =
+            (pesoZonas[cafe.zona] ?? 0) + peso;
+      }
+
+      for (final tag in cafe.tags) {
+        final tagTexto =
+            tag.toString().trim().toLowerCase();
+
+        if (tagTexto.isEmpty) {
           continue;
         }
 
-        if (candidato.zona == referencia.zona) {
-          puntaje += 3;
+        pesoTags[tagTexto] =
+            (pesoTags[tagTexto] ?? 0) + peso;
+      }
+    });
+
+    double puntajeTags(Cafe candidato) {
+      double puntos = 0;
+
+      for (final tag in candidato.tags) {
+        final tagTexto =
+            tag.toString().trim().toLowerCase();
+
+        final peso = pesoTags[tagTexto];
+
+        if (peso == null) {
+          continue;
         }
 
-        if (candidato.cafeEspecialidad &&
-            referencia.cafeEspecialidad) {
-          puntaje += 3;
-        }
+        final afinidad = peso / pesoTotal;
 
-        if (candidato.brunch &&
-            referencia.brunch) {
-          puntaje += 2;
-        }
-
-        if (candidato.desayuno &&
-            referencia.desayuno) {
-          puntaje += 2;
-        }
-
-        if (candidato.pasteleriaArtesanal &&
-            referencia.pasteleriaArtesanal) {
-          puntaje += 2;
-        }
-
-        if (candidato.laptopFriendly &&
-            referencia.laptopFriendly) {
-          puntaje += 4;
-        }
-
-        if (candidato.espacioTranquilo &&
-            referencia.espacioTranquilo) {
-          puntaje += 4;
-        }
-
-        if (candidato.petFriendly &&
-            referencia.petFriendly) {
-          puntaje += 2;
-        }
-
-        if (candidato.tieneWifi &&
-            referencia.tieneWifi) {
-          puntaje += 2;
-        }
-
-        if (candidato.librosOJuegos &&
-            referencia.librosOJuegos) {
-          puntaje += 2;
-        }
-
-        final tagsReferencia =
-            referencia.tags.map((tag) => tag.toString()).toSet();
-
-        final tagsCandidato =
-            candidato.tags.map((tag) => tag.toString()).toSet();
-
-        final coincidencias =
-            tagsCandidato.intersection(tagsReferencia).length;
-
-        puntaje += coincidencias * 4;
+        puntos += afinidad * 6;
       }
 
-      return puntaje;
+      return puntos.clamp(0, 18).toDouble();
+    }
+
+    double puntajeZona(Cafe candidato) {
+      final peso =
+          pesoZonas[candidato.zona] ?? 0;
+
+      if (pesoTotal == 0) {
+        return 0;
+      }
+
+      return (peso / pesoTotal) * 4;
+    }
+
+    Map<String, double> desgloseCafe(
+      Cafe candidato,
+    ) {
+      return {
+        'tags': puntajeTags(candidato),
+
+        'tranquilidad':
+            candidato.espacioTranquilo
+                ? afinidadTranquilidad * 10
+                : 0,
+
+        'trabajar':
+            candidato.laptopFriendly
+                ? afinidadTrabajar * 10
+                : 0,
+
+        'especialidad':
+            candidato.cafeEspecialidad
+                ? afinidadEspecialidad * 8
+                : 0,
+
+        'brunch':
+            candidato.brunch
+                ? afinidadBrunch * 6
+                : 0,
+
+        'desayuno':
+            candidato.desayuno
+                ? afinidadDesayuno * 5
+                : 0,
+
+        'pasteleria':
+            candidato.pasteleriaArtesanal
+                ? afinidadPasteleria * 5
+                : 0,
+
+        'pet':
+            candidato.petFriendly
+                ? afinidadPet * 4
+                : 0,
+
+        'wifi':
+            candidato.tieneWifi
+                ? afinidadWifi * 5
+                : 0,
+
+        'libros':
+            candidato.librosOJuegos
+                ? afinidadLibros * 4
+                : 0,
+
+        'zona': puntajeZona(candidato),
+      };
+    }
+
+    double puntajeCafe(Cafe candidato) {
+      return desgloseCafe(
+        candidato,
+      ).values.fold(
+        0,
+        (total, valor) => total + valor,
+      );
+    }
+
+    String motivoCafe(Cafe candidato) {
+      final desglose = desgloseCafe(candidato);
+
+      String? claveGanadora;
+      double mejorPuntaje = 0;
+
+      desglose.forEach((clave, puntaje) {
+        if (puntaje > mejorPuntaje) {
+          mejorPuntaje = puntaje;
+          claveGanadora = clave;
+        }
+      });
+
+      switch (claveGanadora) {
+        case 'tags':
+          return 'Se parece a lugares que ya forman parte de tu recorrido.';
+
+        case 'tranquilidad':
+          return 'Porque solés elegir lugares tranquilos.';
+
+        case 'trabajar':
+          return 'Porque suele encajar con lugares para trabajar o estudiar.';
+
+        case 'especialidad':
+          return 'Porque el café de especialidad aparece mucho en tu recorrido.';
+
+        case 'brunch':
+          return 'Porque el brunch aparece entre los lugares que elegís.';
+
+        case 'desayuno':
+          return 'Porque coincide con lugares que elegís para desayunar.';
+
+        case 'pasteleria':
+          return 'Porque la pastelería artesanal aparece en tu recorrido.';
+
+        case 'pet':
+          return 'Porque coincide con lugares pet friendly que elegís.';
+
+        case 'wifi':
+          return 'Porque el wifi aparece mucho entre los lugares que guardás.';
+
+        case 'libros':
+          return 'Porque coincide con lugares con libros o juegos que elegís.';
+
+        case 'zona':
+          return 'Porque está en una zona que aparece en tu recorrido.';
+
+        default:
+          return 'Elegido según los cafés de tu recorrido.';
+      }
     }
 
     candidatos.sort(
@@ -171,15 +383,73 @@ class HomeScreen extends StatefulWidget {
       ),
     );
 
-    final mejores =
+    final topCinco =
         candidatos.take(5).toList();
+
+    final mejorPuntaje =
+        puntajeCafe(topCinco.first);
+
+    final mejores = topCinco.where((cafe) {
+      final puntaje = puntajeCafe(cafe);
+
+      return puntaje >= mejorPuntaje * 0.90;
+    }).toList();
+
+    debugPrint(
+      '========== RADAR GOTA V2 ==========',
+    );
+
+    debugPrint(
+      'Perfil: '
+      'tranquilo=${afinidadTranquilidad.toStringAsFixed(2)} | '
+      'trabajar=${afinidadTrabajar.toStringAsFixed(2)} | '
+      'especialidad=${afinidadEspecialidad.toStringAsFixed(2)} | '
+      'brunch=${afinidadBrunch.toStringAsFixed(2)} | '
+      'wifi=${afinidadWifi.toStringAsFixed(2)}',
+    );
+
+    for (var i = 0; i < mejores.length; i++) {
+      final cafe = mejores[i];
+      final desglose = desgloseCafe(cafe);
+
+      debugPrint(
+        '${i + 1}. ${cafe.nombre} '
+        '(${cafe.zona}) — '
+        '${puntajeCafe(cafe).toStringAsFixed(1)} puntos',
+      );
+
+      debugPrint(
+        '   tags=${desglose['tags']!.toStringAsFixed(1)} | '
+        'tranquilo=${desglose['tranquilidad']!.toStringAsFixed(1)} | '
+        'trabajar=${desglose['trabajar']!.toStringAsFixed(1)} | '
+        'especialidad=${desglose['especialidad']!.toStringAsFixed(1)} | '
+        'zona=${desglose['zona']!.toStringAsFixed(1)}',
+      );
+    }
 
     final indice =
         DateTime.now().day % mejores.length;
 
-    return mejores[indice];
-  }
+    final cafeElegido =
+        mejores[indice];
 
+    debugPrint(
+      'ELEGIDO HOY: ${cafeElegido.nombre}',
+    );
+
+    debugPrint(
+      'MOTIVO: ${motivoCafe(cafeElegido)}',
+    );
+
+    debugPrint(
+      '===================================',
+    );
+
+    return RadarRecommendation(
+      cafe: cafeElegido,
+      motivo: motivoCafe(cafeElegido),
+    );
+  }
     Future<void> recargarHome() async {
       final nuevoCafesFuture =
           ApiService.obtenerCafes(
@@ -908,7 +1178,7 @@ class HomeScreen extends StatefulWidget {
 
       const SizedBox(height: 16),
 
-            FutureBuilder<Cafe?>(
+            FutureBuilder<RadarRecommendation?>(
               future: radarFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState ==
@@ -924,7 +1194,8 @@ class HomeScreen extends StatefulWidget {
                   return const SizedBox.shrink();
                 }
 
-                final cafeEnRadar = snapshot.data!;
+                final recomendacion = snapshot.data!;
+                final cafeEnRadar = recomendacion.cafe;
 
                 return Padding(
                   padding: EdgeInsets.zero,
@@ -1005,6 +1276,17 @@ class HomeScreen extends StatefulWidget {
                               cafeEnRadar.zona,
                               style: const TextStyle(
                                 color: Colors.black54,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+
+                            Text(
+                              recomendacion.motivo,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                height: 1.35,
+                                color: Color(0xFF172C6D),
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
