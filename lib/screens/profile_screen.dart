@@ -27,6 +27,84 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await usuarioFuture;
   }
 
+  Future<void> abrirFlujoCafeteria(User usuario) async {
+    if (usuario.isOwner) {
+      Navigator.pushNamed(
+        context,
+        '/create-cafe',
+      );
+      return;
+    }
+
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text(
+            '¿Tenés una cafetería?',
+          ),
+          content: const Text(
+            'Al continuar, tu cuenta de Gota se configurará '
+            'como cuenta de dueño para que puedas sumar '
+            'y gestionar tu cafetería.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  false,
+                );
+              },
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  true,
+                );
+              },
+              child: const Text(
+                'Continuar como dueño',
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmar != true || !mounted) {
+      return;
+    }
+
+    final convertido =
+        await AuthService.convertirEnDueno();
+
+    if (!mounted) return;
+
+    if (!convertido) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No pudimos configurar tu cuenta. '
+            'Intentá nuevamente.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    await recargarPerfil();
+
+    if (!mounted) return;
+
+    Navigator.pushNamed(
+      context,
+      '/create-cafe',
+    );
+  }
+
   Future<void> cerrarSesion() async {
     await AuthService.logout();
 
@@ -252,6 +330,82 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
 
+                const SizedBox(height: 24),
+
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFFBFDBFE),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.local_cafe_outlined,
+                            color: Color(0xFF1E3A8A),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              usuario.isOwner
+                                  ? 'Tu cafetería en Gota'
+                                  : '¿Tenés una cafetería?',
+                              style: const TextStyle(
+                                fontSize: 19,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF172C6D),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      Text(
+                        usuario.isOwner
+                            ? 'Sumá tu cafetería y hacé que forme parte '
+                                'del mapa cafetero de Gota.'
+                            : 'Sumá tu cafetería a Gota y hacé que más '
+                                'personas puedan descubrirla.',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          height: 1.4,
+                          color: Color(0xFF4B5563),
+                        ),
+                      ),
+
+                      const SizedBox(height: 18),
+
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            abrirFlujoCafeteria(usuario);
+                          },
+                          icon: Icon(
+                            usuario.isOwner
+                                ? Icons.add
+                                : Icons.storefront_outlined,
+                          ),
+                          label: Text(
+                            usuario.isOwner
+                                ? 'Sumar cafetería'
+                                : 'Soy dueño de una cafetería',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                        
                 const SizedBox(height: 24),
 
                 SizedBox(

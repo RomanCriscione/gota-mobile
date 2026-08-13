@@ -696,6 +696,76 @@ class HomeScreen extends StatefulWidget {
                 ),
               ),
 
+              const SizedBox(height: 14),
+
+              InkWell(
+                borderRadius: BorderRadius.circular(18),
+                onTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/profile',
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 15,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: const Color(0xFFE5E7EB),
+                    ),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(
+                        Icons.storefront_outlined,
+                        size: 26,
+                        color: Color(0xFF172C6D),
+                      ),
+
+                      SizedBox(width: 14),
+
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '¿Tenés una cafetería?',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF172C6D),
+                              ),
+                            ),
+
+                            SizedBox(height: 3),
+
+                            Text(
+                              'Sumala a Gota',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 16,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
             const SizedBox(height: 18),
 
             const SectionTitle(

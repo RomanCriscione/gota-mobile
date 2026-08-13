@@ -4,10 +4,12 @@ import 'package:latlong2/latlong.dart';
 import 'cafe_detail_screen.dart';
 import '../widgets/network_image_card.dart';
 import '../widgets/rating_badge.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../models/cafe.dart';
 
-class CafesMapScreen extends StatelessWidget {
+class CafesMapScreen extends StatefulWidget {
   final List<Cafe> cafes;
 
   const CafesMapScreen({
@@ -16,7 +18,88 @@ class CafesMapScreen extends StatelessWidget {
   });
 
   @override
+  State<CafesMapScreen> createState() =>
+      _CafesMapScreenState();
+}
+
+class _CafesMapScreenState
+    extends State<CafesMapScreen> {
+  Position? posicionActual;
+  bool buscandoUbicacion = true;
+  final MapController mapController = MapController();
+
+  @override
+  void initState() {
+    super.initState();
+    obtenerUbicacionInicial();
+  }
+
+  Future<void> obtenerUbicacionInicial() async {
+    try {
+      final servicioHabilitado =
+          await Geolocator.isLocationServiceEnabled();
+
+      if (!servicioHabilitado) {
+        if (!mounted) return;
+
+        setState(() {
+          buscandoUbicacion = false;
+        });
+
+        return;
+      }
+
+      final permiso =
+          await Geolocator.checkPermission();
+
+      if (permiso == LocationPermission.denied ||
+          permiso == LocationPermission.deniedForever) {
+        if (!mounted) return;
+
+        setState(() {
+          buscandoUbicacion = false;
+        });
+
+        return;
+      }
+
+      final posicion =
+          await Geolocator.getCurrentPosition();
+
+      if (!mounted) return;
+
+      setState(() {
+        posicionActual = posicion;
+        buscandoUbicacion = false;
+      });
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+
+        mapController.move(
+          LatLng(
+            posicion.latitude,
+            posicion.longitude,
+          ),
+          14.5,
+        );
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        buscandoUbicacion = false;
+      });
+
+      debugPrint(
+        'Error ubicación mapa: $e',
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final cafes = widget.cafes;
     final cafesConUbicacion = cafes.where((cafe) {
         return cafe.latitude != null &&
             cafe.longitude != null &&
@@ -24,27 +107,53 @@ class CafesMapScreen extends StatelessWidget {
             cafe.longitude!.isFinite;
         }).toList();
 
+    final LatLng centroInicial;
+
+    if (cafesConUbicacion.isNotEmpty) {
+      final promedioLat = cafesConUbicacion
+              .map((cafe) => cafe.latitude!)
+              .reduce((a, b) => a + b) /
+          cafesConUbicacion.length;
+
+      final promedioLng = cafesConUbicacion
+              .map((cafe) => cafe.longitude!)
+              .reduce((a, b) => a + b) /
+          cafesConUbicacion.length;
+
+      centroInicial = LatLng(
+        promedioLat,
+        promedioLng,
+      );
+    } else {
+      centroInicial = const LatLng(
+        -34.6037,
+        -58.3816,
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
           'Mapa (${cafesConUbicacion.length})',
         ),
       ),
-        body: FlutterMap(
-        options: MapOptions(
-          initialCenter: cafesConUbicacion.isNotEmpty
-              ? LatLng(
-                  cafesConUbicacion.first.latitude!,
-                  cafesConUbicacion.first.longitude!,
-                )
-              : const LatLng(
-                  -34.6037,
-                  -58.3816,
-                ),
-          initialZoom:
-              cafesConUbicacion.isNotEmpty ? 12 : 11,
-          maxZoom: 18,
-        ),
+        body: buscandoUbicacion
+        ? const Center(
+            child: CircularProgressIndicator(),
+          )
+        : FlutterMap(
+            mapController: mapController,
+            options: MapOptions(
+              initialCenter: posicionActual != null
+                  ? LatLng(
+                      posicionActual!.latitude,
+                      posicionActual!.longitude,
+                    )
+                  : centroInicial,
+              initialZoom:
+                  posicionActual != null ? 14 : 11,
+              maxZoom: 18,
+            ),
         children: [
             TileLayer(
             urlTemplate:
@@ -205,10 +314,15 @@ class CafesMapScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.local_cafe_outlined,
-                      size: 21,
-                      color: Colors.white,
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: SvgPicture.asset(
+                        'assets/icons/rating_cup.svg',
+                        colorFilter: const ColorFilter.mode(
+                          Colors.white,
+                          BlendMode.srcIn,
+                        ),
+                      ),
                     ),
                   ),
                 ),

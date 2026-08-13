@@ -43,6 +43,7 @@ dependencies:
   geolocator: ^14.0.2
   flutter_svg: ^2.2.1
   cached_network_image: ^3.4.1
+  image_picker: ^1.2.0
 
 dev_dependencies:
   flutter_test:

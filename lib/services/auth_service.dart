@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 
 import '../models/user.dart';
 
@@ -48,6 +49,10 @@ class AuthService {
       }
 
       final token = decodedData['token'];
+
+      debugPrint(
+        'TOKEN LOGIN: $token',
+      );
 
       if (token is! String || token.isEmpty) {
         return false;
@@ -140,6 +145,43 @@ class AuthService {
     final token = await obtenerToken();
 
     return token != null && token.isNotEmpty;
+  }
+
+  static Future<bool> convertirEnDueno() async {
+    final token = await obtenerToken();
+
+    if (token == null || token.isEmpty) {
+      return false;
+    }
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/become-owner/'),
+            headers: {
+              'Authorization': 'Token $token',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(
+            const Duration(seconds: 15),
+          );
+
+      if (response.statusCode != 200) {
+        return false;
+      }
+
+      final dynamic decodedData =
+          jsonDecode(response.body);
+
+      if (decodedData is! Map<String, dynamic>) {
+        return false;
+      }
+
+      return decodedData['success'] == true;
+    } catch (_) {
+      return false;
+    }
   }
 
   static Future<void> logout() async {

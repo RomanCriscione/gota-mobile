@@ -8,6 +8,7 @@ import 'services/app_state.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/create_cafe_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -254,6 +255,7 @@ class GotaApp extends StatelessWidget {
         '/nearby': (context) => const NearbyCafesScreen(),
         '/register': (context) => const RegisterScreen(),
         '/profile': (context) => const ProfileScreen(),
+        '/create-cafe': (context) => const CreateCafeScreen(),
       },
     );
   }
