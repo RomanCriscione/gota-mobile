@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'select_cafe_location_screen.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:geocoding/geocoding.dart';
+import '../services/cafe_service.dart';
 
 class CreateCafeScreen extends StatefulWidget {
   const CreateCafeScreen({super.key});
@@ -19,15 +23,21 @@ class _CreateCafeScreenState
   final localidadController = TextEditingController();
   final instagramController = TextEditingController();
   final googleMapsController = TextEditingController();
+  final descripcionController = TextEditingController();
+  final telefonoController = TextEditingController();
 
   String provinciaSeleccionada = '';
 
   final ImagePicker imagePicker = ImagePicker();
+  final Geocoding geocoding = Geocoding();
 
   XFile? fotoPrincipal;
   XFile? foto2;
   XFile? foto3;
+  double? latitude;
+  double? longitude;
 
+    bool enviandoCafe = false;
     bool tieneWifi = false;
     bool aireAcondicionado = false;
     bool enchufes = false;
@@ -80,6 +90,8 @@ class _CreateCafeScreenState
     localidadController.dispose();
     instagramController.dispose();
     googleMapsController.dispose();
+    descripcionController.dispose();
+    telefonoController.dispose();
 
     super.dispose();
   }
@@ -119,10 +131,17 @@ class _CreateCafeScreenState
         }
 
         if (provinciaSeleccionada.isEmpty) {
-        mostrarError(
+          mostrarError(
             'Seleccioná una provincia.',
-        );
-        return;
+          );
+          return;
+        }
+
+        if (latitude == null || longitude == null) {
+          mostrarError(
+            'Confirmá la ubicación de la cafetería en el mapa.',
+          );
+          return;
         }
 
         if (fotoPrincipal == null) {
@@ -138,6 +157,81 @@ class _CreateCafeScreenState
         pasoActual++;
         });
     }
+    }
+
+    Future<void> seleccionarUbicacionMapa() async {
+      LatLng? ubicacionInicial;
+
+      // Si el usuario ya eligió/corrigió un punto anteriormente,
+      // respetamos ese punto.
+      if (latitude != null && longitude != null) {
+        ubicacionInicial = LatLng(
+          latitude!,
+          longitude!,
+        );
+      } else {
+        final direccion = direccionController.text.trim();
+        final localidad = localidadController.text.trim();
+        final provincia = provinciaSeleccionada.trim();
+
+        if (direccion.isEmpty ||
+            localidad.isEmpty ||
+            provincia.isEmpty) {
+          mostrarError(
+            'Completá dirección, localidad y provincia antes de elegir la ubicación.',
+          );
+          return;
+        }
+
+        final direccionCompleta =
+            '$direccion, $localidad, $provincia, Argentina';
+
+        try {
+          final resultados = await geocoding.locationFromAddress(
+            direccionCompleta,
+          );
+
+          if (resultados.isNotEmpty) {
+            final ubicacion = resultados.first;
+
+            ubicacionInicial = LatLng(
+              ubicacion.latitude,
+              ubicacion.longitude,
+            );
+          }
+        } catch (_) {
+          if (!mounted) return;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'No pudimos ubicar automáticamente esa dirección. '
+                'Podés marcarla manualmente en el mapa.',
+              ),
+            ),
+          );
+        }
+      }
+
+      if (!mounted) return;
+
+      final resultado = await Navigator.push<LatLng>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SelectCafeLocationScreen(
+            initialLocation: ubicacionInicial,
+          ),
+        ),
+      );
+
+      if (resultado == null || !mounted) {
+        return;
+      }
+
+      setState(() {
+        latitude = resultado.latitude;
+        longitude = resultado.longitude;
+      });
     }
 
     Future<XFile?> elegirImagen() async {
@@ -195,6 +289,87 @@ class _CreateCafeScreenState
             ),
         );
         }
+  Future<void> enviarCafe() async {
+    if (enviandoCafe) return;
+
+    if (fotoPrincipal == null ||
+        latitude == null ||
+        longitude == null) {
+      mostrarError(
+        'Faltan datos obligatorios para enviar la cafetería.',
+      );
+      return;
+    }
+
+    setState(() {
+      enviandoCafe = true;
+    });
+
+    try {
+      await CafeService.crearCafe(
+        nombre: nombreController.text.trim(),
+        direccion: direccionController.text.trim(),
+        localidad: localidadController.text.trim(),
+        provincia: provinciaSeleccionada,
+        descripcion: descripcionController.text.trim(),
+        telefono: telefonoController.text.trim(),
+        instagram: instagramController.text.trim(),
+        googleMapsUrl: googleMapsController.text.trim(),
+        latitude: latitude!,
+        longitude: longitude!,
+        fotoPrincipal: fotoPrincipal!,
+        foto2: foto2,
+        foto3: foto3,
+
+        tieneWifi: tieneWifi,
+        aireAcondicionado: aireAcondicionado,
+        enchufes: enchufes,
+        mesasAlAireLibre: mesasAlAireLibre,
+        estacionamiento: estacionamiento,
+        accesible: accesible,
+        cambiadorBebes: cambiadorBebes,
+        petFriendly: petFriendly,
+        cafeEspecialidad: cafeEspecialidad,
+        brunch: brunch,
+        desayuno: desayuno,
+        alcohol: alcohol,
+        pasteleriaArtesanal: pasteleriaArtesanal,
+        veganFriendly: veganFriendly,
+        vegetariano: vegetariano,
+        sinTacc: sinTacc,
+        librosOJuegos: librosOJuegos,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Cafetería agregada correctamente.',
+          ),
+        ),
+      );
+
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+
+      final mensaje = e
+          .toString()
+          .replaceFirst(
+            'Exception: ',
+            '',
+          );
+
+      mostrarError(mensaje);
+    } finally {
+      if (mounted) {
+        setState(() {
+          enviandoCafe = false;
+        });
+      }
+    }
+  }
 
   void pasoAnterior() {
     if (pasoActual > 0) {
@@ -245,13 +420,15 @@ class _CreateCafeScreenState
     switch (pasoActual) {
         case 0:
         return _PasoDatos(
-            key: const ValueKey('datos'),
-            nombreController: nombreController,
-            direccionController: direccionController,
-            localidadController: localidadController,
-            instagramController: instagramController,
-            googleMapsController: googleMapsController,
-            provinciaSeleccionada: provinciaSeleccionada,
+          key: const ValueKey('datos'),
+          nombreController: nombreController,
+          direccionController: direccionController,
+          localidadController: localidadController,
+          instagramController: instagramController,
+          googleMapsController: googleMapsController,
+          descripcionController: descripcionController,
+          telefonoController: telefonoController,
+          provinciaSeleccionada: provinciaSeleccionada,
             provincias: provincias,
             onProvinciaChanged: (value) {
             setState(() {
@@ -261,6 +438,9 @@ class _CreateCafeScreenState
             fotoPrincipal: fotoPrincipal,
             foto2: foto2,
             foto3: foto3,
+            latitude: latitude,
+            longitude: longitude,
+            onSeleccionarUbicacion: seleccionarUbicacionMapa,
             onSeleccionarFotoPrincipal: seleccionarFotoPrincipal,
             onSeleccionarFoto2: seleccionarFoto2,
             onSeleccionarFoto3: seleccionarFoto3,
@@ -381,16 +561,20 @@ class _CreateCafeScreenState
 
         default:
         return _PasoRevision(
-            key: const ValueKey('revision'),
-            nombre: nombreController.text.trim(),
-            direccion: direccionController.text.trim(),
-            localidad: localidadController.text.trim(),
-            provincia: provinciaSeleccionada,
-            instagram: instagramController.text.trim(),
-            googleMaps: googleMapsController.text.trim(),
-            fotoPrincipal: fotoPrincipal,
+          key: const ValueKey('revision'),
+          nombre: nombreController.text.trim(),
+          direccion: direccionController.text.trim(),
+          localidad: localidadController.text.trim(),
+          provincia: provinciaSeleccionada,
+          descripcion: descripcionController.text.trim(),
+          telefono: telefonoController.text.trim(),
+          instagram: instagramController.text.trim(),
+          googleMaps: googleMapsController.text.trim(),
+          fotoPrincipal: fotoPrincipal,
             foto2: foto2,
             foto3: foto3,
+            latitude: latitude,
+            longitude: longitude,
 
             tieneWifi: tieneWifi,
             aireAcondicionado: aireAcondicionado,
@@ -411,6 +595,8 @@ class _CreateCafeScreenState
             librosOJuegos: librosOJuegos,
 
             onVolver: pasoAnterior,
+            onEnviar: enviarCafe,
+            enviando: enviandoCafe,
         );
     }
   }
@@ -486,6 +672,8 @@ class _PasoDatos extends StatelessWidget {
   final TextEditingController localidadController;
   final TextEditingController instagramController;
   final TextEditingController googleMapsController;
+  final TextEditingController descripcionController;
+  final TextEditingController telefonoController;
 
   final String provinciaSeleccionada;
   final List<String> provincias;
@@ -495,6 +683,9 @@ class _PasoDatos extends StatelessWidget {
   final XFile? fotoPrincipal;
   final XFile? foto2;
   final XFile? foto3;
+  final double? latitude;
+  final double? longitude;
+  final VoidCallback onSeleccionarUbicacion;
 
   final VoidCallback onSeleccionarFotoPrincipal;
   final VoidCallback onSeleccionarFoto2;
@@ -508,10 +699,15 @@ class _PasoDatos extends StatelessWidget {
     required this.instagramController,
     required this.googleMapsController,
     required this.provinciaSeleccionada,
+    required this.descripcionController,
+    required this.telefonoController,
     required this.provincias,
     required this.onProvinciaChanged,
     required this.onContinuar,
     required this.fotoPrincipal,
+    required this.latitude,
+    required this.longitude,
+    required this.onSeleccionarUbicacion,
     required this.foto2,
     required this.foto3,
     required this.onSeleccionarFotoPrincipal,
@@ -606,6 +802,43 @@ class _PasoDatos extends StatelessWidget {
 
         const SizedBox(height: 14),
 
+        const Text(
+          'Ubicación en el mapa *',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF111827),
+          ),
+        ),
+
+        const SizedBox(height: 6),
+
+        const Text(
+          'Marcá el punto exacto donde está la cafetería.',
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.black54,
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        OutlinedButton.icon(
+          onPressed: onSeleccionarUbicacion,
+          icon: Icon(
+            latitude != null && longitude != null
+                ? Icons.check_circle_outline_rounded
+                : Icons.location_on_outlined,
+          ),
+          label: Text(
+            latitude != null && longitude != null
+                ? 'Ubicación seleccionada · Cambiar'
+                : 'Elegir ubicación en el mapa',
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
         TextField(
           controller: instagramController,
           decoration: const InputDecoration(
@@ -621,6 +854,32 @@ class _PasoDatos extends StatelessWidget {
           keyboardType: TextInputType.url,
           decoration: const InputDecoration(
             labelText: 'Link de Google Maps',
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
+        TextField(
+          controller: telefonoController,
+          keyboardType: TextInputType.phone,
+          decoration: const InputDecoration(
+            labelText: 'Teléfono',
+            hintText: 'Ej: 11 1234-5678',
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
+        TextField(
+          controller: descripcionController,
+          maxLines: 4,
+          minLines: 3,
+          maxLength: 500,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: const InputDecoration(
+            labelText: 'Descripción',
+            hintText: 'Contá brevemente qué hace especial a tu cafetería.',
+            alignLabelWithHint: true,
           ),
         ),
 
@@ -1086,12 +1345,16 @@ class _PasoRevision extends StatelessWidget {
   final String direccion;
   final String localidad;
   final String provincia;
+  final String descripcion;
+  final String telefono;
   final String instagram;
   final String googleMaps;
 
   final XFile? fotoPrincipal;
   final XFile? foto2;
   final XFile? foto3;
+  final double? latitude;
+  final double? longitude;
 
   final bool tieneWifi;
   final bool aireAcondicionado;
@@ -1112,6 +1375,8 @@ class _PasoRevision extends StatelessWidget {
   final bool librosOJuegos;
 
   final VoidCallback onVolver;
+  final VoidCallback onEnviar;
+  final bool enviando;
 
   const _PasoRevision({
     super.key,
@@ -1119,11 +1384,15 @@ class _PasoRevision extends StatelessWidget {
     required this.direccion,
     required this.localidad,
     required this.provincia,
+    required this.descripcion,
+    required this.telefono,
     required this.instagram,
     required this.googleMaps,
     required this.fotoPrincipal,
     required this.foto2,
     required this.foto3,
+    required this.latitude,
+    required this.longitude,
     required this.tieneWifi,
     required this.aireAcondicionado,
     required this.enchufes,
@@ -1142,6 +1411,8 @@ class _PasoRevision extends StatelessWidget {
     required this.sinTacc,
     required this.librosOJuegos,
     required this.onVolver,
+    required this.onEnviar,
+    required this.enviando,
   });
 
   @override
@@ -1273,6 +1544,24 @@ class _PasoRevision extends StatelessWidget {
               _DatoRevision(label: 'Dirección', value: direccion),
               _DatoRevision(label: 'Localidad', value: localidad),
               _DatoRevision(label: 'Provincia', value: provincia),
+              if (telefono.isNotEmpty)
+                _DatoRevision(
+                  label: 'Teléfono',
+                  value: telefono,
+                ),
+
+              if (descripcion.isNotEmpty)
+                _DatoRevision(
+                  label: 'Descripción',
+                  value: descripcion,
+                ),
+
+              _DatoRevision(
+                label: 'Ubicación en el mapa',
+                value: latitude != null && longitude != null
+                    ? 'Ubicación confirmada'
+                    : 'Sin confirmar',
+              ),
 
               if (instagram.isNotEmpty)
                 _DatoRevision(
@@ -1382,8 +1671,21 @@ class _PasoRevision extends StatelessWidget {
         const SizedBox(height: 12),
 
         ElevatedButton(
-          onPressed: null,
-          child: const Text('Enviar cafetería'),
+          onPressed: enviando
+              ? null
+              : onEnviar,
+          child: enviando
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.4,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text(
+                  'Enviar cafetería',
+                ),
         ),
       ],
     );

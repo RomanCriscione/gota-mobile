@@ -8,6 +8,7 @@ import '../widgets/network_image_card.dart';
 import '../models/cafe.dart';
 import '../widgets/feature_card.dart';
 import '../widgets/mini_cafe_card.dart';
+import 'create_review_screen.dart';
 
 class CafeDetailScreen extends StatefulWidget {
   final int cafeId;
@@ -822,7 +823,7 @@ double? get longitudeCafe {
 
                                 const SizedBox(height: 12),
 
-                                if (ratingCafe == '0.0' ||
+                  if (ratingCafe == '0.0' ||
                     ratingCafe == 'Sin calificación')
                   const Text(
                     'Aún sin reseñas',
@@ -878,12 +879,43 @@ double? get longitudeCafe {
               ],
             ),
 
+            const SizedBox(height: 16),
+
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          CreateReviewScreen(
+                        cafeId: widget.cafeId,
+                        cafeName: nombreCafe,
+                      ),
+                    ),
+                  );
+
+                  if (!mounted) return;
+
+                  await cargarDetalleCafe();
+                },
+                icon: SvgPicture.asset(
+                  'assets/icons/rating_cup.svg',
+                  width: 20,
+                  height: 20,
+                ),
+                label: const Text(
+                  'Contá cómo fue',
+                ),
+              ),
+            ),
+
             const SizedBox(height: 18),
 
             etiquetaEstadoActual(),
 
             const SizedBox(height: 24),
-
             if (tagsCafe.isNotEmpty) ...[
               Container(
                 width: double.infinity,
