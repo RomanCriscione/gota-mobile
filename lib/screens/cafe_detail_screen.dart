@@ -37,6 +37,7 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
   String? estadoActual;
   Map<String, dynamic>? detalleCafe;
   bool cargandoDetalle = true;
+  bool errorCargandoDetalle = false;
 
   List<Cafe> cafesRelacionados = [];
   bool cargandoRelacionados = true;
@@ -53,6 +54,11 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
   }
 
   Future<void> cargarDetalleCafe() async {
+    setState(() {
+      cargandoDetalle = true;
+      errorCargandoDetalle = false;
+    });
+
     try {
       final detalle =
           await ApiService.obtenerDetalleCafe(
@@ -70,6 +76,7 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
 
       setState(() {
         cargandoDetalle = false;
+        errorCargandoDetalle = true;
       });
 
     }
@@ -217,6 +224,17 @@ double? get longitudeCafe {
     return 0;
   }
 
+  Map<String, dynamic>? get miReview {
+    final dynamic data =
+        detalleCafe?['my_review'];
+
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+
+    return null;
+  }
+
   bool get tieneWifiCafe {
     return detalleCafe?['has_wifi'] == true;
   }
@@ -249,6 +267,50 @@ double? get longitudeCafe {
     return detalleCafe?['quiet_space'] == true;
   }
 
+  bool get aireAcondicionadoCafe {
+    return detalleCafe?['has_air_conditioning'] == true;
+  }
+
+  bool get aireLibreCafe {
+    return detalleCafe?['has_outdoor_seating'] == true;
+  }
+
+  bool get estacionamientoCafe {
+    return detalleCafe?['has_parking'] == true;
+  }
+
+  bool get accesibleCafe {
+    return detalleCafe?['is_accessible'] == true;
+  }
+
+  bool get cambiadorBebesCafe {
+    return detalleCafe?['has_baby_changing'] == true;
+  }
+
+  bool get desayunoCafe {
+    return detalleCafe?['serves_breakfast'] == true;
+  }
+
+  bool get alcoholCafe {
+    return detalleCafe?['serves_alcohol'] == true;
+  }
+
+  bool get pasteleriaArtesanalCafe {
+    return detalleCafe?['has_artisanal_pastries'] == true;
+  }
+
+  bool get vegetarianoCafe {
+    return detalleCafe?['has_vegetarian_options'] == true;
+  }
+
+  bool get sinTaccCafe {
+    return detalleCafe?['has_gluten_free_options'] == true;
+  }
+
+  bool get librosOJuegosCafe {
+    return detalleCafe?['has_books_or_games'] == true;
+  }
+
   List<String> get fotosDisponibles {
     final dynamic fotosApi = detalleCafe?['photos'];
 
@@ -279,45 +341,54 @@ double? get longitudeCafe {
   }
 
   Future<void> guardarEnMapa(String estado) async {
-  String apiStatus = '';
+    String apiStatus = '';
 
-  if (estado == 'quiero_ir') {
-    apiStatus = 'want_to_go';
-  } else if (estado == 'quiero_volver') {
-    apiStatus = 'want_to_return';
-  } else if (estado == 'ya_fui') {
-    apiStatus = 'visited';
-  }
+    if (estado == 'quiero_ir') {
+      apiStatus = 'want_to_go';
+    } else if (estado == 'quiero_volver') {
+      apiStatus = 'want_to_return';
+    } else if (estado == 'ya_fui') {
+      apiStatus = 'visited';
+    }
 
-  final response = await ApiService.setCafeStatus(
-    cafeId: widget.cafeId,
-    status: apiStatus,
-  );
+    try {
+      final response = await ApiService.setCafeStatus(
+        cafeId: widget.cafeId,
+        status: apiStatus,
+      );
 
-  if (!mounted) return;
+      if (!mounted) return;
 
-  setState(() {
-    estadoActual = response['status'];
-  });
+      setState(() {
+        estadoActual = response['status'];
+      });
 
+      String mensaje = '';
 
-  String mensaje = '';
+      if (estado == 'quiero_ir') {
+        mensaje = 'Agregado a Quiero ir';
+      } else if (estado == 'quiero_volver') {
+        mensaje = 'Agregado a Quiero volver';
+      } else if (estado == 'ya_fui') {
+        mensaje = 'Agregado a Ya fui';
+      }
 
-  if (estado == 'quiero_ir') {
-  mensaje = 'Agregado a Quiero ir';
-  } else if (estado == 'quiero_volver') {
-  mensaje = 'Agregado a Quiero volver';
-  } else if (estado == 'ya_fui') {
-  mensaje = 'Agregado a Ya fui';
-  }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(mensaje),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
 
-  if (!mounted) return;
-
-  ScaffoldMessenger.of(context).showSnackBar(
-  SnackBar(
-  content: Text(mensaje),
-  ),
-  );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No pudimos actualizar tu mapa. Intentá nuevamente.',
+          ),
+        ),
+      );
+    }
   }
 
 
@@ -355,13 +426,13 @@ double? get longitudeCafe {
           ),
         ),
       );
-    } catch (error) {
+    } catch (_) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Primero agregá el café a tu mapa',
+            'No pudimos guardar la colección. Revisá que el café esté en tu mapa e intentá nuevamente.',
           ),
         ),
       );
@@ -637,6 +708,56 @@ double? get longitudeCafe {
       );
     }
 
+    if (errorCargandoDetalle || detalleCafe == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Cafetería'),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.cloud_off_outlined,
+                  size: 44,
+                  color: Colors.black45,
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  'No pudimos cargar esta cafetería.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Revisá tu conexión e intentá nuevamente.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                OutlinedButton.icon(
+                  onPressed: cargarDetalleCafe,
+                  icon: const Icon(
+                    Icons.refresh_rounded,
+                  ),
+                  label: const Text(
+                    'Reintentar',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final tieneServicios =
         tieneWifiCafe ||
         petFriendlyCafe ||
@@ -645,7 +766,18 @@ double? get longitudeCafe {
         cafeEspecialidadCafe ||
         brunchCafe ||
         laptopFriendlyCafe ||
-        espacioTranquiloCafe;
+        espacioTranquiloCafe ||
+        aireAcondicionadoCafe ||
+        aireLibreCafe ||
+        estacionamientoCafe ||
+        accesibleCafe ||
+        cambiadorBebesCafe ||
+        desayunoCafe ||
+        alcoholCafe ||
+        pasteleriaArtesanalCafe ||
+        vegetarianoCafe ||
+        sinTaccCafe ||
+        librosOJuegosCafe;
 
     return Scaffold(
       appBar: AppBar(
@@ -890,9 +1022,10 @@ double? get longitudeCafe {
                     MaterialPageRoute(
                       builder: (context) =>
                           CreateReviewScreen(
-                        cafeId: widget.cafeId,
-                        cafeName: nombreCafe,
-                      ),
+                            cafeId: widget.cafeId,
+                            cafeName: nombreCafe,
+                            existingReview: miReview,
+                          ),
                     ),
                   );
 
@@ -900,13 +1033,19 @@ double? get longitudeCafe {
 
                   await cargarDetalleCafe();
                 },
-                icon: SvgPicture.asset(
-                  'assets/icons/rating_cup.svg',
-                  width: 20,
-                  height: 20,
-                ),
-                label: const Text(
-                  'Contá cómo fue',
+                icon: miReview == null
+                    ? SvgPicture.asset(
+                        'assets/icons/rating_cup.svg',
+                        width: 20,
+                        height: 20,
+                      )
+                    : const Icon(
+                        Icons.edit_outlined,
+                      ),
+                label: Text(
+                  miReview == null
+                      ? 'Contá cómo fue'
+                      : 'Editar mi reseña',
                 ),
               ),
             ),
@@ -1250,10 +1389,76 @@ double? get longitudeCafe {
                       icon: Icons.power_rounded,
                     ),
 
+                  if (aireAcondicionadoCafe)
+                    const FeatureCard(
+                      label: 'Aire acondicionado',
+                      icon: Icons.ac_unit_rounded,
+                    ),
+
+                  if (aireLibreCafe)
+                    const FeatureCard(
+                      label: 'Aire libre',
+                      icon: Icons.wb_sunny_outlined,
+                    ),
+
+                  if (estacionamientoCafe)
+                    const FeatureCard(
+                      label: 'Estacionamiento',
+                      icon: Icons.local_parking_rounded,
+                    ),
+
+                  if (accesibleCafe)
+                    const FeatureCard(
+                      label: 'Accesible',
+                      icon: Icons.accessible_rounded,
+                    ),
+
+                  if (cambiadorBebesCafe)
+                    const FeatureCard(
+                      label: 'Cambiador',
+                      icon: Icons.baby_changing_station_rounded,
+                    ),
+
                   if (brunchCafe)
                     const FeatureCard(
                       label: 'Brunch',
                       icon: Icons.brunch_dining_rounded,
+                    ),
+                  
+                  if (desayunoCafe)
+                    const FeatureCard(
+                      label: 'Desayuno',
+                      icon: Icons.breakfast_dining_rounded,
+                    ),
+
+                  if (pasteleriaArtesanalCafe)
+                    const FeatureCard(
+                      label: 'Pastelería',
+                      icon: Icons.cake_outlined,
+                    ),
+
+                  if (vegetarianoCafe)
+                    const FeatureCard(
+                      label: 'Vegetariano',
+                      icon: Icons.eco_outlined,
+                    ),
+
+                  if (sinTaccCafe)
+                    const FeatureCard(
+                      label: 'Sin TACC',
+                      icon: Icons.no_food_outlined,
+                    ),
+
+                  if (alcoholCafe)
+                    const FeatureCard(
+                      label: 'Alcohol',
+                      icon: Icons.local_bar_outlined,
+                    ),
+
+                  if (librosOJuegosCafe)
+                    const FeatureCard(
+                      label: 'Libros / juegos',
+                      icon: Icons.menu_book_outlined,
                     ),
 
                   if (laptopFriendlyCafe)
@@ -1346,10 +1551,22 @@ double? get longitudeCafe {
                       'https://www.google.com/maps/search/?api=1&query=$latitudeCafe,$longitudeCafe',
                     );
 
-                    await launchUrl(
+                    final abierto = await launchUrl(
                       url,
                       mode: LaunchMode.externalApplication,
                     );
+
+                    if (!context.mounted) return;
+
+                    if (!abierto) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'No pudimos abrir Google Maps.',
+                          ),
+                        ),
+                      );
+                    }
                   },
                   icon: const Icon(Icons.map),
                   label: const Text('Abrir en Google Maps'),

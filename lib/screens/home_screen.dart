@@ -33,41 +33,16 @@ class HomeScreen extends StatefulWidget {
     late Future<List<CafeRelationship>> mapaFuture;
     late Future<RadarRecommendation?> radarFuture;
   
-  Future<T> medirTiempo<T>(
-    String nombre,
-    Future<T> Function() tarea,
-  ) async {
-    final stopwatch = Stopwatch()..start();
-
-    try {
-      return await tarea();
-    } finally {
-      stopwatch.stop();
-
-      debugPrint(
-        '⏱️ HOME $nombre: ${stopwatch.elapsedMilliseconds} ms',
-      );
-    }
-  }
-
+  
   @override
   void initState() {
     super.initState();
 
-    cafesFuture = medirTiempo(
-      'CAFÉS',
-      () => ApiService.obtenerCafes(),
-    );
+    cafesFuture = ApiService.obtenerCafes();
 
-    mapaFuture = medirTiempo(
-      'MI MAPA',
-      () => ApiService.obtenerMiMapa(),
-    );
+    mapaFuture = ApiService.obtenerMiMapa();
 
-    radarFuture = medirTiempo(
-      'RADAR',
-      () => calcularCafeEnRadar(),
-    );
+    radarFuture = calcularCafeEnRadar();
   }
 
   Future<RadarRecommendation?> calcularCafeEnRadar() async {
@@ -396,7 +371,7 @@ class HomeScreen extends StatefulWidget {
     }).toList();
 
     debugPrint(
-      '========== RADAR GOTA V2 ==========',
+      '===================================',
     );
 
     debugPrint(

@@ -18,6 +18,7 @@ class NearbyCafesScreen extends StatefulWidget {
 class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
     String estado = 'Obteniendo ubicación...';
     bool cargando = true;
+    bool permisoDenegadoPermanentemente = false;
 
     List<Cafe> cafesCercanos = [];
     List<Cafe> todosLosCafes = [];
@@ -36,7 +37,8 @@ class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
         setState(() {
             cargando = true;
             estado = 'Obteniendo ubicación...';
-        });
+            permisoDenegadoPermanentemente = false;
+            });
         bool servicioHabilitado =
             await Geolocator.isLocationServiceEnabled();
 
@@ -72,9 +74,10 @@ class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
 
             setState(() {
                 cargando = false;
+                permisoDenegadoPermanentemente = true;
                 estado =
                     'El permiso de ubicación está desactivado. Activálo desde los ajustes del teléfono.';
-            });
+                });
 
             return;
         }
@@ -125,7 +128,7 @@ class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
                 cargando = false;
                 estado = '';
             });
-            } catch (e) {
+            } catch (_) {
             if (!mounted) return;
 
             setState(() {
@@ -134,9 +137,6 @@ class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
                     'No pudimos obtener tu ubicación en este momento.';
             });
 
-            debugPrint(
-                'Error Nearby: $e',
-            );
             }
     }
 
@@ -192,14 +192,22 @@ class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
                             ),
                             const SizedBox(height: 20),
                             OutlinedButton.icon(
-                                onPressed: obtenerUbicacion,
-                                icon: const Icon(
-                                Icons.refresh_rounded,
+                                onPressed: permisoDenegadoPermanentemente
+                                    ? () async {
+                                        await Geolocator.openAppSettings();
+                                        }
+                                    : obtenerUbicacion,
+                                icon: Icon(
+                                    permisoDenegadoPermanentemente
+                                        ? Icons.settings_outlined
+                                        : Icons.refresh_rounded,
                                 ),
-                                label: const Text(
-                                'Reintentar',
+                                label: Text(
+                                    permisoDenegadoPermanentemente
+                                        ? 'Abrir ajustes'
+                                        : 'Reintentar',
                                 ),
-                            ),
+                                ),
                             ],
                         ),
                         ),

@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/foundation.dart';
 
 import '../models/user.dart';
 
@@ -50,9 +49,6 @@ class AuthService {
 
       final token = decodedData['token'];
 
-      debugPrint(
-        'TOKEN LOGIN: $token',
-      );
 
       if (token is! String || token.isEmpty) {
         return false;
@@ -206,6 +202,40 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
 
     await prefs.remove(tokenKey);
+  }
+
+  static Future<bool> eliminarCuenta() async {
+    final token = await obtenerToken();
+
+    if (token == null || token.isEmpty) {
+      return false;
+    }
+
+    try {
+      final response = await http
+          .delete(
+            Uri.parse('$baseUrl/delete-account/'),
+            headers: {
+              'Authorization': 'Token $token',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(
+            const Duration(seconds: 15),
+          );
+
+      if (response.statusCode != 200) {
+        return false;
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+
+      await prefs.remove(tokenKey);
+
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   static Future<User?> obtenerUsuarioActual() async {

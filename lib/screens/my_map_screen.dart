@@ -498,7 +498,7 @@ class _SeccionMapa extends StatelessWidget {
               vertical: 16,
             ),
             child: Text(
-              'Todavía no guardaste cafeterías aquí.',
+              'No hay cafeterías para mostrar.',
               style: TextStyle(
                 color: Colors.grey,
               ),

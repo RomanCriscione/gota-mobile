@@ -84,16 +84,12 @@ class _CafesMapScreenState
           14.5,
         );
       });
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
 
       setState(() {
         buscandoUbicacion = false;
       });
-
-      debugPrint(
-        'Error ubicación mapa: $e',
-      );
     }
   }
 

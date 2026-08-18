@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/auth_service.dart';
 
@@ -16,6 +17,31 @@ class _LoginScreenState extends State<LoginScreen> {
   final passwordFocus = FocusNode();
 
   bool cargando = false;
+
+  Future<void> recuperarContrasena() async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    final uri = Uri.parse(
+      'https://gogota.ar/accounts/password/reset/',
+    );
+
+    final abierto = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+
+    if (!mounted) return;
+
+    if (!abierto) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No pudimos abrir la recuperación de contraseña.',
+          ),
+        ),
+      );
+    }
+  }
 
   Future<void> ingresar() async {
     final email = emailController.text.trim();
@@ -151,6 +177,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   focusNode: emailFocus,
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
+                  autocorrect: false,
+                  autofillHints: const [
+                    AutofillHints.email,
+                  ],
                   onSubmitted: (_) {
                     FocusScope.of(context).requestFocus(
                       passwordFocus,
@@ -169,6 +199,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   focusNode: passwordFocus,
                   obscureText: true,
                   textInputAction: TextInputAction.done,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  autofillHints: const [
+                    AutofillHints.password,
+                  ],
                   onSubmitted: (_) {
                     FocusScope.of(context).unfocus();
 
@@ -182,7 +217,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 8),
+
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: recuperarContrasena,
+                    child: const Text(
+                      '¿Olvidaste tu contraseña?',
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
 
                 SizedBox(
                   width: double.infinity,
@@ -201,25 +248,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             'Ingresar',
                             style: TextStyle(fontSize: 16),
                           ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: OutlinedButton.icon(
-                    onPressed: null,
-                    icon: const Icon(
-                      Icons.login,
-                    ),
-                    label: const Text(
-                      'Continuar con Google · Próximamente',
-                      style: TextStyle(
-                        fontSize: 15,
-                      ),
-                    ),
                   ),
                 ),
 

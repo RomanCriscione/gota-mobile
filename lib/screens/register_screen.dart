@@ -104,7 +104,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         );
       }
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -196,6 +196,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
                   autocorrect: false,
+                  autofillHints: const [
+                    AutofillHints.email,
+                  ],
                   decoration: const InputDecoration(
                     labelText: 'Email',
                     border: OutlineInputBorder(),
@@ -208,6 +211,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: passwordController,
                   obscureText: ocultarPassword,
                   textInputAction: TextInputAction.next,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  autofillHints: const [
+                    AutofillHints.newPassword,
+                  ],
                   decoration: InputDecoration(
                     labelText: 'Contraseña',
                     helperText: 'Mínimo 8 caracteres',
@@ -233,6 +241,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: confirmPasswordController,
                   obscureText: ocultarConfirmacion,
                   textInputAction: TextInputAction.done,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  autofillHints: const [
+                    AutofillHints.newPassword,
+                  ],
                   onSubmitted: (_) {
                     FocusScope.of(context).unfocus();
 

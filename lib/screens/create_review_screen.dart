@@ -5,11 +5,13 @@ import '../services/review_service.dart';
 class CreateReviewScreen extends StatefulWidget {
   final int cafeId;
   final String cafeName;
+  final Map<String, dynamic>? existingReview;
 
   const CreateReviewScreen({
     super.key,
     required this.cafeId,
     required this.cafeName,
+    this.existingReview,
   });
 
   @override
@@ -31,8 +33,10 @@ class _CreateReviewScreenState
   int pasoActual = 0;
 
   bool cargandoTags = true;
+  bool errorCargandoTags = false;
   List<Map<String, dynamic>> tags = [];
   final Set<int> tagsSeleccionados = {};
+  bool publicando = false;
 
   final planes = const [
     {
@@ -65,6 +69,51 @@ class _CreateReviewScreenState
     void initState() {
     super.initState();
 
+    final review = widget.existingReview;
+
+    if (review != null) {
+        final dynamic ratingData =
+            review['rating'];
+
+        if (ratingData is int) {
+        rating = ratingData;
+        } else {
+        rating = int.tryParse(
+                ratingData?.toString() ?? '',
+            ) ??
+            0;
+        }
+
+        comentarioController.text =
+            review['comment']?.toString() ?? '';
+
+        bestForPlan =
+            review['best_for_plan']?.toString();
+
+        final dynamic precio =
+            review['precio_capuccino'];
+
+        if (precio != null) {
+        precioController.text =
+            precio.toString();
+        }
+
+        final dynamic reviewTags =
+            review['tags'];
+
+        if (reviewTags is List) {
+        tagsSeleccionados.addAll(
+            reviewTags
+                .map(
+                (id) => int.tryParse(
+                    id.toString(),
+                ),
+                )
+                .whereType<int>(),
+        );
+        }
+    }
+
     cargarTags();
     }
 
@@ -77,6 +126,11 @@ class _CreateReviewScreenState
   }
 
   Future<void> cargarTags() async {
+    setState(() {
+        cargandoTags = true;
+        errorCargandoTags = false;
+    });
+
     try {
         final resultado =
             await ReviewService.obtenerTags();
@@ -91,7 +145,8 @@ class _CreateReviewScreenState
         if (!mounted) return;
 
         setState(() {
-        cargandoTags = false;
+            cargandoTags = false;
+            errorCargandoTags = true;
         });
 
         mostrarError(
@@ -484,8 +539,38 @@ class _CreateReviewScreenState
                     padding: EdgeInsets.symmetric(
                     vertical: 40,
                     ),
-                    child:
-                        CircularProgressIndicator(),
+                    child: CircularProgressIndicator(),
+                ),
+                )
+            else if (errorCargandoTags)
+                Center(
+                child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                    vertical: 24,
+                    ),
+                    child: Column(
+                    children: [
+                        const Icon(
+                        Icons.cloud_off_outlined,
+                        size: 38,
+                        color: Colors.black45,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                        'No pudimos cargar las etiquetas.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.black54,
+                        ),
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton(
+                        onPressed: cargarTags,
+                        child: const Text('Reintentar'),
+                        ),
+                    ],
+                    ),
                 ),
                 )
             else if (tags.isEmpty)
@@ -535,19 +620,24 @@ class _CreateReviewScreenState
                             runSpacing: 8,
                             children:
                                 tagsCategoria.map((tag) {
-                            final id =
-                                tag['id'] as int;
+                            final id = int.tryParse(
+                                tag['id']?.toString() ?? '',
+                                );
 
-                            final nombre =
-                                tag['name']
-                                        ?.toString() ??
-                                    '';
+                                final nombre =
+                                    tag['name']
+                                            ?.toString() ??
+                                        '';
 
-                            final seleccionado =
-                                tagsSeleccionados
-                                    .contains(id);
+                                if (id == null || nombre.isEmpty) {
+                                return const SizedBox.shrink();
+                                }
 
-                            return FilterChip(
+                                final seleccionado =
+                                    tagsSeleccionados
+                                        .contains(id);
+
+                                return FilterChip(
                                 selected: seleccionado,
                                 label: Text(nombre),
                                 onSelected: (value) {
@@ -586,11 +676,13 @@ class _CreateReviewScreenState
             const SizedBox(height: 12),
 
             ElevatedButton(
-                onPressed: () {
-                    setState(() {
-                    pasoActual = 2;
-                    });
-                },
+                onPressed: cargandoTags || errorCargandoTags
+                    ? null
+                    : () {
+                        setState(() {
+                            pasoActual = 2;
+                        });
+                        },
                 child: const Text(
                     'Continuar',
                 ),
@@ -598,6 +690,104 @@ class _CreateReviewScreenState
             ],
         );
         }
+Future<void> publicarReview() async {
+  if (publicando) return;
+
+  setState(() {
+    publicando = true;
+  });
+
+  try {
+    final existingReview =
+        widget.existingReview;
+
+    if (existingReview == null) {
+      await ReviewService.crearReview(
+        cafeId: widget.cafeId,
+        rating: rating,
+        comment:
+            comentarioController.text.trim(),
+        bestForPlan: bestForPlan!,
+        precioCapuccino:
+            precioController.text.trim().isEmpty
+                ? null
+                : precioController.text.trim(),
+        tagIds:
+            tagsSeleccionados.toList(),
+      );
+    } else {
+      final dynamic reviewIdData =
+          existingReview['id'];
+
+      final int? reviewId =
+          reviewIdData is int
+              ? reviewIdData
+              : int.tryParse(
+                  reviewIdData?.toString() ?? '',
+                );
+
+      if (reviewId == null) {
+        throw Exception(
+          'No pudimos identificar la reseña.',
+        );
+      }
+
+      await ReviewService.actualizarReview(
+        reviewId: reviewId,
+        rating: rating,
+        comment:
+            comentarioController.text.trim(),
+        bestForPlan: bestForPlan!,
+        precioCapuccino:
+            precioController.text.trim().isEmpty
+                ? null
+                : precioController.text.trim(),
+        tagIds:
+            tagsSeleccionados.toList(),
+      );
+    }
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          widget.existingReview == null
+              ? '¡Gracias por tu reseña!'
+              : 'Reseña actualizada.',
+        ),
+      ),
+    );
+
+    Navigator.pop(
+      context,
+      true,
+    );
+  } catch (error) {
+    if (!mounted) return;
+
+    String mensaje =
+        error.toString();
+
+    if (mensaje.startsWith('Exception: ')) {
+      mensaje = mensaje.substring(
+        'Exception: '.length,
+      );
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensaje),
+      ),
+    );
+  } finally {
+    if (mounted) {
+      setState(() {
+        publicando = false;
+      });
+    }
+  }
+}
 
 Widget _buildPasoRevision() {
   final precioTexto =
@@ -822,14 +1012,22 @@ Widget _buildPasoRevision() {
       const SizedBox(height: 12),
 
       ElevatedButton(
-        onPressed: () {
-          // En el siguiente cambio
-          // conectamos la publicación real.
-        },
-        child: const Text(
-          'Publicar reseña',
+        onPressed:
+            publicando ? null : publicarReview,
+        child: publicando
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                ),
+                )
+            : Text(
+                widget.existingReview == null
+                    ? 'Publicar reseña'
+                    : 'Guardar cambios',
+            ),
         ),
-      ),
     ],
   );
 }
@@ -838,10 +1036,12 @@ Widget _buildPasoRevision() {
     Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-        title: const Text(
-            'Dejar una reseña',
-        ),
-        ),
+            title: Text(
+                widget.existingReview == null
+                    ? 'Dejar una reseña'
+                    : 'Editar mi reseña',
+            ),
+            ),
         body: SafeArea(
             child: pasoActual == 0
                 ? _buildPasoExperiencia()

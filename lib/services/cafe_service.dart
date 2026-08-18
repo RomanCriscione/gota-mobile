@@ -132,7 +132,11 @@ class CafeService {
       );
     }
 
-    final streamedResponse = await request.send();
+    final streamedResponse = await request
+        .send()
+        .timeout(
+          const Duration(seconds: 30),
+        );
 
     final response =
         await http.Response.fromStream(

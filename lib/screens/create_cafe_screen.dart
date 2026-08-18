@@ -441,6 +441,14 @@ class _CreateCafeScreenState
             latitude: latitude,
             longitude: longitude,
             onSeleccionarUbicacion: seleccionarUbicacionMapa,
+            onDatosUbicacionChanged: () {
+              if (latitude != null || longitude != null) {
+                setState(() {
+                  latitude = null;
+                  longitude = null;
+                });
+              }
+            },
             onSeleccionarFotoPrincipal: seleccionarFotoPrincipal,
             onSeleccionarFoto2: seleccionarFoto2,
             onSeleccionarFoto3: seleccionarFoto3,
@@ -550,9 +558,9 @@ class _CreateCafeScreenState
             });
             },
             onLibrosOJuegosChanged: (value) {
-            setState(() {
+              setState(() {
                 librosOJuegos = value;
-            });
+              });
             },
 
             onVolver: pasoAnterior,
@@ -686,6 +694,7 @@ class _PasoDatos extends StatelessWidget {
   final double? latitude;
   final double? longitude;
   final VoidCallback onSeleccionarUbicacion;
+  final VoidCallback onDatosUbicacionChanged;
 
   final VoidCallback onSeleccionarFotoPrincipal;
   final VoidCallback onSeleccionarFoto2;
@@ -708,6 +717,7 @@ class _PasoDatos extends StatelessWidget {
     required this.latitude,
     required this.longitude,
     required this.onSeleccionarUbicacion,
+    required this.onDatosUbicacionChanged,
     required this.foto2,
     required this.foto3,
     required this.onSeleccionarFotoPrincipal,
@@ -761,6 +771,9 @@ class _PasoDatos extends StatelessWidget {
           controller: direccionController,
           textCapitalization:
               TextCapitalization.words,
+          onChanged: (_) {
+            onDatosUbicacionChanged();
+          },
           decoration: const InputDecoration(
             labelText: 'Dirección *',
             hintText: 'Ej: Mitre 123',
@@ -773,6 +786,9 @@ class _PasoDatos extends StatelessWidget {
           controller: localidadController,
           textCapitalization:
               TextCapitalization.words,
+          onChanged: (_) {
+            onDatosUbicacionChanged();
+          },
           decoration: const InputDecoration(
             labelText: 'Localidad *',
           ),
@@ -797,7 +813,10 @@ class _PasoDatos extends StatelessWidget {
                 ),
               )
               .toList(),
-          onChanged: onProvinciaChanged,
+          onChanged: (value) {
+            onProvinciaChanged(value);
+            onDatosUbicacionChanged();
+          },
         ),
 
         const SizedBox(height: 14),
@@ -1157,8 +1176,7 @@ class _PasoCaracteristicas extends StatelessWidget {
         const SizedBox(height: 8),
 
         const Text(
-          'Elegí las características que tiene tu cafetería. '
-          'Podés cambiarlas después.',
+          'Elegí las características que tiene tu cafetería.',
           style: TextStyle(
             fontSize: 15,
             height: 1.4,
@@ -1270,6 +1288,8 @@ class _PasoCaracteristicas extends StatelessWidget {
           value: librosOJuegos,
           onChanged: onLibrosOJuegosChanged,
         ),
+
+        const SizedBox(height: 24),
 
         const SizedBox(height: 24),
 

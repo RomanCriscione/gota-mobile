@@ -46,7 +46,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           content: const Text(
             'Al continuar, tu cuenta de Gota se configurará '
             'como cuenta de dueño para que puedas sumar '
-            'y gestionar tu cafetería.',
+            'tu cafetería.',
           ),
           actions: [
             TextButton(
@@ -105,17 +105,118 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Future<void> cerrarSesion() async {
-    await AuthService.logout();
+Future<void> cerrarSesion() async {
+  final confirmar = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: const Text(
+          '¿Cerrar sesión?',
+        ),
+        content: const Text(
+          'Vas a tener que volver a ingresar para usar tu cuenta.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(
+                dialogContext,
+                false,
+              );
+            },
+            child: const Text(
+              'Cancelar',
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(
+                dialogContext,
+                true,
+              );
+            },
+            child: const Text(
+              'Cerrar sesión',
+            ),
+          ),
+        ],
+      );
+    },
+  );
 
-    if (!mounted) return;
-
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      '/login',
-      (route) => false,
-    );
+  if (confirmar != true || !mounted) {
+    return;
   }
+
+  await AuthService.logout();
+
+  if (!mounted) return;
+
+  Navigator.pushNamedAndRemoveUntil(
+    context,
+    '/login',
+    (route) => false,
+  );
+}
+
+Future<void> eliminarCuenta() async {
+  final confirmar = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: const Text('Eliminar cuenta'),
+        content: const Text(
+          'Esta acción es permanente. Se eliminará tu cuenta de Gota '
+          'y no vas a poder recuperarla.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext, false);
+            },
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFB91C1C),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.pop(dialogContext, true);
+            },
+            child: const Text('Eliminar cuenta'),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (confirmar != true || !mounted) {
+    return;
+  }
+
+  final eliminado = await AuthService.eliminarCuenta();
+
+  if (!mounted) return;
+
+  if (!eliminado) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'No pudimos eliminar tu cuenta. Intentá nuevamente.',
+        ),
+      ),
+    );
+
+    return;
+  }
+
+  Navigator.pushNamedAndRemoveUntil(
+    context,
+    '/login',
+    (route) => false,
+  );
+}
 
   String obtenerNombre(User usuario) {
     final nombreCompleto = [
@@ -418,6 +519,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       'Cerrar sesión',
                       style: TextStyle(
                         fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: TextButton.icon(
+                    onPressed: eliminarCuenta,
+                    icon: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: Color(0xFFB91C1C),
+                    ),
+                    label: const Text(
+                      'Eliminar cuenta',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFFB91C1C),
                       ),
                     ),
                   ),

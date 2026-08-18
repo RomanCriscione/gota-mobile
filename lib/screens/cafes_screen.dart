@@ -111,8 +111,52 @@
 
             if (snapshot.hasError) {
               return Center(
-                child: Text(
-                  'Error: ${snapshot.error}',
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.cloud_off_outlined,
+                        size: 42,
+                        color: Colors.black45,
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'No pudimos cargar las cafeterías.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Revisá tu conexión e intentá nuevamente.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            cafesFuture =
+                                ApiService.obtenerCafes(
+                              forzarActualizacion: true,
+                            );
+                          });
+                        },
+                        icon: const Icon(
+                          Icons.refresh_rounded,
+                        ),
+                        label: const Text(
+                          'Reintentar',
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             }
@@ -498,6 +542,7 @@
                                                   setState(() {
                                                     filtroEspecialidad = value;
                                                   });
+                                                  setModalState(() {});
                                                 },
                                               ),
 
@@ -508,6 +553,7 @@
                                                   setState(() {
                                                     filtroLaptop = value;
                                                   });
+                                                  setModalState(() {});
                                                 },
                                               ),
 
@@ -518,6 +564,7 @@
                                                   setState(() {
                                                     filtroBrunch = value;
                                                   });
+                                                  setModalState(() {});
                                                 },
                                               ),
 
@@ -528,6 +575,7 @@
                                                   setState(() {
                                                     filtroMascotas = value;
                                                   });
+                                                  setModalState(() {});
                                                 },
                                               ),
 
@@ -538,6 +586,7 @@
                                                   setState(() {
                                                     filtroWifi = value;
                                                   });
+                                                  setModalState(() {});
                                                 },
                                               ),
                                             ],
@@ -721,6 +770,17 @@
                             spacing: 8,
                             runSpacing: 8,
                             children: [
+
+                              FilterChip(
+                                label: const Text('🔌 Enchufes'),
+                                selected: filtroEnchufes,
+                                onSelected: (value) {
+                                  setState(() {
+                                    filtroEnchufes = value;
+                                  });
+                                  setModalState(() {});
+                                },
+                              ),
 
                               FilterChip(
                                 label: const Text('❄️ Aire acondicionado'),
