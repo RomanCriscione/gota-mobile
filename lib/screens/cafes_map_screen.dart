@@ -154,7 +154,7 @@ class _CafesMapScreenState
             TileLayer(
             urlTemplate:
                 'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-            userAgentPackageName: 'com.example.gota_mobile',
+            userAgentPackageName: 'ar.gogota.app',
             ),
 
           MarkerLayer(

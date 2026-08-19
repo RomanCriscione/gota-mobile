@@ -41,6 +41,12 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
 
   List<Cafe> cafesRelacionados = [];
   bool cargandoRelacionados = true;
+  List<Map<String, dynamic>> huellas = [];
+  bool cargandoHuellas = true;
+  final TextEditingController huellaController =
+      TextEditingController();
+
+  bool publicandoHuella = false;
 
   int fotoActual = 0;
 
@@ -51,6 +57,13 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
     cargarDetalleCafe();
     cargarEstadoActual();
     cargarCafesRelacionados();
+    cargarHuellas();
+  }
+
+  @override
+  void dispose() {
+    huellaController.dispose();
+    super.dispose();
   }
 
   Future<void> cargarDetalleCafe() async {
@@ -151,6 +164,28 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
         cargandoRelacionados = false;
       });
 
+    }
+  }
+
+  Future<void> cargarHuellas() async {
+    try {
+      final resultado =
+          await ApiService.obtenerHuellas(
+        widget.cafeId,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        huellas = resultado;
+        cargandoHuellas = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        cargandoHuellas = false;
+      });
     }
   }
 
@@ -391,6 +426,84 @@ double? get longitudeCafe {
     }
   }
 
+
+  Future<void> publicarHuella() async {
+    final texto = huellaController.text.trim();
+
+    if (texto.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Escribí una huella.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (texto.length > 40) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'La huella puede tener hasta 40 caracteres.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+
+    setState(() {
+      publicandoHuella = true;
+    });
+
+    try {
+      final response = await ApiService.crearHuella(
+        cafeId: widget.cafeId,
+        text: texto,
+      );
+
+      if (!mounted) return;
+
+      huellaController.clear();
+
+      await cargarHuellas();
+
+      if (!mounted) return;
+
+      final message =
+          response['message']?.toString();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            message != null && message.isNotEmpty
+                ? message
+                : 'Tu huella fue guardada.',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      final mensaje = e
+          .toString()
+          .replaceFirst('Exception: ', '');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(mensaje),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          publicandoHuella = false;
+        });
+      }
+    }
+  }
 
   Future<void> guardarColeccion(String collection) async {
     String apiCollection = '';
@@ -1168,6 +1281,202 @@ double? get longitudeCafe {
               const SizedBox(height: 24),
             ],
 
+            const SizedBox(height: 28),
+
+            const Text(
+              '🍃 Huellas de este lugar',
+              style: TextStyle(
+                fontSize: 21,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            const Text(
+              'Pequeñas sensaciones que este café dejó en alguien.',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.black54,
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: const Color(0xFFE5E7EB),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: huellaController,
+                    maxLength: 40,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) {
+                      if (!publicandoHuella) {
+                        publicarHuella();
+                      }
+                    },
+                    onChanged: (_) {
+                      setState(() {});
+                    },
+                    decoration: const InputDecoration(
+                      hintText: 'Ej: Para charlas largas',
+                      border: OutlineInputBorder(),
+                      counterText: '',
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Máximo 40 caracteres · 1 huella por día',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      Text(
+                        '${huellaController.text.length}/40',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: huellaController.text.length >= 40
+                              ? Colors.red
+                              : Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed:
+                          publicandoHuella ? null : publicarHuella,
+                      icon: publicandoHuella
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.eco_outlined,
+                            ),
+                      label: Text(
+                        publicandoHuella
+                            ? 'Guardando...'
+                            : 'Dejá cómo se sintió',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 18),
+
+            if (cargandoHuellas)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    vertical: 20,
+                  ),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (huellas.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: const Color(0xFFE5E7EB),
+                  ),
+                ),
+                child: const Text(
+                  'Todavía nadie dejó una huella acá.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.black54,
+                  ),
+                ),
+              )
+            else
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: huellas.take(6).map((huella) {
+                  final texto =
+                      huella['text']?.toString() ?? '';
+
+                  return Container(
+                    constraints: const BoxConstraints(
+                      minWidth: 150,
+                      maxWidth: 220,
+                    ),
+                    padding: const EdgeInsets.fromLTRB(
+                      16,
+                      18,
+                      16,
+                      16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF7D6),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: const Color(0xFFE7D69C),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: 0.06,
+                          ),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      '“$texto”',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        height: 1.35,
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF5A472A),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+
+            const SizedBox(height: 28),
+
             const Text(
               'Guardarlo en tu mapa',
               style: TextStyle(
@@ -1517,7 +1826,7 @@ double? get longitudeCafe {
                       TileLayer(
                         urlTemplate:
                             'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-                        userAgentPackageName: 'com.example.gota_mobile',
+                        userAgentPackageName: 'ar.gogota.app',
                       ),
                       MarkerLayer(
                         markers: [

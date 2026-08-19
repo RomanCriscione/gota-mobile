@@ -338,4 +338,124 @@ class ApiService {
 
     return decodedData;
   }
+
+  static Future<List<Map<String, dynamic>>> obtenerHuellas(
+    int cafeId,
+  ) async {
+    final token = await AuthService.obtenerToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception(
+        'No hay una sesión iniciada',
+      );
+    }
+
+    final response = await http
+        .get(
+          Uri.parse(
+            '$baseUrl/mobile/cafes/$cafeId/whispers/',
+          ),
+          headers: {
+            'Authorization': 'Token $token',
+            'Accept': 'application/json',
+          },
+        )
+        .timeout(
+          const Duration(seconds: 15),
+        );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'No pudimos cargar las huellas.',
+      );
+    }
+
+    final dynamic decodedData =
+        jsonDecode(response.body);
+
+    if (decodedData is! Map<String, dynamic>) {
+      throw Exception(
+        'La respuesta de huellas no es válida.',
+      );
+    }
+
+    final dynamic whispersData =
+        decodedData['whispers'];
+
+    if (whispersData is! List) {
+      return [];
+    }
+
+    return whispersData
+        .whereType<Map>()
+        .map(
+          (whisper) =>
+              Map<String, dynamic>.from(whisper),
+        )
+        .toList();
+  }
+
+  static Future<Map<String, dynamic>> crearHuella({
+    required int cafeId,
+    required String text,
+  }) async {
+    final token = await AuthService.obtenerToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception(
+        'No hay una sesión iniciada',
+      );
+    }
+
+    final response = await http
+        .post(
+          Uri.parse(
+            '$baseUrl/mobile/cafes/$cafeId/whispers/',
+          ),
+          headers: {
+            'Authorization': 'Token $token',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'text': text,
+          }),
+        )
+        .timeout(
+          const Duration(seconds: 15),
+        );
+
+    Map<String, dynamic>? decodedData;
+
+    try {
+      final dynamic decoded =
+          jsonDecode(response.body);
+
+      if (decoded is Map<String, dynamic>) {
+        decodedData = decoded;
+      }
+    } catch (_) {}
+
+    if (response.statusCode != 201) {
+      final message =
+          decodedData?['message'];
+
+      if (message is String &&
+          message.isNotEmpty) {
+        throw Exception(message);
+      }
+
+      throw Exception(
+        'No pudimos guardar tu huella.',
+      );
+    }
+
+    if (decodedData == null) {
+      throw Exception(
+        'La respuesta de huellas no es válida.',
+      );
+    }
+
+    return decodedData;
+  }
 }

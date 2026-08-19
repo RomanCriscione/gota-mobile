@@ -370,55 +370,13 @@ class HomeScreen extends StatefulWidget {
       return puntaje >= mejorPuntaje * 0.90;
     }).toList();
 
-    debugPrint(
-      '===================================',
-    );
 
-    debugPrint(
-      'Perfil: '
-      'tranquilo=${afinidadTranquilidad.toStringAsFixed(2)} | '
-      'trabajar=${afinidadTrabajar.toStringAsFixed(2)} | '
-      'especialidad=${afinidadEspecialidad.toStringAsFixed(2)} | '
-      'brunch=${afinidadBrunch.toStringAsFixed(2)} | '
-      'wifi=${afinidadWifi.toStringAsFixed(2)}',
-    );
-
-    for (var i = 0; i < mejores.length; i++) {
-      final cafe = mejores[i];
-      final desglose = desgloseCafe(cafe);
-
-      debugPrint(
-        '${i + 1}. ${cafe.nombre} '
-        '(${cafe.zona}) — '
-        '${puntajeCafe(cafe).toStringAsFixed(1)} puntos',
-      );
-
-      debugPrint(
-        '   tags=${desglose['tags']!.toStringAsFixed(1)} | '
-        'tranquilo=${desglose['tranquilidad']!.toStringAsFixed(1)} | '
-        'trabajar=${desglose['trabajar']!.toStringAsFixed(1)} | '
-        'especialidad=${desglose['especialidad']!.toStringAsFixed(1)} | '
-        'zona=${desglose['zona']!.toStringAsFixed(1)}',
-      );
-    }
 
     final indice =
         DateTime.now().day % mejores.length;
 
     final cafeElegido =
         mejores[indice];
-
-    debugPrint(
-      'ELEGIDO HOY: ${cafeElegido.nombre}',
-    );
-
-    debugPrint(
-      'MOTIVO: ${motivoCafe(cafeElegido)}',
-    );
-
-    debugPrint(
-      '===================================',
-    );
 
     return RadarRecommendation(
       cafe: cafeElegido,
