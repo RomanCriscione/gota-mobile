@@ -46,14 +46,32 @@ class _CreateCafeScreenState
     bool accesible = false;
     bool cambiadorBebes = false;
     bool petFriendly = false;
+    bool kidsFriendly = false;
+
     bool cafeEspecialidad = false;
     bool brunch = false;
     bool desayuno = false;
     bool alcohol = false;
     bool pasteleriaArtesanal = false;
+
     bool veganFriendly = false;
     bool vegetariano = false;
     bool sinTacc = false;
+    bool opcionesSaludables = false;
+    bool sinAzucar = false;
+    bool lechesVegetales = false;
+
+    bool jardin = false;
+    bool vistaAgua = false;
+    bool vistaMontanas = false;
+    bool rodeadoNaturaleza = false;
+    bool terrazaRooftop = false;
+    bool ventanalesGrandes = false;
+    bool casaAntigua = false;
+    bool edificioHistorico = false;
+    bool dentroLibreria = false;
+    bool espacioCultural = false;
+
     bool librosOJuegos = false;
 
   final provincias = const [
@@ -329,6 +347,8 @@ class _CreateCafeScreenState
         accesible: accesible,
         cambiadorBebes: cambiadorBebes,
         petFriendly: petFriendly,
+        kidsFriendly: kidsFriendly,
+
         cafeEspecialidad: cafeEspecialidad,
         brunch: brunch,
         desayuno: desayuno,
@@ -337,6 +357,21 @@ class _CreateCafeScreenState
         veganFriendly: veganFriendly,
         vegetariano: vegetariano,
         sinTacc: sinTacc,
+        opcionesSaludables: opcionesSaludables,
+        sinAzucar: sinAzucar,
+        lechesVegetales: lechesVegetales,
+
+        jardin: jardin,
+        vistaAgua: vistaAgua,
+        vistaMontanas: vistaMontanas,
+        rodeadoNaturaleza: rodeadoNaturaleza,
+        terrazaRooftop: terrazaRooftop,
+        ventanalesGrandes: ventanalesGrandes,
+        casaAntigua: casaAntigua,
+        edificioHistorico: edificioHistorico,
+        dentroLibreria: dentroLibreria,
+        espacioCultural: espacioCultural,
+
         librosOJuegos: librosOJuegos,
       );
 
@@ -467,14 +502,32 @@ class _CreateCafeScreenState
             accesible: accesible,
             cambiadorBebes: cambiadorBebes,
             petFriendly: petFriendly,
+            kidsFriendly: kidsFriendly,
+
             cafeEspecialidad: cafeEspecialidad,
             brunch: brunch,
             desayuno: desayuno,
             alcohol: alcohol,
             pasteleriaArtesanal: pasteleriaArtesanal,
+
             veganFriendly: veganFriendly,
             vegetariano: vegetariano,
             sinTacc: sinTacc,
+            opcionesSaludables: opcionesSaludables,
+            sinAzucar: sinAzucar,
+            lechesVegetales: lechesVegetales,
+
+            jardin: jardin,
+            vistaAgua: vistaAgua,
+            vistaMontanas: vistaMontanas,
+            rodeadoNaturaleza: rodeadoNaturaleza,
+            terrazaRooftop: terrazaRooftop,
+            ventanalesGrandes: ventanalesGrandes,
+            casaAntigua: casaAntigua,
+            edificioHistorico: edificioHistorico,
+            dentroLibreria: dentroLibreria,
+            espacioCultural: espacioCultural,
+
             librosOJuegos: librosOJuegos,
 
             onTieneWifiChanged: (value) {
@@ -513,10 +566,95 @@ class _CreateCafeScreenState
             });
             },
             onPetFriendlyChanged: (value) {
-            setState(() {
+              setState(() {
                 petFriendly = value;
-            });
+              });
             },
+
+            onKidsFriendlyChanged: (value) {
+              setState(() {
+                kidsFriendly = value;
+              });
+            },
+
+            onOpcionesSaludablesChanged: (value) {
+              setState(() {
+                opcionesSaludables = value;
+              });
+            },
+
+            onSinAzucarChanged: (value) {
+              setState(() {
+                sinAzucar = value;
+              });
+            },
+
+            onLechesVegetalesChanged: (value) {
+              setState(() {
+                lechesVegetales = value;
+              });
+            },
+
+            onJardinChanged: (value) {
+              setState(() {
+                jardin = value;
+              });
+            },
+
+            onVistaAguaChanged: (value) {
+              setState(() {
+                vistaAgua = value;
+              });
+            },
+
+            onVistaMontanasChanged: (value) {
+              setState(() {
+                vistaMontanas = value;
+              });
+            },
+
+            onRodeadoNaturalezaChanged: (value) {
+              setState(() {
+                rodeadoNaturaleza = value;
+              });
+            },
+
+            onTerrazaRooftopChanged: (value) {
+              setState(() {
+                terrazaRooftop = value;
+              });
+            },
+
+            onVentanalesGrandesChanged: (value) {
+              setState(() {
+                ventanalesGrandes = value;
+              });
+            },
+
+            onCasaAntiguaChanged: (value) {
+              setState(() {
+                casaAntigua = value;
+              });
+            },
+
+            onEdificioHistoricoChanged: (value) {
+              setState(() {
+                edificioHistorico = value;
+              });
+            },
+
+            onDentroLibreriaChanged: (value) {
+              setState(() {
+                dentroLibreria = value;
+              });
+            },
+
+            onEspacioCulturalChanged: (value) {
+              setState(() {
+                espacioCultural = value;
+              });
+            },
+
             onCafeEspecialidadChanged: (value) {
             setState(() {
                 cafeEspecialidad = value;
@@ -592,14 +730,32 @@ class _CreateCafeScreenState
             accesible: accesible,
             cambiadorBebes: cambiadorBebes,
             petFriendly: petFriendly,
+            kidsFriendly: kidsFriendly,
+
             cafeEspecialidad: cafeEspecialidad,
             brunch: brunch,
             desayuno: desayuno,
             alcohol: alcohol,
             pasteleriaArtesanal: pasteleriaArtesanal,
+
             veganFriendly: veganFriendly,
             vegetariano: vegetariano,
             sinTacc: sinTacc,
+            opcionesSaludables: opcionesSaludables,
+            sinAzucar: sinAzucar,
+            lechesVegetales: lechesVegetales,
+
+            jardin: jardin,
+            vistaAgua: vistaAgua,
+            vistaMontanas: vistaMontanas,
+            rodeadoNaturaleza: rodeadoNaturaleza,
+            terrazaRooftop: terrazaRooftop,
+            ventanalesGrandes: ventanalesGrandes,
+            casaAntigua: casaAntigua,
+            edificioHistorico: edificioHistorico,
+            dentroLibreria: dentroLibreria,
+            espacioCultural: espacioCultural,
+
             librosOJuegos: librosOJuegos,
 
             onVolver: pasoAnterior,
@@ -1082,37 +1238,74 @@ class _PasoCaracteristicas extends StatelessWidget {
   final bool estacionamiento;
   final bool accesible;
   final bool cambiadorBebes;
+
   final bool petFriendly;
-  final bool cafeEspecialidad;
-  final bool brunch;
-  final bool desayuno;
-  final bool alcohol;
-  final bool pasteleriaArtesanal;
-  final bool veganFriendly;
-  final bool vegetariano;
-  final bool sinTacc;
-  final bool librosOJuegos;
+  final bool kidsFriendly;
 
-  final ValueChanged<bool> onTieneWifiChanged;
-  final ValueChanged<bool> onAireAcondicionadoChanged;
-  final ValueChanged<bool> onEnchufesChanged;
-  final ValueChanged<bool> onMesasAlAireLibreChanged;
-  final ValueChanged<bool> onEstacionamientoChanged;
-  final ValueChanged<bool> onAccesibleChanged;
-  final ValueChanged<bool> onCambiadorBebesChanged;
-  final ValueChanged<bool> onPetFriendlyChanged;
-  final ValueChanged<bool> onCafeEspecialidadChanged;
-  final ValueChanged<bool> onBrunchChanged;
-  final ValueChanged<bool> onDesayunoChanged;
-  final ValueChanged<bool> onAlcoholChanged;
-  final ValueChanged<bool> onPasteleriaArtesanalChanged;
-  final ValueChanged<bool> onVeganFriendlyChanged;
-  final ValueChanged<bool> onVegetarianoChanged;
-  final ValueChanged<bool> onSinTaccChanged;
-  final ValueChanged<bool> onLibrosOJuegosChanged;
+final bool cafeEspecialidad;
+final bool brunch;
+final bool desayuno;
+final bool alcohol;
+final bool pasteleriaArtesanal;
 
-  final VoidCallback onVolver;
-  final VoidCallback onContinuar;
+final bool veganFriendly;
+final bool vegetariano;
+final bool sinTacc;
+final bool opcionesSaludables;
+final bool sinAzucar;
+final bool lechesVegetales;
+
+final bool jardin;
+final bool vistaAgua;
+final bool vistaMontanas;
+final bool rodeadoNaturaleza;
+final bool terrazaRooftop;
+final bool ventanalesGrandes;
+final bool casaAntigua;
+final bool edificioHistorico;
+final bool dentroLibreria;
+final bool espacioCultural;
+
+final bool librosOJuegos;
+
+final ValueChanged<bool> onTieneWifiChanged;
+final ValueChanged<bool> onAireAcondicionadoChanged;
+final ValueChanged<bool> onEnchufesChanged;
+final ValueChanged<bool> onMesasAlAireLibreChanged;
+final ValueChanged<bool> onEstacionamientoChanged;
+final ValueChanged<bool> onAccesibleChanged;
+final ValueChanged<bool> onCambiadorBebesChanged;
+final ValueChanged<bool> onPetFriendlyChanged;
+final ValueChanged<bool> onKidsFriendlyChanged;
+
+final ValueChanged<bool> onCafeEspecialidadChanged;
+final ValueChanged<bool> onBrunchChanged;
+final ValueChanged<bool> onDesayunoChanged;
+final ValueChanged<bool> onAlcoholChanged;
+final ValueChanged<bool> onPasteleriaArtesanalChanged;
+
+final ValueChanged<bool> onVeganFriendlyChanged;
+final ValueChanged<bool> onVegetarianoChanged;
+final ValueChanged<bool> onSinTaccChanged;
+final ValueChanged<bool> onOpcionesSaludablesChanged;
+final ValueChanged<bool> onSinAzucarChanged;
+final ValueChanged<bool> onLechesVegetalesChanged;
+
+final ValueChanged<bool> onJardinChanged;
+final ValueChanged<bool> onVistaAguaChanged;
+final ValueChanged<bool> onVistaMontanasChanged;
+final ValueChanged<bool> onRodeadoNaturalezaChanged;
+final ValueChanged<bool> onTerrazaRooftopChanged;
+final ValueChanged<bool> onVentanalesGrandesChanged;
+final ValueChanged<bool> onCasaAntiguaChanged;
+final ValueChanged<bool> onEdificioHistoricoChanged;
+final ValueChanged<bool> onDentroLibreriaChanged;
+final ValueChanged<bool> onEspacioCulturalChanged;
+
+final ValueChanged<bool> onLibrosOJuegosChanged;
+
+final VoidCallback onVolver;
+final VoidCallback onContinuar;
 
   const _PasoCaracteristicas({
     super.key,
@@ -1124,6 +1317,8 @@ class _PasoCaracteristicas extends StatelessWidget {
     required this.accesible,
     required this.cambiadorBebes,
     required this.petFriendly,
+    required this.kidsFriendly,
+
     required this.cafeEspecialidad,
     required this.brunch,
     required this.desayuno,
@@ -1132,6 +1327,21 @@ class _PasoCaracteristicas extends StatelessWidget {
     required this.veganFriendly,
     required this.vegetariano,
     required this.sinTacc,
+    required this.opcionesSaludables,
+    required this.sinAzucar,
+    required this.lechesVegetales,
+
+    required this.jardin,
+    required this.vistaAgua,
+    required this.vistaMontanas,
+    required this.rodeadoNaturaleza,
+    required this.terrazaRooftop,
+    required this.ventanalesGrandes,
+    required this.casaAntigua,
+    required this.edificioHistorico,
+    required this.dentroLibreria,
+    required this.espacioCultural,
+
     required this.librosOJuegos,
     required this.onTieneWifiChanged,
     required this.onAireAcondicionadoChanged,
@@ -1141,6 +1351,8 @@ class _PasoCaracteristicas extends StatelessWidget {
     required this.onAccesibleChanged,
     required this.onCambiadorBebesChanged,
     required this.onPetFriendlyChanged,
+    required this.onKidsFriendlyChanged,
+
     required this.onCafeEspecialidadChanged,
     required this.onBrunchChanged,
     required this.onDesayunoChanged,
@@ -1149,6 +1361,21 @@ class _PasoCaracteristicas extends StatelessWidget {
     required this.onVeganFriendlyChanged,
     required this.onVegetarianoChanged,
     required this.onSinTaccChanged,
+    required this.onOpcionesSaludablesChanged,
+    required this.onSinAzucarChanged,
+    required this.onLechesVegetalesChanged,
+
+    required this.onJardinChanged,
+    required this.onVistaAguaChanged,
+    required this.onVistaMontanasChanged,
+    required this.onRodeadoNaturalezaChanged,
+    required this.onTerrazaRooftopChanged,
+    required this.onVentanalesGrandesChanged,
+    required this.onCasaAntiguaChanged,
+    required this.onEdificioHistoricoChanged,
+    required this.onDentroLibreriaChanged,
+    required this.onEspacioCulturalChanged,
+
     required this.onLibrosOJuegosChanged,
     required this.onVolver,
     required this.onContinuar,
@@ -1235,6 +1462,12 @@ class _PasoCaracteristicas extends StatelessWidget {
           onChanged: onPetFriendlyChanged,
         ),
         _CaracteristicaTile(
+          icon: Icons.child_friendly_outlined,
+          label: 'Kids friendly',
+          value: kidsFriendly,
+          onChanged: onKidsFriendlyChanged,
+        ),
+        _CaracteristicaTile(
           icon: Icons.coffee_outlined,
           label: 'Café de especialidad',
           value: cafeEspecialidad,
@@ -1281,6 +1514,86 @@ class _PasoCaracteristicas extends StatelessWidget {
           label: 'Opciones sin gluten / Sin TACC',
           value: sinTacc,
           onChanged: onSinTaccChanged,
+        ),
+
+        _CaracteristicaTile(
+          icon: Icons.health_and_safety_outlined,
+          label: 'Opciones saludables',
+          value: opcionesSaludables,
+          onChanged: onOpcionesSaludablesChanged,
+        ),
+        _CaracteristicaTile(
+          icon: Icons.no_meals_outlined,
+          label: 'Opciones sin azúcar',
+          value: sinAzucar,
+          onChanged: onSinAzucarChanged,
+        ),
+        _CaracteristicaTile(
+          icon: Icons.local_drink_outlined,
+          label: 'Leches vegetales',
+          value: lechesVegetales,
+          onChanged: onLechesVegetalesChanged,
+        ),
+
+        _CaracteristicaTile(
+          icon: Icons.yard_outlined,
+          label: 'Con jardín',
+          value: jardin,
+          onChanged: onJardinChanged,
+        ),
+        _CaracteristicaTile(
+          icon: Icons.water_outlined,
+          label: 'Vista al agua',
+          value: vistaAgua,
+          onChanged: onVistaAguaChanged,
+        ),
+        _CaracteristicaTile(
+          icon: Icons.landscape_outlined,
+          label: 'Vista a las sierras / montañas',
+          value: vistaMontanas,
+          onChanged: onVistaMontanasChanged,
+        ),
+        _CaracteristicaTile(
+          icon: Icons.park_outlined,
+          label: 'Rodeado de naturaleza',
+          value: rodeadoNaturaleza,
+          onChanged: onRodeadoNaturalezaChanged,
+        ),
+        _CaracteristicaTile(
+          icon: Icons.roofing_outlined,
+          label: 'Terraza o rooftop',
+          value: terrazaRooftop,
+          onChanged: onTerrazaRooftopChanged,
+        ),
+        _CaracteristicaTile(
+          icon: Icons.window_outlined,
+          label: 'Grandes ventanales',
+          value: ventanalesGrandes,
+          onChanged: onVentanalesGrandesChanged,
+        ),
+        _CaracteristicaTile(
+          icon: Icons.home_outlined,
+          label: 'En una casa antigua',
+          value: casaAntigua,
+          onChanged: onCasaAntiguaChanged,
+        ),
+        _CaracteristicaTile(
+          icon: Icons.account_balance_outlined,
+          label: 'En un edificio histórico',
+          value: edificioHistorico,
+          onChanged: onEdificioHistoricoChanged,
+        ),
+        _CaracteristicaTile(
+          icon: Icons.menu_book_outlined,
+          label: 'Dentro de una librería',
+          value: dentroLibreria,
+          onChanged: onDentroLibreriaChanged,
+        ),
+        _CaracteristicaTile(
+          icon: Icons.palette_outlined,
+          label: 'En un espacio cultural',
+          value: espacioCultural,
+          onChanged: onEspacioCulturalChanged,
         ),
         _CaracteristicaTile(
           icon: Icons.menu_book_outlined,
@@ -1384,14 +1697,32 @@ class _PasoRevision extends StatelessWidget {
   final bool accesible;
   final bool cambiadorBebes;
   final bool petFriendly;
+  final bool kidsFriendly;
+
   final bool cafeEspecialidad;
   final bool brunch;
   final bool desayuno;
   final bool alcohol;
   final bool pasteleriaArtesanal;
+
   final bool veganFriendly;
   final bool vegetariano;
   final bool sinTacc;
+  final bool opcionesSaludables;
+  final bool sinAzucar;
+  final bool lechesVegetales;
+
+  final bool jardin;
+  final bool vistaAgua;
+  final bool vistaMontanas;
+  final bool rodeadoNaturaleza;
+  final bool terrazaRooftop;
+  final bool ventanalesGrandes;
+  final bool casaAntigua;
+  final bool edificioHistorico;
+  final bool dentroLibreria;
+  final bool espacioCultural;
+
   final bool librosOJuegos;
 
   final VoidCallback onVolver;
@@ -1421,6 +1752,8 @@ class _PasoRevision extends StatelessWidget {
     required this.accesible,
     required this.cambiadorBebes,
     required this.petFriendly,
+    required this.kidsFriendly,
+
     required this.cafeEspecialidad,
     required this.brunch,
     required this.desayuno,
@@ -1429,6 +1762,21 @@ class _PasoRevision extends StatelessWidget {
     required this.veganFriendly,
     required this.vegetariano,
     required this.sinTacc,
+    required this.opcionesSaludables,
+    required this.sinAzucar,
+    required this.lechesVegetales,
+
+    required this.jardin,
+    required this.vistaAgua,
+    required this.vistaMontanas,
+    required this.rodeadoNaturaleza,
+    required this.terrazaRooftop,
+    required this.ventanalesGrandes,
+    required this.casaAntigua,
+    required this.edificioHistorico,
+    required this.dentroLibreria,
+    required this.espacioCultural,
+
     required this.librosOJuegos,
     required this.onVolver,
     required this.onEnviar,
@@ -1445,7 +1793,9 @@ class _PasoRevision extends StatelessWidget {
       if (estacionamiento) 'Estacionamiento',
       if (accesible) 'Accesible',
       if (cambiadorBebes) 'Cambiador para bebés',
-      if (petFriendly) 'Apto mascotas',
+      if (petFriendly) 'Pet friendly',
+      if (kidsFriendly) 'Kids friendly',
+
       if (cafeEspecialidad) 'Café de especialidad',
       if (brunch) 'Brunch',
       if (desayuno) 'Desayuno',
@@ -1453,7 +1803,22 @@ class _PasoRevision extends StatelessWidget {
       if (pasteleriaArtesanal) 'Pastelería artesanal',
       if (veganFriendly) 'Opciones veganas',
       if (vegetariano) 'Opciones vegetarianas',
-      if (sinTacc) 'Opciones sin gluten / Sin TACC',
+      if (sinTacc) 'Sin TACC',
+      if (opcionesSaludables) 'Opciones saludables',
+      if (sinAzucar) 'Opciones sin azúcar',
+      if (lechesVegetales) 'Leches vegetales',
+
+      if (jardin) 'Con jardín',
+      if (vistaAgua) 'Vista al agua',
+      if (vistaMontanas) 'Vista a las sierras / montañas',
+      if (rodeadoNaturaleza) 'Rodeado de naturaleza',
+      if (terrazaRooftop) 'Terraza o rooftop',
+      if (ventanalesGrandes) 'Grandes ventanales',
+      if (casaAntigua) 'En una casa antigua',
+      if (edificioHistorico) 'En un edificio histórico',
+      if (dentroLibreria) 'Dentro de una librería',
+      if (espacioCultural) 'En un espacio cultural',
+
       if (librosOJuegos) 'Libros o juegos',
     ];
 

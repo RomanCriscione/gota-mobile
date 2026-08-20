@@ -294,14 +294,6 @@ double? get longitudeCafe {
     return detalleCafe?['serves_brunch'] == true;
   }
 
-  bool get laptopFriendlyCafe {
-    return detalleCafe?['laptop_friendly'] == true;
-  }
-
-  bool get espacioTranquiloCafe {
-    return detalleCafe?['quiet_space'] == true;
-  }
-
   bool get aireAcondicionadoCafe {
     return detalleCafe?['has_air_conditioning'] == true;
   }
@@ -344,6 +336,62 @@ double? get longitudeCafe {
 
   bool get librosOJuegosCafe {
     return detalleCafe?['has_books_or_games'] == true;
+  }
+
+  bool get kidsFriendlyCafe {
+  return detalleCafe?['is_kids_friendly'] == true;
+}
+
+  bool get opcionesSaludablesCafe {
+    return detalleCafe?['has_healthy_options'] == true;
+  }
+
+  bool get sinAzucarCafe {
+    return detalleCafe?['has_sugar_free_options'] == true;
+  }
+
+  bool get lechesVegetalesCafe {
+    return detalleCafe?['has_plant_based_milk'] == true;
+  }
+
+  bool get jardinCafe {
+    return detalleCafe?['has_garden'] == true;
+  }
+
+  bool get vistaAguaCafe {
+    return detalleCafe?['has_water_view'] == true;
+  }
+
+  bool get vistaMontanasCafe {
+    return detalleCafe?['has_mountain_view'] == true;
+  }
+
+  bool get rodeadoNaturalezaCafe {
+    return detalleCafe?['surrounded_by_nature'] == true;
+  }
+
+  bool get terrazaRooftopCafe {
+    return detalleCafe?['has_rooftop'] == true;
+  }
+
+  bool get ventanalesGrandesCafe {
+    return detalleCafe?['has_large_windows'] == true;
+  }
+
+  bool get casaAntiguaCafe {
+    return detalleCafe?['is_old_house'] == true;
+  }
+
+  bool get edificioHistoricoCafe {
+    return detalleCafe?['is_historic_building'] == true;
+  }
+
+  bool get dentroLibreriaCafe {
+    return detalleCafe?['inside_bookstore'] == true;
+  }
+
+  bool get espacioCulturalCafe {
+    return detalleCafe?['inside_cultural_space'] == true;
   }
 
   List<String> get fotosDisponibles {
@@ -504,6 +552,97 @@ double? get longitudeCafe {
       }
     }
   }
+
+    Future<void> _mostrarReporteResena(int reviewId) async {
+      final motivo = await showModalBottomSheet<String>(
+        context: context,
+        showDragHandle: true,
+        builder: (context) {
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Reportar reseña',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    '¿Por qué querés reportar esta reseña?',
+                    style: TextStyle(
+                      color: Colors.black54,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  ListTile(
+                    leading: const Icon(Icons.block_outlined),
+                    title: const Text('Spam'),
+                    onTap: () => Navigator.pop(context, 'SPAM'),
+                  ),
+
+                  ListTile(
+                    leading: const Icon(Icons.warning_amber_rounded),
+                    title: const Text('Contenido ofensivo'),
+                    onTap: () => Navigator.pop(context, 'OFFENSIVE'),
+                  ),
+
+                  ListTile(
+                    leading: const Icon(Icons.info_outline_rounded),
+                    title: const Text('Información falsa'),
+                    onTap: () => Navigator.pop(context, 'FALSE_INFO'),
+                  ),
+
+                  ListTile(
+                    leading: const Icon(Icons.more_horiz_rounded),
+                    title: const Text('Otro motivo'),
+                    onTap: () => Navigator.pop(context, 'OTHER'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+
+      if (motivo == null || !mounted) return;
+
+      try {
+        await ApiService.reportarResena(
+          reviewId: reviewId,
+          reason: motivo,
+        );
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Gracias. Recibimos tu reporte y lo vamos a revisar.',
+            ),
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+
+        final mensaje = e
+            .toString()
+            .replaceFirst('Exception: ', '');
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(mensaje),
+          ),
+        );
+      }
+    }
+
 
   Future<void> guardarColeccion(String collection) async {
     String apiCollection = '';
@@ -878,8 +1017,6 @@ double? get longitudeCafe {
         enchufesCafe ||
         cafeEspecialidadCafe ||
         brunchCafe ||
-        laptopFriendlyCafe ||
-        espacioTranquiloCafe ||
         aireAcondicionadoCafe ||
         aireLibreCafe ||
         estacionamientoCafe ||
@@ -890,7 +1027,21 @@ double? get longitudeCafe {
         pasteleriaArtesanalCafe ||
         vegetarianoCafe ||
         sinTaccCafe ||
-        librosOJuegosCafe;
+        librosOJuegosCafe ||
+        kidsFriendlyCafe ||
+        opcionesSaludablesCafe ||
+        sinAzucarCafe ||
+        lechesVegetalesCafe ||
+        jardinCafe ||
+        vistaAguaCafe ||
+        vistaMontanasCafe ||
+        rodeadoNaturalezaCafe ||
+        terrazaRooftopCafe ||
+        ventanalesGrandesCafe ||
+        casaAntiguaCafe ||
+        edificioHistoricoCafe ||
+        dentroLibreriaCafe ||
+        espacioCulturalCafe;
 
     return Scaffold(
       appBar: AppBar(
@@ -1757,6 +1908,90 @@ double? get longitudeCafe {
                       label: 'Sin TACC',
                       icon: Icons.no_food_outlined,
                     ),
+                  
+                  if (opcionesSaludablesCafe)
+                    const FeatureCard(
+                      label: 'Saludables',
+                      icon: Icons.health_and_safety_outlined,
+                    ),
+
+                  if (sinAzucarCafe)
+                    const FeatureCard(
+                      label: 'Sin azúcar',
+                      icon: Icons.no_meals_outlined,
+                    ),
+
+                  if (lechesVegetalesCafe)
+                    const FeatureCard(
+                      label: 'Leches vegetales',
+                      icon: Icons.local_drink_outlined,
+                    ),
+
+                  if (jardinCafe)
+                    const FeatureCard(
+                      label: 'Con jardín',
+                      icon: Icons.yard_outlined,
+                    ),
+
+                  if (vistaAguaCafe)
+                    const FeatureCard(
+                      label: 'Vista al agua',
+                      icon: Icons.water_outlined,
+                    ),
+
+                  if (vistaMontanasCafe)
+                    const FeatureCard(
+                      label: 'Sierras / montañas',
+                      icon: Icons.landscape_outlined,
+                    ),
+
+                  if (rodeadoNaturalezaCafe)
+                    const FeatureCard(
+                      label: 'Naturaleza',
+                      icon: Icons.park_outlined,
+                    ),
+
+                  if (terrazaRooftopCafe)
+                    const FeatureCard(
+                      label: 'Terraza / rooftop',
+                      icon: Icons.roofing_outlined,
+                    ),
+
+                  if (ventanalesGrandesCafe)
+                    const FeatureCard(
+                      label: 'Grandes ventanales',
+                      icon: Icons.window_outlined,
+                    ),
+
+                  if (casaAntiguaCafe)
+                    const FeatureCard(
+                      label: 'Casa antigua',
+                      icon: Icons.home_outlined,
+                    ),
+
+                  if (edificioHistoricoCafe)
+                    const FeatureCard(
+                      label: 'Edificio histórico',
+                      icon: Icons.account_balance_outlined,
+                    ),
+
+                  if (dentroLibreriaCafe)
+                    const FeatureCard(
+                      label: 'Dentro de librería',
+                      icon: Icons.menu_book_outlined,
+                    ),
+
+                  if (espacioCulturalCafe)
+                    const FeatureCard(
+                      label: 'Espacio cultural',
+                      icon: Icons.palette_outlined,
+                    ),
+
+                  if (kidsFriendlyCafe)
+                    const FeatureCard(
+                      label: 'Kids friendly',
+                      icon: Icons.child_friendly_outlined,
+                    ),
 
                   if (alcoholCafe)
                     const FeatureCard(
@@ -1768,18 +2003,6 @@ double? get longitudeCafe {
                     const FeatureCard(
                       label: 'Libros / juegos',
                       icon: Icons.menu_book_outlined,
-                    ),
-
-                  if (laptopFriendlyCafe)
-                    const FeatureCard(
-                      label: 'Para trabajar',
-                      icon: Icons.laptop_mac_rounded,
-                    ),
-
-                  if (espacioTranquiloCafe)
-                    const FeatureCard(
-                      label: 'Tranquilo',
-                      icon: Icons.volume_off_rounded,
                     ),
 
                   if (petFriendlyCafe)
@@ -1938,8 +2161,12 @@ double? get longitudeCafe {
                 final String respuestaDueno =
                     reviewMap['owner_reply']?.toString() ?? '';
 
+                final int? reviewId = reviewMap['id'] is num
+                    ? (reviewMap['id'] as num).toInt()
+                    : int.tryParse(reviewMap['id']?.toString() ?? '');
+
                 return Container(
-                  width: double.infinity,
+                   width: double.infinity,
                   margin: const EdgeInsets.only(
                     bottom: 12,
                   ),
@@ -2007,7 +2234,36 @@ double? get longitudeCafe {
                                   ),
                               ],
                             ),
-                          ),
+                                                    ),
+
+                          if (reviewId != null)
+                            PopupMenuButton<String>(
+                              tooltip: 'Opciones',
+                              icon: const Icon(
+                                Icons.more_vert_rounded,
+                                color: Colors.black54,
+                              ),
+                              onSelected: (value) {
+                                if (value == 'report') {
+                                  _mostrarReporteResena(reviewId);
+                                }
+                              },
+                              itemBuilder: (context) => const [
+                                PopupMenuItem<String>(
+                                  value: 'report',
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.flag_outlined,
+                                        size: 20,
+                                      ),
+                                      SizedBox(width: 10),
+                                      Text('Reportar reseña'),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                         ],
                       ),
 

@@ -32,14 +32,32 @@ class CafeService {
     required bool accesible,
     required bool cambiadorBebes,
     required bool petFriendly,
+    required bool kidsFriendly,
+
     required bool cafeEspecialidad,
     required bool brunch,
     required bool desayuno,
     required bool alcohol,
     required bool pasteleriaArtesanal,
+
     required bool veganFriendly,
     required bool vegetariano,
     required bool sinTacc,
+    required bool opcionesSaludables,
+    required bool sinAzucar,
+    required bool lechesVegetales,
+
+    required bool jardin,
+    required bool vistaAgua,
+    required bool vistaMontanas,
+    required bool rodeadoNaturaleza,
+    required bool terrazaRooftop,
+    required bool ventanalesGrandes,
+    required bool casaAntigua,
+    required bool edificioHistorico,
+    required bool dentroLibreria,
+    required bool espacioCultural,
+
     required bool librosOJuegos,
   }) async {
     final token = await AuthService.obtenerToken();
@@ -87,6 +105,7 @@ class CafeService {
           cambiadorBebes.toString(),
 
       'is_pet_friendly': petFriendly.toString(),
+      'is_kids_friendly': kidsFriendly.toString(),
 
       'has_specialty_coffee':
           cafeEspecialidad.toString(),
@@ -102,6 +121,34 @@ class CafeService {
           vegetariano.toString(),
       'has_gluten_free_options':
           sinTacc.toString(),
+
+      'has_healthy_options':
+          opcionesSaludables.toString(),
+      'has_sugar_free_options':
+          sinAzucar.toString(),
+      'has_plant_based_milk':
+          lechesVegetales.toString(),
+
+      'has_garden':
+          jardin.toString(),
+      'has_water_view':
+          vistaAgua.toString(),
+      'has_mountain_view':
+          vistaMontanas.toString(),
+      'surrounded_by_nature':
+          rodeadoNaturaleza.toString(),
+      'has_rooftop':
+          terrazaRooftop.toString(),
+      'has_large_windows':
+          ventanalesGrandes.toString(),
+      'is_old_house':
+          casaAntigua.toString(),
+      'is_historic_building':
+          edificioHistorico.toString(),
+      'inside_bookstore':
+          dentroLibreria.toString(),
+      'inside_cultural_space':
+          espacioCultural.toString(),
 
       'has_books_or_games':
           librosOJuegos.toString(),

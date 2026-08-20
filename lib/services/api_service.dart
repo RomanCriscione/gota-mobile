@@ -458,4 +458,70 @@ class ApiService {
 
     return decodedData;
   }
+
+  static Future<Map<String, dynamic>> reportarResena({
+    required int reviewId,
+    required String reason,
+    String? message,
+  }) async {
+    final token = await AuthService.obtenerToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception(
+        'No hay una sesión iniciada',
+      );
+    }
+
+    final response = await http
+        .post(
+          Uri.parse(
+            '$baseUrl/mobile/reviews/$reviewId/report/',
+          ),
+          headers: {
+            'Authorization': 'Token $token',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'reason': reason,
+            'message': message?.trim() ?? '',
+          }),
+        )
+        .timeout(
+          const Duration(seconds: 15),
+        );
+
+    Map<String, dynamic>? decodedData;
+
+    try {
+      final dynamic decoded =
+          jsonDecode(response.body);
+
+      if (decoded is Map<String, dynamic>) {
+        decodedData = decoded;
+      }
+    } catch (_) {}
+
+    if (response.statusCode != 201) {
+      final message =
+          decodedData?['message'];
+
+      if (message is String &&
+          message.isNotEmpty) {
+        throw Exception(message);
+      }
+
+      throw Exception(
+        'No pudimos enviar el reporte.',
+      );
+    }
+
+    if (decodedData == null) {
+      throw Exception(
+        'La respuesta del reporte no es válida.',
+      );
+    }
+
+    return decodedData;
+  }
 }

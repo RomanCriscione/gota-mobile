@@ -18,25 +18,41 @@
   class _CafesScreenState extends State<CafesScreen> {
     late Future<List<Cafe>> cafesFuture;
 
-    bool filtroWifi = false;
-    bool filtroEnchufes = false;
+    // Comida y bebida
     bool filtroEspecialidad = false;
-    bool filtroLaptop = false;
-    bool filtroMascotas = false;
     bool filtroBrunch = false;
     bool filtroDesayuno = false;
+    bool filtroPasteleria = false;
     bool filtroVegano = false;
     bool filtroVegetariano = false;
     bool filtroSinTacc = false;
+    bool filtroSaludable = false;
+    bool filtroSinAzucar = false;
+    bool filtroLechesVegetales = false;
+
+    // Espacios y lugares diferentes
+    bool filtroJardin = false;
+    bool filtroVistaAgua = false;
+    bool filtroVistaMontanas = false;
+    bool filtroNaturaleza = false;
+    bool filtroRooftop = false;
+    bool filtroVentanales = false;
+    bool filtroCasaAntigua = false;
+    bool filtroEdificioHistorico = false;
+    bool filtroLibreria = false;
+    bool filtroEspacioCultural = false;
     bool filtroLibros = false;
-    bool filtroTranquilo = false;
+
+    // Servicios
+    bool filtroMascotas = false;
+    bool filtroKidsFriendly = false;
+    bool filtroWifi = false;
+    bool filtroEnchufes = false;
     bool filtroAireAcondicionado = false;
     bool filtroAireLibre = false;
     bool filtroEstacionamiento = false;
     bool filtroAccesible = false;
     bool filtroCambiador = false;
-    bool filtroAlcohol = false;
-    bool filtroPasteleria = false;
 
     final TextEditingController _searchController =
         TextEditingController();
@@ -51,29 +67,41 @@
     int get filtrosActivos {
       int total = 0;
 
-      if (filtroWifi) total++;
-      if (filtroEnchufes) total++;
+      // Comida y bebida
       if (filtroEspecialidad) total++;
-      if (filtroLaptop) total++;
-
-      if (filtroMascotas) total++;
       if (filtroBrunch) total++;
       if (filtroDesayuno) total++;
+      if (filtroPasteleria) total++;
       if (filtroVegano) total++;
       if (filtroVegetariano) total++;
       if (filtroSinTacc) total++;
+      if (filtroSaludable) total++;
+      if (filtroSinAzucar) total++;
+      if (filtroLechesVegetales) total++;
 
-      if (filtroLibros) total++;
-      if (filtroTranquilo) total++;
+      // Espacio y entorno
+      if (filtroJardin) total++;
+      if (filtroVistaAgua) total++;
+      if (filtroVistaMontanas) total++;
+      if (filtroNaturaleza) total++;
+      if (filtroRooftop) total++;
+      if (filtroVentanales) total++;
+      if (filtroCasaAntigua) total++;
+      if (filtroEdificioHistorico) total++;
+      if (filtroLibreria) total++;
+      if (filtroEspacioCultural) total++;
 
+      // Servicios y comodidades
+      if (filtroMascotas) total++;
+      if (filtroKidsFriendly) total++;
+      if (filtroWifi) total++;
+      if (filtroEnchufes) total++;
       if (filtroAireAcondicionado) total++;
       if (filtroAireLibre) total++;
       if (filtroEstacionamiento) total++;
       if (filtroAccesible) total++;
       if (filtroCambiador) total++;
-
-      if (filtroPasteleria) total++;
-      if (filtroAlcohol) total++;
+      if (filtroLibros) total++;
 
       return total;
     }
@@ -171,22 +199,8 @@
                 return false;
               }
 
-              if (filtroWifi && !cafe.tieneWifi) {
-                return false;
-              }
-
-              if (filtroEnchufes && !cafe.enchufes) {
-                return false;
-              }
-
-              if (filtroEspecialidad && !cafe.cafeEspecialidad) {
-                return false;
-              }
-
-              if (filtroLaptop && !cafe.laptopFriendly) {
-                return false;
-              }
-              if (filtroMascotas && !cafe.petFriendly) {
+              // Comida y bebida
+          if (filtroEspecialidad && !cafe.cafeEspecialidad) {
             return false;
           }
 
@@ -195,6 +209,10 @@
           }
 
           if (filtroDesayuno && !cafe.desayuno) {
+            return false;
+          }
+
+          if (filtroPasteleria && !cafe.pasteleriaArtesanal) {
             return false;
           }
 
@@ -210,45 +228,97 @@
             return false;
           }
 
+          if (filtroSaludable && !cafe.opcionesSaludables) {
+            return false;
+          }
+
+          if (filtroSinAzucar && !cafe.sinAzucar) {
+            return false;
+          }
+
+          if (filtroLechesVegetales && !cafe.lechesVegetales) {
+            return false;
+          }
+
+          // Espacio y entorno
+          if (filtroJardin && !cafe.jardin) {
+            return false;
+          }
+
+          if (filtroVistaAgua && !cafe.vistaAgua) {
+            return false;
+          }
+
+          if (filtroVistaMontanas && !cafe.vistaMontanas) {
+            return false;
+          }
+
+          if (filtroNaturaleza && !cafe.rodeadoNaturaleza) {
+            return false;
+          }
+
+          if (filtroRooftop && !cafe.terrazaRooftop) {
+            return false;
+          }
+
+          if (filtroVentanales && !cafe.ventanalesGrandes) {
+            return false;
+          }
+
+          if (filtroCasaAntigua && !cafe.casaAntigua) {
+            return false;
+          }
+
+          if (filtroEdificioHistorico && !cafe.edificioHistorico) {
+            return false;
+          }
+
+          if (filtroLibreria && !cafe.dentroLibreria) {
+            return false;
+          }
+
+          if (filtroEspacioCultural && !cafe.espacioCultural) {
+            return false;
+          }
+
+          // Servicios y comodidades
+          if (filtroMascotas && !cafe.petFriendly) {
+            return false;
+          }
+
+          if (filtroKidsFriendly && !cafe.kidsFriendly) {
+            return false;
+          }
+
+          if (filtroWifi && !cafe.tieneWifi) {
+            return false;
+          }
+
+          if (filtroEnchufes && !cafe.enchufes) {
+            return false;
+          }
+
+          if (filtroAireAcondicionado && !cafe.aireAcondicionado) {
+            return false;
+          }
+
+          if (filtroAireLibre && !cafe.mesasAlAireLibre) {
+            return false;
+          }
+
+          if (filtroEstacionamiento && !cafe.estacionamiento) {
+            return false;
+          }
+
+          if (filtroAccesible && !cafe.accesible) {
+            return false;
+          }
+
+          if (filtroCambiador && !cafe.cambiadorBebes) {
+            return false;
+          }
+
           if (filtroLibros && !cafe.librosOJuegos) {
-            return false;
-          }
-
-          if (filtroTranquilo && !cafe.espacioTranquilo) {
-            return false;
-          }
-
-          if (filtroAireAcondicionado &&
-              !cafe.aireAcondicionado) {
-            return false;
-          }
-
-          if (filtroAireLibre &&
-              !cafe.mesasAlAireLibre) {
-            return false;
-          }
-
-          if (filtroEstacionamiento &&
-              !cafe.estacionamiento) {
-            return false;
-          }
-
-          if (filtroAccesible &&
-              !cafe.accesible) {
-            return false;
-          }
-
-          if (filtroCambiador &&
-              !cafe.cambiadorBebes) {
-            return false;
-          }
-          if (filtroAlcohol &&
-              !cafe.alcohol) {
-            return false;
-          }
-
-          if (filtroPasteleria &&
-              !cafe.pasteleriaArtesanal) {
             return false;
           }
 
@@ -345,22 +415,23 @@
                         ),
 
                         FilterChip(
-                          label: const Text('💻 Trabajar'),
-                          selected: filtroLaptop,
+                          label: const Text('🌿 Jardín'),
+                          selected: filtroJardin,
                           visualDensity: const VisualDensity(
                             horizontal: -2,
                             vertical: -2,
                           ),
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
                           onSelected: (value) {
                             setState(() {
-                              filtroLaptop = value;
+                              filtroJardin = value;
                             });
                           },
                         ),
 
                         FilterChip(
-                          label: const Text('🍳 Brunch'),
+                          label: const Text('🥞 Brunch'),
                           selected: filtroBrunch,
                           visualDensity: const VisualDensity(
                             horizontal: -2,
@@ -512,13 +583,13 @@
                                           Row(
                                             children: [
                                               Icon(
-                                                Icons.star_rounded,
+                                                Icons.restaurant_menu,
                                                 size: 20,
                                                 color: Theme.of(context).colorScheme.primary,
                                               ),
                                               const SizedBox(width: 8),
                                               Text(
-                                                'Principales',
+                                                '☕ Para comer y tomar',
                                                 style: TextStyle(
                                                   fontSize: 17,
                                                   fontWeight: FontWeight.w700,
@@ -534,7 +605,6 @@
                                             spacing: 8,
                                             runSpacing: 8,
                                             children: [
-
                                               FilterChip(
                                                 label: const Text('☕ Especialidad'),
                                                 selected: filtroEspecialidad,
@@ -545,20 +615,18 @@
                                                   setModalState(() {});
                                                 },
                                               ),
-
                                               FilterChip(
-                                                label: const Text('💻 Trabajar'),
-                                                selected: filtroLaptop,
+                                                label: const Text('🥐 Pastelería artesanal'),
+                                                selected: filtroPasteleria,
                                                 onSelected: (value) {
                                                   setState(() {
-                                                    filtroLaptop = value;
+                                                    filtroPasteleria = value;
                                                   });
                                                   setModalState(() {});
                                                 },
                                               ),
-
                                               FilterChip(
-                                                label: const Text('🍳 Brunch'),
+                                                label: const Text('🥞 Brunch'),
                                                 selected: filtroBrunch,
                                                 onSelected: (value) {
                                                   setState(() {
@@ -567,24 +635,72 @@
                                                   setModalState(() {});
                                                 },
                                               ),
-
                                               FilterChip(
-                                                label: const Text('🐶 Pet Friendly'),
-                                                selected: filtroMascotas,
+                                                label: const Text('🍳 Desayuno'),
+                                                selected: filtroDesayuno,
                                                 onSelected: (value) {
                                                   setState(() {
-                                                    filtroMascotas = value;
+                                                    filtroDesayuno = value;
                                                   });
                                                   setModalState(() {});
                                                 },
                                               ),
-
                                               FilterChip(
-                                                label: const Text('📶 Wifi'),
-                                                selected: filtroWifi,
+                                                label: const Text('🥑 Saludables'),
+                                                selected: filtroSaludable,
                                                 onSelected: (value) {
                                                   setState(() {
-                                                    filtroWifi = value;
+                                                    filtroSaludable = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('🚫🍬 Sin azúcar'),
+                                                selected: filtroSinAzucar,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroSinAzucar = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('🌾 Sin TACC'),
+                                                selected: filtroSinTacc,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroSinTacc = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('🥛 Leches vegetales'),
+                                                selected: filtroLechesVegetales,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroLechesVegetales = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('🌱 Veganas'),
+                                                selected: filtroVegano,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroVegano = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('🥕 Vegetarianas'),
+                                                selected: filtroVegetariano,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroVegetariano = value;
                                                   });
                                                   setModalState(() {});
                                                 },
@@ -597,13 +713,13 @@
                                           Row(
                                             children: [
                                               Icon(
-                                                Icons.sentiment_satisfied_alt,
+                                                Icons.landscape_outlined,
                                                 size: 20,
                                                 color: Theme.of(context).colorScheme.primary,
                                               ),
                                               const SizedBox(width: 8),
                                               Text(
-                                                'Experiencia',
+                                                '🌿 Espacio y entorno',
                                                 style: TextStyle(
                                                   fontSize: 17,
                                                   fontWeight: FontWeight.w700,
@@ -619,9 +735,138 @@
                                             spacing: 8,
                                             runSpacing: 8,
                                             children: [
-
                                               FilterChip(
-                                                label: const Text('🐶 Mascotas'),
+                                                label: const Text('🌿 Con jardín'),
+                                                selected: filtroJardin,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroJardin = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('🌊 Vista al agua'),
+                                                selected: filtroVistaAgua,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroVistaAgua = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('⛰️ Sierras / montañas'),
+                                                selected: filtroVistaMontanas,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroVistaMontanas = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('🌳 Rodeado de naturaleza'),
+                                                selected: filtroNaturaleza,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroNaturaleza = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('🌇 Terraza o rooftop'),
+                                                selected: filtroRooftop,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroRooftop = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('🪟 Grandes ventanales'),
+                                                selected: filtroVentanales,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroVentanales = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('🏡 Casa antigua'),
+                                                selected: filtroCasaAntigua,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroCasaAntigua = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('🏛️ Edificio histórico'),
+                                                selected: filtroEdificioHistorico,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroEdificioHistorico = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('📚 Dentro de una librería'),
+                                                selected: filtroLibreria,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroLibreria = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('🎨 Espacio cultural'),
+                                                selected: filtroEspacioCultural,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroEspacioCultural = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                            ],
+                                          ),
+
+                                          const SizedBox(height: 28),
+
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.room_preferences_outlined,
+                                                size: 20,
+                                                color: Theme.of(context).colorScheme.primary,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                '🐶 Servicios y comodidades',
+                                                style: TextStyle(
+                                                  fontSize: 17,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Theme.of(context).colorScheme.primary,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+
+                                          const SizedBox(height: 8),
+
+                                          Wrap(
+                                            spacing: 8,
+                                            runSpacing: 8,
+                                            children: [
+                                              FilterChip(
+                                                label: const Text('🐶 Pet friendly'),
                                                 selected: filtroMascotas,
                                                 onSelected: (value) {
                                                   setState(() {
@@ -630,9 +875,88 @@
                                                   setModalState(() {});
                                                 },
                                               ),
-
                                               FilterChip(
-                                                label: const Text('📚 Libros/Juegos'),
+                                                label: const Text('👶 Kids friendly'),
+                                                selected: filtroKidsFriendly,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroKidsFriendly = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('📶 Wi-Fi'),
+                                                selected: filtroWifi,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroWifi = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('🔌 Enchufes'),
+                                                selected: filtroEnchufes,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroEnchufes = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('🌤️ Mesas al aire libre'),
+                                                selected: filtroAireLibre,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroAireLibre = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('🅿️ Estacionamiento'),
+                                                selected: filtroEstacionamiento,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroEstacionamiento = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('♿ Accesible'),
+                                                selected: filtroAccesible,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroAccesible = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('❄️ Aire acondicionado'),
+                                                selected: filtroAireAcondicionado,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroAireAcondicionado = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('👶 Cambiador para bebés'),
+                                                selected: filtroCambiador,
+                                                onSelected: (value) {
+                                                  setState(() {
+                                                    filtroCambiador = value;
+                                                  });
+                                                  setModalState(() {});
+                                                },
+                                              ),
+                                              FilterChip(
+                                                label: const Text('🎲 Libros o juegos'),
                                                 selected: filtroLibros,
                                                 onSelected: (value) {
                                                   setState(() {
@@ -641,255 +965,8 @@
                                                   setModalState(() {});
                                                 },
                                               ),
-
-                                              FilterChip(
-                                                label: const Text('🤫 Tranquilo'),
-                                                selected: filtroTranquilo,
-                                                onSelected: (value) {
-                                                  setState(() {
-                                                    filtroTranquilo = value;
-                                                  });
-                                                  setModalState(() {});
-                                                },
-                                              ),
-
-                                              ],
-                                              ),
-
-                                              const SizedBox(height: 28),
-
-
-                                          Row(
-                                            children: [
-                                              Icon(
-                                                Icons.restaurant_menu,
-                                                size: 20,
-                                                color: Theme.of(context).colorScheme.primary,
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Text(
-                                                'Comida y bebida',
-                                                style: TextStyle(
-                                                  fontSize: 17,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: Theme.of(context).colorScheme.primary,
-                                                ),
-                                              ),
                                             ],
                                           ),
-
-                                          const SizedBox(height: 8),
-
-                                          Wrap(
-                                            spacing: 8,
-                                            runSpacing: 8,
-                                            children: [
-
-                                              FilterChip(
-                                                label: const Text('🍳 Brunch'),
-                                                selected: filtroBrunch,
-                                                onSelected: (value) {
-                                                  setState(() {
-                                                    filtroBrunch = value;
-                                                  });
-                                                  setModalState(() {});
-                                                },
-                                              ),
-
-                                              FilterChip(
-                                                label: const Text('🥐 Desayuno'),
-                                                selected: filtroDesayuno,
-                                                onSelected: (value) {
-                                                  setState(() {
-                                                    filtroDesayuno = value;
-                                                  });
-                                                  setModalState(() {});
-                                                },
-                                              ),
-
-                                              FilterChip(
-                                                label: const Text('🌱 Vegano'),
-                                                selected: filtroVegano,
-                                                onSelected: (value) {
-                                                  setState(() {
-                                                    filtroVegano = value;
-                                                  });
-                                                  setModalState(() {});
-                                                },
-                                              ),
-
-                                              FilterChip(
-                                                label: const Text('🥗 Vegetariano'),
-                                                selected: filtroVegetariano,
-                                                onSelected: (value) {
-                                                  setState(() {
-                                                    filtroVegetariano = value;
-                                                  });
-                                                  setModalState(() {});
-                                                },
-                                              ),
-
-                                              FilterChip(
-                                                label: const Text('🌾 Sin TACC'),
-                                                selected: filtroSinTacc,
-                                                onSelected: (value) {
-                                                  setState(() {
-                                                    filtroSinTacc = value;
-                                                  });
-                                                  setModalState(() {});
-                                                },
-                                              ),
-
-                                            ],
-                                          ),
-
-                          const SizedBox(height: 28),
-
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.room_preferences_outlined,
-                                size: 20,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Servicios',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w700,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-
-                              FilterChip(
-                                label: const Text('🔌 Enchufes'),
-                                selected: filtroEnchufes,
-                                onSelected: (value) {
-                                  setState(() {
-                                    filtroEnchufes = value;
-                                  });
-                                  setModalState(() {});
-                                },
-                              ),
-
-                              FilterChip(
-                                label: const Text('❄️ Aire acondicionado'),
-                                selected: filtroAireAcondicionado,
-                                onSelected: (value) {
-                                  setState(() {
-                                    filtroAireAcondicionado = value;
-                                  });
-                                  setModalState(() {});
-                                },
-                              ),
-
-                              FilterChip(
-                                label: const Text('☀️ Aire libre'),
-                                selected: filtroAireLibre,
-                                onSelected: (value) {
-                                  setState(() {
-                                    filtroAireLibre = value;
-                                  });
-                                  setModalState(() {});
-                                },
-                              ),
-
-                              FilterChip(
-                                label: const Text('🚗 Estacionamiento'),
-                                selected: filtroEstacionamiento,
-                                onSelected: (value) {
-                                  setState(() {
-                                    filtroEstacionamiento = value;
-                                  });
-                                  setModalState(() {});
-                                },
-                              ),
-
-                              FilterChip(
-                                label: const Text('♿ Accesible'),
-                                selected: filtroAccesible,
-                                onSelected: (value) {
-                                  setState(() {
-                                    filtroAccesible = value;
-                                  });
-                                  setModalState(() {});
-                                },
-                              ),
-
-                              FilterChip(
-                                label: const Text('👶 Cambiador'),
-                                selected: filtroCambiador,
-                                onSelected: (value) {
-                                  setState(() {
-                                    filtroCambiador = value;
-                                  });
-                                  setModalState(() {});
-                                },
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 28),
-
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.coffee_outlined,
-                                size: 20,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Cafetería',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w700,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-
-                              FilterChip(
-                                label: const Text('🍰 Pastelería artesanal'),
-                                selected: filtroPasteleria,
-                                onSelected: (value) {
-                                  setState(() {
-                                    filtroPasteleria = value;
-                                  });
-                                  setModalState(() {});
-                                },
-                              ),
-
-                              FilterChip(
-                                label: const Text('🍺 Alcohol'),
-                                selected: filtroAlcohol,
-                                onSelected: (value) {
-                                  setState(() {
-                                    filtroAlcohol = value;
-                                  });
-                                  setModalState(() {});
-                                },
-                              ),
-                            ],
-                            ),
 
                             const SizedBox(height: 28),
 
@@ -899,29 +976,41 @@
                                 label: const Text('Limpiar filtros'),
                                 onPressed: () {
                                   setState(() {
-                                    filtroWifi = false;
-                                    filtroEnchufes = false;
+                                    // Comida y bebida
                                     filtroEspecialidad = false;
-                                    filtroLaptop = false;
-
-                                    filtroMascotas = false;
                                     filtroBrunch = false;
                                     filtroDesayuno = false;
+                                    filtroPasteleria = false;
                                     filtroVegano = false;
                                     filtroVegetariano = false;
                                     filtroSinTacc = false;
+                                    filtroSaludable = false;
+                                    filtroSinAzucar = false;
+                                    filtroLechesVegetales = false;
 
-                                    filtroLibros = false;
-                                    filtroTranquilo = false;
+                                    // Espacio y entorno
+                                    filtroJardin = false;
+                                    filtroVistaAgua = false;
+                                    filtroVistaMontanas = false;
+                                    filtroNaturaleza = false;
+                                    filtroRooftop = false;
+                                    filtroVentanales = false;
+                                    filtroCasaAntigua = false;
+                                    filtroEdificioHistorico = false;
+                                    filtroLibreria = false;
+                                    filtroEspacioCultural = false;
 
+                                    // Servicios y comodidades
+                                    filtroMascotas = false;
+                                    filtroKidsFriendly = false;
+                                    filtroWifi = false;
+                                    filtroEnchufes = false;
                                     filtroAireAcondicionado = false;
                                     filtroAireLibre = false;
                                     filtroEstacionamiento = false;
                                     filtroAccesible = false;
                                     filtroCambiador = false;
-
-                                    filtroPasteleria = false;
-                                    filtroAlcohol = false;
+                                    filtroLibros = false;
                                   });
 
                                   setModalState(() {});

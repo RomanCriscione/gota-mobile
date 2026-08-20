@@ -13,6 +13,7 @@ class Cafe {
 
   final bool tieneWifi;
   final bool petFriendly;
+  final bool kidsFriendly;
   final bool veganFriendly;
   final bool aireAcondicionado;
   final bool enchufes;
@@ -29,6 +30,20 @@ class Cafe {
 
   final bool vegetariano;
   final bool sinTacc;
+  final bool opcionesSaludables;
+  final bool sinAzucar;
+  final bool lechesVegetales;
+
+  final bool jardin;
+  final bool vistaAgua;
+  final bool vistaMontanas;
+  final bool rodeadoNaturaleza;
+  final bool terrazaRooftop;
+  final bool ventanalesGrandes;
+  final bool casaAntigua;
+  final bool edificioHistorico;
+  final bool dentroLibreria;
+  final bool espacioCultural;
 
   final bool laptopFriendly;
   final bool espacioTranquilo;
@@ -51,6 +66,7 @@ class Cafe {
     this.longitude,
     this.tieneWifi = false,
     this.petFriendly = false,
+    this.kidsFriendly = false,
     this.veganFriendly = false,
     this.aireAcondicionado = false,
     this.enchufes = false,
@@ -67,6 +83,20 @@ class Cafe {
 
     this.vegetariano = false,
     this.sinTacc = false,
+    this.opcionesSaludables = false,
+    this.sinAzucar = false,
+    this.lechesVegetales = false,
+
+    this.jardin = false,
+    this.vistaAgua = false,
+    this.vistaMontanas = false,
+    this.rodeadoNaturaleza = false,
+    this.terrazaRooftop = false,
+    this.ventanalesGrandes = false,
+    this.casaAntigua = false,
+    this.edificioHistorico = false,
+    this.dentroLibreria = false,
+    this.espacioCultural = false,
 
     this.laptopFriendly = false,
     this.espacioTranquilo = false,
@@ -92,6 +122,7 @@ class Cafe {
         longitude: longitude,
         tieneWifi: tieneWifi,
         petFriendly: petFriendly,
+        kidsFriendly: kidsFriendly,
         veganFriendly: veganFriendly,
         aireAcondicionado: aireAcondicionado,
         enchufes: enchufes,
@@ -106,6 +137,21 @@ class Cafe {
         pasteleriaArtesanal: pasteleriaArtesanal,
         vegetariano: vegetariano,
         sinTacc: sinTacc,
+        opcionesSaludables: opcionesSaludables,
+        sinAzucar: sinAzucar,
+        lechesVegetales: lechesVegetales,
+
+        jardin: jardin,
+        vistaAgua: vistaAgua,
+        vistaMontanas: vistaMontanas,
+        rodeadoNaturaleza: rodeadoNaturaleza,
+        terrazaRooftop: terrazaRooftop,
+        ventanalesGrandes: ventanalesGrandes,
+        casaAntigua: casaAntigua,
+        edificioHistorico: edificioHistorico,
+        dentroLibreria: dentroLibreria,
+        espacioCultural: espacioCultural,
+
         laptopFriendly: laptopFriendly,
         espacioTranquilo: espacioTranquilo,
         librosOJuegos: librosOJuegos,
@@ -126,6 +172,7 @@ class Cafe {
       'direccion': direccion,
       'tieneWifi': tieneWifi,
       'petFriendly': petFriendly,
+      'kidsFriendly': kidsFriendly,
       'veganFriendly': veganFriendly,
       'aireAcondicionado': aireAcondicionado,
       'enchufes': enchufes,
@@ -142,13 +189,27 @@ class Cafe {
 
       'vegetariano': vegetariano,
       'sinTacc': sinTacc,
+      'opcionesSaludables': opcionesSaludables,
+      'sinAzucar': sinAzucar,
+      'lechesVegetales': lechesVegetales,
+
+      'jardin': jardin,
+      'vistaAgua': vistaAgua,
+      'vistaMontanas': vistaMontanas,
+      'rodeadoNaturaleza': rodeadoNaturaleza,
+      'terrazaRooftop': terrazaRooftop,
+      'ventanalesGrandes': ventanalesGrandes,
+      'casaAntigua': casaAntigua,
+      'edificioHistorico': edificioHistorico,
+      'dentroLibreria': dentroLibreria,
+      'espacioCultural': espacioCultural,
 
       'laptopFriendly': laptopFriendly,
       'espacioTranquilo': espacioTranquilo,
 
       'librosOJuegos': librosOJuegos,
       'tags': tags,
-    'collection': collection,
+      'collection': collection,
     };
   }
 
@@ -179,6 +240,7 @@ class Cafe {
       tieneWifi: json['has_wifi'] ?? false,
 
       petFriendly: json['is_pet_friendly'] ?? false,
+      kidsFriendly: json['is_kids_friendly'] ?? false,
 
       veganFriendly: json['is_vegan_friendly'] ?? false,
 
@@ -220,6 +282,45 @@ class Cafe {
 
       sinTacc:
           json['has_gluten_free_options'] ?? false,
+
+      opcionesSaludables:
+          json['has_healthy_options'] ?? false,
+
+      sinAzucar:
+          json['has_sugar_free_options'] ?? false,
+
+      lechesVegetales:
+          json['has_plant_based_milk'] ?? false,
+
+      jardin:
+          json['has_garden'] ?? false,
+
+      vistaAgua:
+          json['has_water_view'] ?? false,
+
+      vistaMontanas:
+          json['has_mountain_view'] ?? false,
+
+      rodeadoNaturaleza:
+          json['surrounded_by_nature'] ?? false,
+
+      terrazaRooftop:
+          json['has_rooftop'] ?? false,
+
+      ventanalesGrandes:
+          json['has_large_windows'] ?? false,
+
+      casaAntigua:
+          json['is_old_house'] ?? false,
+
+      edificioHistorico:
+          json['is_historic_building'] ?? false,
+
+      dentroLibreria:
+          json['inside_bookstore'] ?? false,
+
+      espacioCultural:
+          json['inside_cultural_space'] ?? false,
 
       laptopFriendly:
           json['laptop_friendly'] ?? false,
