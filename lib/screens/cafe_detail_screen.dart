@@ -205,6 +205,26 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
     return detalleCafe?['address']?.toString() ?? '';
   }
 
+  String get descripcionCafe {
+    return detalleCafe?['description']?.toString().trim() ?? '';
+  }
+
+  String get telefonoCafe {
+    return detalleCafe?['phone']?.toString().trim() ?? '';
+  }
+
+  String get instagramCafe {
+    return detalleCafe?['instagram']?.toString().trim() ?? '';
+  }
+
+  String get googleMapsUrlCafe {
+    return detalleCafe?['google_maps_url']?.toString().trim() ?? '';
+  }
+
+  String get provinciaCafe {
+    return detalleCafe?['province']?.toString().trim() ?? '';
+  }
+
   double? get latitudeCafe {
     final valor = detalleCafe?['latitude'];
 
@@ -1219,6 +1239,72 @@ double? get longitudeCafe {
 
                                 const SizedBox(height: 12),
 
+                                if (descripcionCafe.isNotEmpty) ...[
+                                  const SizedBox(height: 14),
+                                  Text(
+                                    descripcionCafe,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      height: 1.45,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
+
+                                if (telefonoCafe.isNotEmpty ||
+                                  instagramCafe.isNotEmpty) ...[
+                                  const SizedBox(height: 14),
+
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      if (telefonoCafe.isNotEmpty)
+                                        OutlinedButton.icon(
+                                          onPressed: () async {
+                                            final Uri url = Uri.parse(
+                                              'tel:${telefonoCafe.replaceAll(' ', '')}',
+                                            );
+
+                                            await launchUrl(url);
+                                          },
+                                          icon: const Icon(
+                                            Icons.phone_outlined,
+                                            size: 18,
+                                          ),
+                                          label: const Text('Llamar'),
+                                        ),
+
+                                      if (instagramCafe.isNotEmpty)
+                                        OutlinedButton.icon(
+                                          onPressed: () async {
+                                            final usuario = instagramCafe
+                                                .replaceAll('@', '')
+                                                .replaceAll('https://instagram.com/', '')
+                                                .replaceAll('https://www.instagram.com/', '')
+                                                .replaceAll('/', '');
+
+                                            final Uri url = Uri.parse(
+                                              'https://www.instagram.com/$usuario/',
+                                            );
+
+                                            await launchUrl(
+                                              url,
+                                              mode: LaunchMode.externalApplication,
+                                            );
+                                          },
+                                          icon: const Icon(
+                                            Icons.camera_alt_outlined,
+                                            size: 18,
+                                          ),
+                                          label: const Text('Instagram'),
+                                        ),
+
+                                      
+                                    ],
+                                  ),
+                                ],
+
                   if (ratingCafe == '0.0' ||
                     ratingCafe == 'Sin calificación')
                   const Text(
@@ -2079,9 +2165,15 @@ double? get longitudeCafe {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: () async {
-                    final Uri url = Uri.parse(
-                      'https://www.google.com/maps/search/?api=1&query=$latitudeCafe,$longitudeCafe',
-                    );
+                    final Uri url;
+
+                    if (googleMapsUrlCafe.isNotEmpty) {
+                      url = Uri.parse(googleMapsUrlCafe);
+                    } else {
+                      url = Uri.parse(
+                        'https://www.google.com/maps/search/?api=1&query=$latitudeCafe,$longitudeCafe',
+                      );
+                    }
 
                     final abierto = await launchUrl(
                       url,
