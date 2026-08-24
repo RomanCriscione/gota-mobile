@@ -249,9 +249,14 @@ class ApiService {
       );
     }
 
-    return jsonDecode(
+    final resultado = jsonDecode(
       response.body,
     ) as Map<String, dynamic>;
+
+    _miMapaCache = null;
+    _miMapaRequest = null;
+
+    return resultado;
   }
 
   static Future<Map<String, dynamic>> setCafeCollection({
@@ -290,9 +295,14 @@ class ApiService {
       );
     }
 
-    return jsonDecode(
+    final resultado = jsonDecode(
       response.body,
     ) as Map<String, dynamic>;
+
+    _miMapaCache = null;
+    _miMapaRequest = null;
+
+    return resultado;
   }
 
   static Future<Map<String, dynamic>> obtenerDetalleCafe(
