@@ -1,4 +1,5 @@
   import 'package:flutter/material.dart';
+  import 'package:geolocator/geolocator.dart';
   import 'cafe_detail_screen.dart';
   import '../models/cafe.dart';
   import '../services/api_service.dart';
@@ -62,8 +63,47 @@
     @override
     void initState() {
       super.initState();
-      cafesFuture = ApiService.obtenerCafes();
+      cafesFuture = _cargarCafesConUbicacion();
     }
+
+    Future<List<Cafe>> _cargarCafesConUbicacion({
+      bool forzarActualizacion = false,
+    }) async {
+      try {
+        final servicioHabilitado =
+            await Geolocator.isLocationServiceEnabled();
+
+        if (!servicioHabilitado) {
+          return ApiService.obtenerCafes(
+            forzarActualizacion: forzarActualizacion,
+          );
+        }
+
+        final permiso =
+            await Geolocator.checkPermission();
+
+        if (permiso == LocationPermission.denied ||
+            permiso == LocationPermission.deniedForever) {
+          return ApiService.obtenerCafes(
+            forzarActualizacion: forzarActualizacion,
+          );
+        }
+
+        final posicion =
+            await Geolocator.getCurrentPosition();
+
+        return ApiService.obtenerCafes(
+          forzarActualizacion: forzarActualizacion,
+          latitude: posicion.latitude,
+          longitude: posicion.longitude,
+        );
+      } catch (_) {
+        return ApiService.obtenerCafes(
+          forzarActualizacion: forzarActualizacion,
+        );
+      }
+    }
+
     int get filtrosActivos {
       int total = 0;
 
@@ -107,7 +147,7 @@
     }
 
     Future<void> _recargarCafes() async {
-      final nuevoFuture = ApiService.obtenerCafes(
+      final nuevoFuture = _cargarCafesConUbicacion(
         forzarActualizacion: true,
       );
 
@@ -171,7 +211,7 @@
                         onPressed: () {
                           setState(() {
                             cafesFuture =
-                                ApiService.obtenerCafes(
+                                _cargarCafesConUbicacion(
                               forzarActualizacion: true,
                             );
                           });

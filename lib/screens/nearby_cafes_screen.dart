@@ -87,7 +87,11 @@ class _NearbyCafesScreenState extends State<NearbyCafesScreen> {
                 await Geolocator.getCurrentPosition();
 
             final cafes =
-                await ApiService.obtenerCafes();
+                    await ApiService.obtenerCafes(
+                latitude: posicion.latitude,
+                longitude: posicion.longitude,
+                forzarActualizacion: true,
+                );
 
             final cafesConUbicacion = cafes
                 .where(

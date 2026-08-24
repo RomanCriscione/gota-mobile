@@ -9,40 +9,74 @@ class ApiService {
 
   static List<Cafe>? _cafesCache;
   static Future<List<Cafe>>? _cafesRequest;
+  static String? _cafesCacheKey;
+  static String? _cafesRequestKey;
 
   static Future<List<Cafe>> obtenerCafes({
     bool forzarActualizacion = false,
+    double? latitude,
+    double? longitude,
   }) async {
-    if (!forzarActualizacion && _cafesCache != null) {
+    final cacheKey =
+    latitude != null && longitude != null
+        ? '${latitude.toStringAsFixed(2)},${longitude.toStringAsFixed(2)}'
+        : 'global';
+
+    if (!forzarActualizacion &&
+        _cafesCache != null &&
+        _cafesCacheKey == cacheKey) {
       return _cafesCache!;
     }
 
-    if (!forzarActualizacion && _cafesRequest != null) {
+    if (!forzarActualizacion &&
+        _cafesRequest != null &&
+        _cafesRequestKey == cacheKey) {
       return _cafesRequest!;
     }
 
-    final request = _descargarCafes();
+    final request = _descargarCafes(
+      latitude: latitude,
+      longitude: longitude,
+    );
 
     _cafesRequest = request;
+    _cafesRequestKey = cacheKey;
 
     try {
       final cafes = await request;
 
       _cafesCache = cafes;
+      _cafesCacheKey = cacheKey;
 
       return cafes;
     } finally {
       if (identical(_cafesRequest, request)) {
         _cafesRequest = null;
+        _cafesRequestKey = null;
       }
     }
   }
 
-  static Future<List<Cafe>> _descargarCafes() async {
+  static Future<List<Cafe>> _descargarCafes({
+    double? latitude,
+    double? longitude,
+  }) async {
+    final queryParameters = <String, String>{};
+
+    if (latitude != null && longitude != null) {
+      queryParameters['lat'] = latitude.toString();
+      queryParameters['lon'] = longitude.toString();
+    }
+
+    final uri = Uri.parse(
+      '$baseUrl/cafes/',
+    ).replace(
+      queryParameters:
+          queryParameters.isEmpty ? null : queryParameters,
+    );
+
     final response = await http
-        .get(
-          Uri.parse('$baseUrl/cafes/'),
-        )
+        .get(uri)
         .timeout(
           const Duration(seconds: 15),
         );
