@@ -24,7 +24,7 @@ class FeatureCard extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool espacioReducido =
-            constraints.maxWidth < 150;
+            constraints.maxWidth < 180;
 
         return Container(
           constraints: const BoxConstraints(

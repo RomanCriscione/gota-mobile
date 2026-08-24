@@ -79,8 +79,12 @@
           );
         }
 
-        final permiso =
+        var permiso =
             await Geolocator.checkPermission();
+
+        if (permiso == LocationPermission.denied) {
+          permiso = await Geolocator.requestPermission();
+        }
 
         if (permiso == LocationPermission.denied ||
             permiso == LocationPermission.deniedForever) {
