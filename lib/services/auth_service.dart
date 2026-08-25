@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../models/user.dart';
 
@@ -9,6 +10,11 @@ class AuthService {
   static const String baseUrl = 'https://gogota.ar/api/mobile';
 
   static const String tokenKey = 'auth_token';
+
+  static const String googleServerClientId =
+      '322308910233-aktosf2nqa5gnhpc2mrpfktcsq5o8h48.apps.googleusercontent.com';
+
+  static bool _googleInicializado = false;
 
   static Future<bool> login({
     required String email,
@@ -64,6 +70,83 @@ class AuthService {
       return true;
     } catch (_) {
       rethrow;
+    }
+  }
+
+  static Future<String?> loginConGoogle() async {
+    try {
+      final googleSignIn = GoogleSignIn.instance;
+
+      if (!_googleInicializado) {
+        await googleSignIn.initialize(
+          serverClientId: googleServerClientId,
+        );
+
+        _googleInicializado = true;
+      }
+
+      final account = await googleSignIn.authenticate();
+
+      final authentication = account.authentication;
+      final idToken = authentication.idToken;
+
+      if (idToken == null || idToken.isEmpty) {
+        return 'Google no devolvió una sesión válida.';
+      }
+
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/google-login/'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({
+              'id_token': idToken,
+            }),
+          )
+          .timeout(
+            const Duration(seconds: 15),
+          );
+
+      final dynamic decodedData = jsonDecode(response.body);
+
+      if (decodedData is! Map<String, dynamic>) {
+        return 'La respuesta del servidor no es válida.';
+      }
+
+      if (response.statusCode != 200) {
+        final message = decodedData['message'];
+
+        if (message is String && message.isNotEmpty) {
+          return message;
+        }
+
+        return 'No pudimos iniciar sesión con Google.';
+      }
+
+      final token = decodedData['token'];
+
+      if (token is! String || token.isEmpty) {
+        return 'No se recibió una sesión válida.';
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+
+      await prefs.setString(
+        tokenKey,
+        token,
+      );
+
+      return null;
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        return null;
+      }
+
+      return 'No pudimos iniciar sesión con Google.';
+    } catch (_) {
+      return 'No pudimos iniciar sesión con Google.';
     }
   }
 

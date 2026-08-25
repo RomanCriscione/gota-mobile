@@ -120,6 +120,39 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
+  Future<void> ingresarConGoogle() async {
+    setState(() {
+      cargando = true;
+    });
+
+    try {
+      final error =
+          await AuthService.loginConGoogle();
+
+      if (!mounted) return;
+
+      if (error == null) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/home',
+          (route) => false,
+        );
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          cargando = false;
+        });
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -251,7 +284,53 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 18),
+
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Divider(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                      ),
+                      child: Text(
+                        'o',
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const Expanded(
+                      child: Divider(),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 18),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: OutlinedButton.icon(
+                    onPressed:
+                        cargando ? null : ingresarConGoogle,
+                    icon: const Icon(
+                      Icons.g_mobiledata_rounded,
+                      size: 28,
+                    ),
+                    label: const Text(
+                      'Continuar con Google',
+                      style: TextStyle(
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
 
                 TextButton(
                   onPressed: () {
