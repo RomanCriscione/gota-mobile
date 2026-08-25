@@ -31,6 +31,7 @@ class HomeScreen extends StatefulWidget {
 
     late Future<List<Cafe>> cafesFuture;
     late Future<List<CafeRelationship>> mapaFuture;
+    bool estaLogueado = false;
     late Future<RadarRecommendation?> radarFuture;
   
   
@@ -40,9 +41,27 @@ class HomeScreen extends StatefulWidget {
 
     cafesFuture = ApiService.obtenerCafes();
 
-    mapaFuture = ApiService.obtenerMiMapa();
+    mapaFuture = Future.value(
+  <CafeRelationship>[],
+);
 
     radarFuture = calcularCafeEnRadar();
+
+    _verificarSesion();
+  }
+
+  Future<void> _verificarSesion() async {
+    final logueado = await AuthService.estaLogueado();
+
+    if (!mounted) return;
+
+    if (logueado) {
+      setState(() {
+        estaLogueado = true;
+        mapaFuture = ApiService.obtenerMiMapa();
+        radarFuture = calcularCafeEnRadar();
+      });
+    }
   }
 
   Future<RadarRecommendation?> calcularCafeEnRadar() async {
@@ -389,10 +408,13 @@ class HomeScreen extends StatefulWidget {
         forzarActualizacion: true,
       );
 
-      final nuevoMapaFuture =
-          ApiService.obtenerMiMapa(
-        forzarActualizacion: true,
-      );
+      final nuevoMapaFuture = estaLogueado
+          ? ApiService.obtenerMiMapa(
+              forzarActualizacion: true,
+            )
+          : Future.value(
+              <CafeRelationship>[],
+            );
 
       setState(() {
         cafesFuture = nuevoCafesFuture;
@@ -446,6 +468,20 @@ class HomeScreen extends StatefulWidget {
                 ),
               ),
               onSelected: (value) async {
+                if (value == 'login') {
+                  Navigator.pushNamed(
+                    context,
+                    '/login',
+                  );
+                }
+
+                if (value == 'register') {
+                  Navigator.pushNamed(
+                    context,
+                    '/register',
+                  );
+                }
+
                 if (value == 'profile') {
                   Navigator.pushNamed(
                     context,
@@ -458,11 +494,13 @@ class HomeScreen extends StatefulWidget {
 
                   if (!context.mounted) return;
 
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/login',
-                    (route) => false,
-                  );
+                  setState(() {
+                    estaLogueado = false;
+                    mapaFuture = Future.value(
+                      <CafeRelationship>[],
+                    );
+                    radarFuture = calcularCafeEnRadar();
+                  });
                 }
               },
               itemBuilder: (context) => const [
@@ -629,11 +667,95 @@ class HomeScreen extends StatefulWidget {
                 ),
               ),
 
+              if (!estaLogueado) ...[
+            const SizedBox(height: 14),
+
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: const Color(0xFFE5E7EB),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '¿Querés guardar tus cafés?',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF172C6D),
+                    ),
+                  ),
+
+                  const SizedBox(height: 5),
+
+                  const Text(
+                    'Creá tu mapa cafetero, guardá lugares y compartí tus experiencias.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.4,
+                      color: Colors.black54,
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 4,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.pushNamed(
+                              context,
+                              '/login',
+                            );
+                          },
+                          child: const Text('Ingresar'),
+                        ),
+                      ),
+
+                      const SizedBox(width: 10),
+
+                      Expanded(
+                        flex: 5,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pushNamed(
+                              context,
+                              '/register',
+                            );
+                          },
+                          child: const Text(
+                            'Crear cuenta',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+
               const SizedBox(height: 14),
 
               InkWell(
                 borderRadius: BorderRadius.circular(18),
                 onTap: () {
+                  if (!estaLogueado) {
+                    Navigator.pushNamed(
+                      context,
+                      '/login',
+                    );
+                    return;
+                  }
+
                   Navigator.pushNamed(
                     context,
                     '/profile',
@@ -813,6 +935,14 @@ class HomeScreen extends StatefulWidget {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(18),
                     onTap: () {
+                      if (!estaLogueado) {
+                        Navigator.pushNamed(
+                          context,
+                          '/login',
+                        );
+                        return;
+                      }
+
                       Navigator.pushNamed(
                         context,
                         '/my-map',

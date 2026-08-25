@@ -19,27 +19,14 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> verificarSesion() async {
-
-    final usuario =
-        await AuthService.obtenerUsuarioActual();
+    await AuthService.obtenerUsuarioActual();
 
     if (!mounted) return;
 
-    if (usuario != null) {
-
-      Navigator.pushReplacementNamed(
-        context,
-        '/home',
-      );
-
-    } else {
-
-      Navigator.pushReplacementNamed(
-        context,
-        '/login',
-      );
-
-    }
+    Navigator.pushReplacementNamed(
+      context,
+      '/home',
+    );
   }
 
   @override

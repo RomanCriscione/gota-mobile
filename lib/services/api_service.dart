@@ -111,10 +111,12 @@ class ApiService {
   ) async {
     final token = await AuthService.obtenerToken();
 
-    if (token == null || token.isEmpty) {
-      throw Exception(
-        'No hay una sesión iniciada',
-      );
+    final headers = <String, String>{
+      'Accept': 'application/json',
+    };
+
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Token $token';
     }
 
     final response = await http
@@ -122,10 +124,7 @@ class ApiService {
           Uri.parse(
             '$baseUrl/mobile/cafes/$cafeId/related/',
           ),
-          headers: {
-            'Authorization': 'Token $token',
-            'Accept': 'application/json',
-          },
+          headers: headers,
         )
         .timeout(
           const Duration(seconds: 15),
@@ -344,10 +343,12 @@ class ApiService {
   ) async {
     final token = await AuthService.obtenerToken();
 
-    if (token == null || token.isEmpty) {
-      throw Exception(
-        'No hay una sesión iniciada',
-      );
+    final headers = <String, String>{
+      'Accept': 'application/json',
+    };
+
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Token $token';
     }
 
     final response = await http
@@ -355,10 +356,7 @@ class ApiService {
           Uri.parse(
             '$baseUrl/mobile/cafes/$cafeId/',
           ),
-          headers: {
-            'Authorization': 'Token $token',
-            'Accept': 'application/json',
-          },
+          headers: headers,
         )
         .timeout(
           const Duration(seconds: 15),
@@ -388,10 +386,12 @@ class ApiService {
   ) async {
     final token = await AuthService.obtenerToken();
 
-    if (token == null || token.isEmpty) {
-      throw Exception(
-        'No hay una sesión iniciada',
-      );
+    final headers = <String, String>{
+      'Accept': 'application/json',
+    };
+
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Token $token';
     }
 
     final response = await http
@@ -399,10 +399,7 @@ class ApiService {
           Uri.parse(
             '$baseUrl/mobile/cafes/$cafeId/whispers/',
           ),
-          headers: {
-            'Authorization': 'Token $token',
-            'Accept': 'application/json',
-          },
+          headers: headers,
         )
         .timeout(
           const Duration(seconds: 15),

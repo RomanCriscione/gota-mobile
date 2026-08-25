@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/network_image_card.dart';
 import '../models/cafe.dart';
@@ -38,7 +39,7 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
   Map<String, dynamic>? detalleCafe;
   bool cargandoDetalle = true;
   bool errorCargandoDetalle = false;
-
+  bool estaLogueado = false;
   List<Cafe> cafesRelacionados = [];
   bool cargandoRelacionados = true;
   List<Map<String, dynamic>> huellas = [];
@@ -53,11 +54,22 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _verificarSesion();
 
     cargarDetalleCafe();
     cargarEstadoActual();
     cargarCafesRelacionados();
     cargarHuellas();
+  }
+
+  Future<void> _verificarSesion() async {
+    final logueado = await AuthService.estaLogueado();
+
+    if (!mounted) return;
+
+    setState(() {
+      estaLogueado = logueado;
+    });
   }
 
   @override
@@ -496,6 +508,14 @@ double? get longitudeCafe {
 
 
   Future<void> publicarHuella() async {
+    if (!estaLogueado) {
+      Navigator.pushNamed(
+        context,
+        '/login',
+      );
+      return;
+    }
+
     final texto = huellaController.text.trim();
 
     if (texto.isEmpty) {
@@ -574,6 +594,13 @@ double? get longitudeCafe {
   }
 
     Future<void> _mostrarReporteResena(int reviewId) async {
+      if (!estaLogueado) {
+        Navigator.pushNamed(
+          context,
+          '/login',
+        );
+        return;
+      }
       final motivo = await showModalBottomSheet<String>(
         context: context,
         showDragHandle: true,
@@ -830,6 +857,14 @@ double? get longitudeCafe {
         onTap: activo
             ? null
             : () {
+                if (!estaLogueado) {
+                  Navigator.pushNamed(
+                    context,
+                    '/login',
+                  );
+                  return;
+                }
+
                 guardarEnMapa(estado);
               },
         borderRadius: BorderRadius.circular(18),
@@ -1367,6 +1402,14 @@ double? get longitudeCafe {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () async {
+                  if (!estaLogueado) {
+                    Navigator.pushNamed(
+                      context,
+                      '/login',
+                    );
+                    return;
+                  }
+
                   await Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -1810,6 +1853,14 @@ double? get longitudeCafe {
                                   child: InkWell(
                                     borderRadius: BorderRadius.circular(16),
                                     onTap: () {
+                                      if (!estaLogueado) {
+                                        Navigator.pushNamed(
+                                          context,
+                                          '/login',
+                                        );
+                                        return;
+                                      }
+
                                       guardarColeccion(collection);
                                     },
                                     child: AnimatedContainer(
