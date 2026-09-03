@@ -135,6 +135,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (!mounted) return;
 
+      if (error == AuthService.googleLoginCancelado) {
+        return;
+      }
+
       if (error == null) {
         Navigator.pushNamedAndRemoveUntil(
           context,
@@ -377,7 +381,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
 
                 const SizedBox(height: 16),
-                
+
                 TextButton(
                   onPressed: cargando
                       ? null

@@ -1,5 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+
 
 import '../services/auth_service.dart';
 
@@ -19,28 +20,151 @@ class _LoginScreenState extends State<LoginScreen> {
   bool cargando = false;
 
   Future<void> recuperarContrasena() async {
-    final messenger = ScaffoldMessenger.of(context);
-
-    final uri = Uri.parse(
-      'https://gogota.ar/accounts/password/reset/',
+    final emailRecuperacionController = TextEditingController(
+      text: emailController.text.trim(),
     );
 
-    final abierto = await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
+    final enviar = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text(
+            'Recuperar contraseña',
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Ingresá el email de tu cuenta y te enviaremos '
+                'un enlace para restablecer tu contraseña.',
+              ),
+
+              const SizedBox(height: 16),
+
+              TextField(
+                controller: emailRecuperacionController,
+                keyboardType: TextInputType.emailAddress,
+                autocorrect: false,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  false,
+                );
+              },
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  true,
+                );
+              },
+              child: const Text('Enviar enlace'),
+            ),
+          ],
+        );
+      },
     );
 
-    if (!mounted) return;
+    if (enviar != true || !mounted) {
+      emailRecuperacionController.dispose();
+      return;
+    }
 
-    if (!abierto) {
-      messenger.showSnackBar(
+    final email = emailRecuperacionController.text.trim();
+
+    if (email.isEmpty) {
+      emailRecuperacionController.dispose();
+
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'No pudimos abrir la recuperación de contraseña.',
+            'Ingresá tu email.',
           ),
         ),
       );
+
+      return;
     }
+
+    final emailRegex = RegExp(
+      r'^[^@]+@[^@]+\.[^@]+$',
+    );
+
+    if (!emailRegex.hasMatch(email)) {
+      emailRecuperacionController.dispose();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Ingresá un email válido.',
+          ),
+        ),
+      );
+
+      return;
+    }
+
+    setState(() {
+      cargando = true;
+    });
+
+    final error = await AuthService.recuperarContrasena(
+      email: email,
+    );
+
+    emailRecuperacionController.dispose();
+
+    if (!mounted) return;
+
+    setState(() {
+      cargando = false;
+    });
+
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+        ),
+      );
+
+      return;
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text(
+            'Revisá tu correo',
+          ),
+          content: const Text(
+            'Si existe una cuenta asociada a ese email, '
+            'te enviamos las instrucciones para restablecer '
+            'tu contraseña.\n\n'
+            'Si no lo ves en unos minutos, revisá spam o promociones.',
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+              },
+              child: const Text('Entendido'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> ingresar() async {
@@ -120,39 +244,80 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
-  Future<void> ingresarConGoogle() async {
-    setState(() {
-      cargando = true;
-    });
+    Future<void> ingresarConGoogle() async {
+      setState(() {
+        cargando = true;
+      });
 
-    try {
-      final error =
-          await AuthService.loginConGoogle();
+      try {
+        final error = await AuthService.loginConGoogle();
 
-      if (!mounted) return;
+        if (!mounted) return;
 
-      if (error == null) {
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          '/home',
-          (route) => false,
+        if (error == AuthService.googleLoginCancelado) {
+          return;
+        }
+
+        if (error == null) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/home',
+            (route) => false,
+          );
+          return;
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(error),
+          ),
         );
-        return;
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error),
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          cargando = false;
-        });
+      } finally {
+        if (mounted) {
+          setState(() {
+            cargando = false;
+          });
+        }
       }
     }
-  }
+
+    Future<void> ingresarConApple() async {
+      setState(() {
+        cargando = true;
+      });
+
+      try {
+        final error = await AuthService.loginConApple();
+
+        if (!mounted) return;
+
+        if (error == AuthService.googleLoginCancelado) {
+          return;
+        }
+
+        if (error == null) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            '/home',
+            (route) => false,
+          );
+          return;
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(error),
+          ),
+        );
+      } finally {
+        if (mounted) {
+          setState(() {
+            cargando = false;
+          });
+        }
+      }
+    }
+
 
   @override
   void dispose() {
@@ -329,6 +494,29 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
+
+                                if (Platform.isIOS) ...[
+                  const SizedBox(height: 12),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: OutlinedButton.icon(
+                      onPressed:
+                          cargando ? null : ingresarConApple,
+                      icon: const Icon(
+                        Icons.apple,
+                        size: 24,
+                      ),
+                      label: const Text(
+                        'Continuar con Apple',
+                        style: TextStyle(
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
 
                 const SizedBox(height: 16),
 

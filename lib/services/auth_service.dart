@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../models/user.dart';
 
@@ -15,6 +16,8 @@ class AuthService {
       '322308910233-aktosf2nqa5gnhpc2mrpfktcsq5o8h48.apps.googleusercontent.com';
 
   static bool _googleInicializado = false;
+  static const String googleLoginCancelado =
+    '__google_login_cancelado__';
 
   static Future<bool> login({
     required String email,
@@ -141,12 +144,93 @@ class AuthService {
       return null;
     } on GoogleSignInException catch (e) {
       if (e.code == GoogleSignInExceptionCode.canceled) {
-        return null;
+        return googleLoginCancelado;
       }
 
       return 'No pudimos iniciar sesión con Google.';
     } catch (_) {
       return 'No pudimos iniciar sesión con Google.';
+    }
+  }
+
+  static Future<String?> loginConApple() async {
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      final idToken = credential.identityToken;
+
+      if (idToken == null || idToken.isEmpty) {
+        return 'Apple no devolvió una sesión válida.';
+      }
+
+      final name = [
+        credential.givenName,
+        credential.familyName,
+      ]
+          .whereType<String>()
+          .where((part) => part.trim().isNotEmpty)
+          .join(' ')
+          .trim();
+
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/apple-login/'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({
+              'id_token': idToken,
+              'name': name,
+            }),
+          )
+          .timeout(
+            const Duration(seconds: 15),
+          );
+
+      final dynamic decodedData = jsonDecode(response.body);
+
+      if (decodedData is! Map<String, dynamic>) {
+        return 'La respuesta del servidor no es válida.';
+      }
+
+      if (response.statusCode != 200) {
+        final message = decodedData['message'];
+
+        if (message is String && message.isNotEmpty) {
+          return message;
+        }
+
+        return 'No pudimos iniciar sesión con Apple.';
+      }
+
+      final token = decodedData['token'];
+
+      if (token is! String || token.isEmpty) {
+        return 'No se recibió una sesión válida.';
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+
+      await prefs.setString(
+        tokenKey,
+        token,
+      );
+
+      return null;
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) {
+        return googleLoginCancelado;
+      }
+
+      return 'No pudimos iniciar sesión con Apple.';
+    } catch (_) {
+      return 'No pudimos iniciar sesión con Apple.';
     }
   }
 
@@ -318,6 +402,162 @@ class AuthService {
       return true;
     } catch (_) {
       return false;
+    }
+  }
+
+  static Future<String?> recuperarContrasena({
+    required String email,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/password-reset/'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({
+              'email': email.trim().toLowerCase(),
+            }),
+          )
+          .timeout(
+            const Duration(seconds: 15),
+          );
+
+      final dynamic decodedData = jsonDecode(response.body);
+
+      if (decodedData is! Map<String, dynamic>) {
+        return 'La respuesta del servidor no es válida.';
+      }
+
+      final message = decodedData['message'];
+
+      if (response.statusCode != 200) {
+        if (message is String && message.isNotEmpty) {
+          return message;
+        }
+
+        return 'No pudimos enviar el correo de recuperación.';
+      }
+
+      return null;
+    } catch (_) {
+      return 'No pudimos enviar el correo de recuperación.';
+    }
+  }
+
+  static Future<String?> cambiarContrasena({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    final token = await obtenerToken();
+
+    if (token == null || token.isEmpty) {
+      return 'No hay una sesión activa.';
+    }
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/change-password/'),
+            headers: {
+              'Authorization': 'Token $token',
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({
+              'current_password': currentPassword,
+              'new_password': newPassword,
+              'confirm_password': confirmPassword,
+            }),
+          )
+          .timeout(
+            const Duration(seconds: 15),
+          );
+
+      final dynamic decodedData = jsonDecode(response.body);
+
+      if (decodedData is! Map<String, dynamic>) {
+        return 'La respuesta del servidor no es válida.';
+      }
+
+      if (response.statusCode != 200) {
+        final message = decodedData['message'];
+
+        if (message is String && message.isNotEmpty) {
+          return message;
+        }
+
+        return 'No pudimos cambiar tu contraseña.';
+      }
+
+      final newToken = decodedData['token'];
+
+      if (newToken is! String || newToken.isEmpty) {
+        return 'La contraseña cambió, pero no pudimos renovar tu sesión.';
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+
+      await prefs.setString(
+        tokenKey,
+        newToken,
+      );
+
+      return null;
+    } catch (_) {
+      return 'No pudimos cambiar tu contraseña.';
+    }
+  }
+
+  static Future<String?> actualizarPerfil({
+    required String firstName,
+    required String lastName,
+  }) async {
+    final token = await obtenerToken();
+
+    if (token == null || token.isEmpty) {
+      return 'No hay una sesión activa.';
+    }
+
+    try {
+      final response = await http
+          .patch(
+            Uri.parse('$baseUrl/me/'),
+            headers: {
+              'Authorization': 'Token $token',
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({
+              'first_name': firstName.trim(),
+              'last_name': lastName.trim(),
+            }),
+          )
+          .timeout(
+            const Duration(seconds: 15),
+          );
+
+      final dynamic decodedData = jsonDecode(response.body);
+
+      if (decodedData is! Map<String, dynamic>) {
+        return 'La respuesta del servidor no es válida.';
+      }
+
+      if (response.statusCode != 200) {
+        final message = decodedData['message'];
+
+        if (message is String && message.isNotEmpty) {
+          return message;
+        }
+
+        return 'No pudimos actualizar tu perfil.';
+      }
+
+      return null;
+    } catch (_) {
+      return 'No pudimos actualizar tu perfil.';
     }
   }
 

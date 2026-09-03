@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/user.dart';
 import '../services/auth_service.dart';
@@ -228,8 +229,267 @@ Future<void> eliminarCuenta() async {
       return nombreCompleto;
     }
 
-    return 'Usuario de Gota';
+    if (usuario.email.trim().isNotEmpty) {
+      return usuario.email;
+    }
+
+    return 'Gota';
+    }
+
+  Future<void> abrirEnlace(String url) async {
+    final uri = Uri.parse(url);
+
+    final abierto = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+
+    if (!abierto && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No pudimos abrir el enlace.',
+          ),
+        ),
+      );
+    }
   }
+
+  Future<void> abrirEmail() async {
+    final uri = Uri(
+      scheme: 'mailto',
+      path: 'hola@gogota.ar',
+      queryParameters: {
+        'subject': 'Contacto desde Gota',
+      },
+    );
+
+    final abierto = await launchUrl(uri);
+
+    if (!abierto && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No pudimos abrir tu aplicación de correo.',
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> mostrarEditarPerfil(User usuario) async {
+    final firstNameController = TextEditingController(
+      text: usuario.firstName,
+    );
+
+    final lastNameController = TextEditingController(
+      text: usuario.lastName,
+    );
+
+    
+
+    final guardar = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Editar perfil'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: firstNameController,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre',
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              TextField(
+                controller: lastNameController,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(
+                  labelText: 'Apellido',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, false);
+              },
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, true);
+              },
+              child: const Text('Guardar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (guardar != true || !mounted) {
+      firstNameController.dispose();
+      lastNameController.dispose();
+      return;
+    }
+
+    final error = await AuthService.actualizarPerfil(
+      firstName: firstNameController.text,
+      lastName: lastNameController.text,
+    );
+
+    firstNameController.dispose();
+    lastNameController.dispose();
+
+    if (!mounted) return;
+
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+        ),
+      );
+      return;
+    }
+
+    await recargarPerfil();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Perfil actualizado.',
+        ),
+      ),
+    );
+    }
+
+    Future<void> mostrarCambiarContrasena() async {
+      final currentPasswordController =
+          TextEditingController();
+
+      final newPasswordController =
+          TextEditingController();
+
+      final confirmPasswordController =
+          TextEditingController();
+
+      final guardar = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text(
+              'Cambiar contraseña',
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller:
+                      currentPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText:
+                        'Contraseña actual',
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                TextField(
+                  controller:
+                      newPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText:
+                        'Nueva contraseña',
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                TextField(
+                  controller:
+                      confirmPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText:
+                        'Repetir nueva contraseña',
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(
+                    dialogContext,
+                    false,
+                  );
+                },
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(
+                    dialogContext,
+                    true,
+                  );
+                },
+                child: const Text('Guardar'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (guardar != true || !mounted) {
+        currentPasswordController.dispose();
+        newPasswordController.dispose();
+        confirmPasswordController.dispose();
+        return;
+      }
+
+      final error =
+          await AuthService.cambiarContrasena(
+        currentPassword:
+            currentPasswordController.text,
+        newPassword:
+            newPasswordController.text,
+        confirmPassword:
+            confirmPasswordController.text,
+      );
+
+      currentPasswordController.dispose();
+      newPasswordController.dispose();
+      confirmPasswordController.dispose();
+
+      if (!mounted) return;
+
+      if (error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(error),
+          ),
+        );
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Contraseña actualizada.',
+          ),
+        ),
+      );
+      }
 
   @override
   Widget build(BuildContext context) {
@@ -401,13 +661,30 @@ Future<void> eliminarCuenta() async {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Tu cuenta',
-                        style: TextStyle(
-                          fontSize: 19,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF111827),
-                        ),
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Tu cuenta',
+                              style: TextStyle(
+                                fontSize: 19,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF111827),
+                              ),
+                            ),
+                          ),
+
+                          TextButton.icon(
+                            onPressed: () {
+                              mostrarEditarPerfil(usuario);
+                            },
+                            icon: const Icon(
+                              Icons.edit_outlined,
+                              size: 18,
+                            ),
+                            label: const Text('Editar'),
+                          ),
+                        ],
                       ),
 
                       const SizedBox(height: 16),
@@ -426,6 +703,20 @@ Future<void> eliminarCuenta() async {
                         value: usuario.isOwner
                             ? 'Dueño de cafetería'
                             : 'Usuario de Gota',
+                      ),
+                      const SizedBox(height: 14),
+
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: mostrarCambiarContrasena,
+                          icon: const Icon(
+                            Icons.lock_outline_rounded,
+                          ),
+                          label: const Text(
+                            'Cambiar contraseña',
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -509,20 +800,169 @@ Future<void> eliminarCuenta() async {
                         
                 const SizedBox(height: 24),
 
-                SizedBox(
+                Container(
                   width: double.infinity,
-                  height: 52,
-                  child: OutlinedButton.icon(
-                    onPressed: cerrarSesion,
-                    icon: const Icon(Icons.logout),
-                    label: const Text(
-                      'Cerrar sesión',
-                      style: TextStyle(
-                        fontSize: 16,
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFFE5E7EB),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Sobre Gota',
+                        style: TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF111827),
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(
+                          Icons.language_rounded,
+                          color: Color(0xFF1E3A8A),
+                        ),
+                        title: const Text('Sitio web'),
+                        subtitle: const Text('gogota.ar'),
+                        trailing: const Icon(
+                          Icons.open_in_new_rounded,
+                          size: 18,
+                        ),
+                        onTap: () {
+                          abrirEnlace(
+                            'https://gogota.ar',
+                          );
+                        },
+                      ),
+
+                      const Divider(),
+
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(
+                          Icons.camera_alt_outlined,
+                          color: Color(0xFF1E3A8A),
+                        ),
+                        title: const Text('Instagram'),
+                        subtitle: const Text('@app.gota'),
+                        trailing: const Icon(
+                          Icons.open_in_new_rounded,
+                          size: 18,
+                        ),
+                        onTap: () {
+                          abrirEnlace(
+                            'https://www.instagram.com/app.gota/',
+                          );
+                        },
+                      ),
+
+                      const Divider(),
+
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(
+                          Icons.mail_outline_rounded,
+                          color: Color(0xFF1E3A8A),
+                        ),
+                        title: const Text('Contacto'),
+                        subtitle: const Text(
+                          'hola@gogota.ar',
+                        ),
+                        trailing: const Icon(
+                          Icons.chevron_right_rounded,
+                        ),
+                        onTap: abrirEmail,
+                      ),
+
+                      const Divider(),
+
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(
+            Icons.privacy_tip_outlined,
+            color: Color(0xFF1E3A8A),
+          ),
+          title: const Text(
+            'Política de privacidad',
+          ),
+          trailing: const Icon(
+            Icons.open_in_new_rounded,
+            size: 18,
+          ),
+          onTap: () {
+            abrirEnlace(
+              'https://gogota.ar/privacidad/',
+            );
+          },
+        ),
+
+        const Divider(),
+
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(
+            Icons.description_outlined,
+            color: Color(0xFF1E3A8A),
+          ),
+          title: const Text(
+            'Términos y condiciones',
+          ),
+          trailing: const Icon(
+            Icons.open_in_new_rounded,
+            size: 18,
+          ),
+          onTap: () {
+            abrirEnlace(
+              'https://gogota.ar/terminos/',
+            );
+          },
+        ),
+
+        const Divider(),
+
+        const Padding(
+          padding: EdgeInsets.only(
+            top: 8,
+            bottom: 2,
+          ),
+          child: Center(
+            child: Text(
+              'Gota · versión 1.0.0',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.black45,
+              ),
+            ),
+          ),
+        ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: OutlinedButton.icon(
+                      onPressed: cerrarSesion,
+                      icon: const Icon(Icons.logout),
+                      label: const Text(
+                        'Cerrar sesión',
+                        style: TextStyle(
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                   ),
-                ),
 
                 const SizedBox(height: 12),
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/cafe.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
@@ -427,6 +428,26 @@ class HomeScreen extends StatefulWidget {
         nuevoMapaFuture,
       ]);
     }
+    Future<void> abrirInstagram() async {
+      final uri = Uri.parse(
+        'https://www.instagram.com/app.gota/',
+      );
+
+      final abierto = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!abierto && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'No pudimos abrir Instagram.',
+            ),
+          ),
+        );
+      }
+    }
 
   @override
   Widget build(BuildContext context) {
@@ -444,9 +465,10 @@ class HomeScreen extends StatefulWidget {
         surfaceTintColor: Colors.white,
         elevation: 0,
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: PopupMenuButton<String>(
+          if (estaLogueado)
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: PopupMenuButton<String>(
               tooltip: 'Cuenta',
               offset: const Offset(0, 48),
               shape: RoundedRectangleBorder(
@@ -503,34 +525,67 @@ class HomeScreen extends StatefulWidget {
                   });
                 }
               },
-              itemBuilder: (context) => const [
-                PopupMenuItem(
-                  value: 'profile',
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.person_outline_rounded,
-                        size: 21,
+              itemBuilder: (context) {
+                if (estaLogueado) {
+                  return const [
+                    PopupMenuItem(
+                      value: 'profile',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.person_outline_rounded,
+                            size: 21,
+                          ),
+                          SizedBox(width: 10),
+                          Text('Mi perfil'),
+                        ],
                       ),
-                      SizedBox(width: 10),
-                      Text('Mi perfil'),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.logout_rounded,
-                        size: 21,
+                    ),
+                    PopupMenuItem(
+                      value: 'logout',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.logout_rounded,
+                            size: 21,
+                          ),
+                          SizedBox(width: 10),
+                          Text('Cerrar sesión'),
+                        ],
                       ),
-                      SizedBox(width: 10),
-                      Text('Cerrar sesión'),
-                    ],
+                    ),
+                  ];
+                }
+
+                return const [
+                  PopupMenuItem(
+                    value: 'login',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.login_rounded,
+                          size: 21,
+                        ),
+                        SizedBox(width: 10),
+                        Text('Ingresar'),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  PopupMenuItem(
+                    value: 'register',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.person_add_alt_1_rounded,
+                          size: 21,
+                        ),
+                        SizedBox(width: 10),
+                        Text('Crear cuenta'),
+                      ],
+                    ),
+                  ),
+                ];
+              },
             ),
           ),
         ],
@@ -1431,8 +1486,68 @@ class HomeScreen extends StatefulWidget {
               },
             ),
 
+            const SizedBox(height: 24),
 
-            
+            InkWell(
+              borderRadius: BorderRadius.circular(18),
+              onTap: abrirInstagram,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: const Color(0xFFE5E7EB),
+                  ),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(
+                      Icons.camera_alt_outlined,
+                      size: 28,
+                      color: Color(0xFF172C6D),
+                    ),
+
+                    SizedBox(width: 14),
+
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Seguinos en Instagram',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF172C6D),
+                            ),
+                          ),
+
+                          SizedBox(height: 3),
+
+                          Text(
+                            '@app.gota',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Icon(
+                      Icons.open_in_new_rounded,
+                      size: 18,
+                      color: Color(0xFF6B7280),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
           ],
         ),
       ),
