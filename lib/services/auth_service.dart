@@ -184,8 +184,8 @@ static Future<String?> loginConApple() async {
       ],
       nonce: hashedNonce,
     );
-
       final idToken = credential.identityToken;
+      final authorizationCode = credential.authorizationCode;
 
       if (idToken == null || idToken.isEmpty) {
         return 'Apple no devolvió una sesión válida.';
@@ -209,6 +209,7 @@ static Future<String?> loginConApple() async {
             },
             body: jsonEncode({
               'id_token': idToken,
+              'authorization_code': authorizationCode,
               'name': name,
               'nonce': rawNonce,
             }),
