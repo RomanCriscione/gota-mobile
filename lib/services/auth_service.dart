@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:math';
 
+import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -153,14 +155,35 @@ class AuthService {
     }
   }
 
-  static Future<String?> loginConApple() async {
-    try {
-      final credential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-      );
+  static String _generarNonce() {
+    const chars =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+
+    final random = Random.secure();
+
+    return List.generate(
+      32,
+      (_) => chars[random.nextInt(chars.length)],
+    ).join();
+  }
+
+  static String _sha256(String input) {
+    final bytes = utf8.encode(input);
+    return sha256.convert(bytes).toString();
+  }
+
+static Future<String?> loginConApple() async {
+  try {
+    final rawNonce = _generarNonce();
+    final hashedNonce = _sha256(rawNonce);
+
+    final credential = await SignInWithApple.getAppleIDCredential(
+      scopes: [
+        AppleIDAuthorizationScopes.email,
+        AppleIDAuthorizationScopes.fullName,
+      ],
+      nonce: hashedNonce,
+    );
 
       final idToken = credential.identityToken;
 
@@ -187,6 +210,7 @@ class AuthService {
             body: jsonEncode({
               'id_token': idToken,
               'name': name,
+              'nonce': rawNonce,
             }),
           )
           .timeout(
