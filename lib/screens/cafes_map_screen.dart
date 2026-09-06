@@ -160,6 +160,9 @@ class _CafesMapScreenState
               urlTemplate:
                   'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=${const String.fromEnvironment('CARTO_API_KEY')}',
               userAgentPackageName: 'ar.gogota.app',
+              errorTileCallback: (tile, error, stackTrace) {
+                debugPrint('ERROR TILE CARTO: $error');
+              },
             ),
 
           MarkerLayer(
