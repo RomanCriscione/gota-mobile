@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SelectCafeLocationScreen extends StatefulWidget {
   final LatLng? initialLocation;
@@ -83,7 +84,7 @@ class _SelectCafeLocationScreenState
 
                   const SizedBox(height: 6),
 
-                  Text(
+                                    Text(
                     direccionEncontrada
                         ? 'Ubicamos la dirección que ingresaste. '
                             'Si el pin no está exactamente donde corresponde, '
@@ -112,7 +113,7 @@ class _SelectCafeLocationScreenState
                 children: [
                   TileLayer(
                     urlTemplate:
-                        'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+                        'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=${const String.fromEnvironment('CARTO_API_KEY')}',
                     userAgentPackageName:
                         'ar.gogota.app',
                   ),
@@ -129,6 +130,27 @@ class _SelectCafeLocationScreenState
                           size: 52,
                           color:
                               Color(0xFF1E3A8A),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  RichAttributionWidget(
+                    attributions: [
+                      TextSourceAttribution(
+                        'OpenStreetMap contributors',
+                        onTap: () => launchUrl(
+                          Uri.parse(
+                            'https://www.openstreetmap.org/copyright',
+                          ),
+                        ),
+                      ),
+                      TextSourceAttribution(
+                        'CARTO',
+                        onTap: () => launchUrl(
+                          Uri.parse(
+                            'https://carto.com/attributions',
+                          ),
                         ),
                       ),
                     ],

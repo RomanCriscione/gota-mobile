@@ -2211,7 +2211,7 @@ double? get longitudeCafe {
                     children: [
                       TileLayer(
                         urlTemplate:
-                            'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+                            'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=${const String.fromEnvironment('CARTO_API_KEY')}',
                         userAgentPackageName: 'ar.gogota.app',
                       ),
                       MarkerLayer(
@@ -2231,6 +2231,26 @@ double? get longitudeCafe {
                           ),
                         ],
                       ),
+                          RichAttributionWidget(
+                            attributions: [
+                              TextSourceAttribution(
+                                'OpenStreetMap contributors',
+                                onTap: () => launchUrl(
+                                  Uri.parse(
+                                    'https://www.openstreetmap.org/copyright',
+                                  ),
+                                ),
+                              ),
+                              TextSourceAttribution(
+                                'CARTO',
+                                onTap: () => launchUrl(
+                                  Uri.parse(
+                                    'https://carto.com/attributions',
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                     ],
                   ),
                 ),

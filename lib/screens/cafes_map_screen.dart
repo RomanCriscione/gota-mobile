@@ -6,6 +6,7 @@ import '../widgets/network_image_card.dart';
 import '../widgets/rating_badge.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/cafe.dart';
 
@@ -96,17 +97,13 @@ class _CafesMapScreenState
   @override
   Widget build(BuildContext context) {
     final cafes = widget.cafes;
-    const cartoKey = String.fromEnvironment('CARTO_API_KEY');
 
-    debugPrint(
-      'CARTO_API_KEY presente: ${cartoKey.isNotEmpty} | longitud: ${cartoKey.length}',
-    );
     final cafesConUbicacion = cafes.where((cafe) {
-        return cafe.latitude != null &&
-            cafe.longitude != null &&
-            cafe.latitude!.isFinite &&
-            cafe.longitude!.isFinite;
-        }).toList();
+      return cafe.latitude != null &&
+          cafe.longitude != null &&
+          cafe.latitude!.isFinite &&
+          cafe.longitude!.isFinite;
+    }).toList();
 
     final LatLng centroInicial;
 
@@ -160,9 +157,7 @@ class _CafesMapScreenState
               urlTemplate:
                   'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=${const String.fromEnvironment('CARTO_API_KEY')}',
               userAgentPackageName: 'ar.gogota.app',
-              errorTileCallback: (tile, error, stackTrace) {
-                debugPrint('ERROR TILE CARTO: $error');
-              },
+
             ),
 
           MarkerLayer(
@@ -332,6 +327,22 @@ class _CafesMapScreenState
                 ),
               );
             }).toList(),
+          ),
+          RichAttributionWidget(
+            attributions: [
+              TextSourceAttribution(
+                'OpenStreetMap contributors',
+                onTap: () => launchUrl(
+                  Uri.parse('https://www.openstreetmap.org/copyright'),
+                ),
+              ),
+              TextSourceAttribution(
+                'CARTO',
+                onTap: () => launchUrl(
+                  Uri.parse('https://carto.com/attributions'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
