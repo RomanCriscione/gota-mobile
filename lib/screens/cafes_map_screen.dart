@@ -96,6 +96,11 @@ class _CafesMapScreenState
   @override
   Widget build(BuildContext context) {
     final cafes = widget.cafes;
+    const cartoKey = String.fromEnvironment('CARTO_API_KEY');
+
+    debugPrint(
+      'CARTO_API_KEY presente: ${cartoKey.isNotEmpty} | longitud: ${cartoKey.length}',
+    );
     final cafesConUbicacion = cafes.where((cafe) {
         return cafe.latitude != null &&
             cafe.longitude != null &&
