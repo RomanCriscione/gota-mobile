@@ -48,6 +48,7 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
       TextEditingController();
 
   bool publicandoHuella = false;
+  bool descripcionExpandida = false;
 
   int fotoActual = 0;
 
@@ -1276,14 +1277,39 @@ double? get longitudeCafe {
 
                                 if (descripcionCafe.isNotEmpty) ...[
                                   const SizedBox(height: 14),
+
                                   Text(
                                     descripcionCafe,
+                                    maxLines: descripcionExpandida ? null : 3,
+                                    overflow: descripcionExpandida
+                                        ? TextOverflow.visible
+                                        : TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       fontSize: 15,
                                       height: 1.45,
                                       color: Colors.black87,
                                     ),
                                   ),
+
+                                  if (descripcionCafe.length > 160)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            descripcionExpandida = !descripcionExpandida;
+                                          });
+                                        },
+                                        child: Text(
+                                          descripcionExpandida ? 'Leer menos' : 'Leer más',
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF1E3A8A),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                 ],
 
                                 if (telefonoCafe.isNotEmpty ||

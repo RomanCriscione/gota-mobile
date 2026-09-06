@@ -152,9 +152,9 @@ class _CafesMapScreenState
             ),
         children: [
             TileLayer(
-            urlTemplate:
-                'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-            userAgentPackageName: 'ar.gogota.app',
+              urlTemplate:
+                  'https://basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png?key=${const String.fromEnvironment('CARTO_API_KEY')}',
+              userAgentPackageName: 'ar.gogota.app',
             ),
 
           MarkerLayer(
