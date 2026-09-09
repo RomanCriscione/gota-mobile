@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../models/user.dart';
 import '../services/auth_service.dart';
+import 'my_cafes_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -776,24 +777,59 @@ Future<void> eliminarCuenta() async {
 
                       const SizedBox(height: 18),
 
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            abrirFlujoCafeteria(usuario);
-                          },
-                          icon: Icon(
-                            usuario.isOwner
-                                ? Icons.add
-                                : Icons.storefront_outlined,
-                          ),
-                          label: Text(
-                            usuario.isOwner
-                                ? 'Sumar cafetería'
-                                : 'Soy dueño de una cafetería',
+                      if (usuario.isOwner) ...[
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const MyCafesScreen(),
+                                ),
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.storefront_outlined,
+                            ),
+                            label: const Text(
+                              'Mis cafeterías',
+                            ),
                           ),
                         ),
-                      ),
+
+                        const SizedBox(height: 10),
+
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              abrirFlujoCafeteria(usuario);
+                            },
+                            icon: const Icon(
+                              Icons.add,
+                            ),
+                            label: const Text(
+                              'Sumar cafetería',
+                            ),
+                          ),
+                        ),
+                      ] else ...[
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              abrirFlujoCafeteria(usuario);
+                            },
+                            icon: const Icon(
+                              Icons.storefront_outlined,
+                            ),
+                            label: const Text(
+                              'Soy dueño de una cafetería',
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),

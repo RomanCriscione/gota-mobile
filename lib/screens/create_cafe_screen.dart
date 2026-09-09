@@ -5,9 +5,17 @@ import 'select_cafe_location_screen.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geocoding/geocoding.dart';
 import '../services/cafe_service.dart';
+import '../models/cafe.dart';
 
 class CreateCafeScreen extends StatefulWidget {
-  const CreateCafeScreen({super.key});
+  final Cafe? cafe;
+
+  const CreateCafeScreen({
+    super.key,
+    this.cafe,
+  });
+
+  bool get esEdicion => cafe != null;
 
   @override
   State<CreateCafeScreen> createState() =>
@@ -34,6 +42,11 @@ class _CreateCafeScreenState
   XFile? fotoPrincipal;
   XFile? foto2;
   XFile? foto3;
+
+  String? fotoPrincipalUrl;
+  String? foto2Url;
+  String? foto3Url;
+
   double? latitude;
   double? longitude;
 
@@ -102,6 +115,229 @@ class _CreateCafeScreenState
   ];
 
   @override
+  void initState() {
+    super.initState();
+
+    final cafe = widget.cafe;
+
+    if (cafe == null) {
+      return;
+    }
+
+    cargarDatosEdicion();
+
+    nombreController.text = cafe.nombre;
+    direccionController.text = cafe.direccion;
+    localidadController.text = cafe.zona;
+
+    latitude = cafe.latitude;
+    longitude = cafe.longitude;
+
+    tieneWifi = cafe.tieneWifi;
+    aireAcondicionado = cafe.aireAcondicionado;
+    enchufes = cafe.enchufes;
+    mesasAlAireLibre = cafe.mesasAlAireLibre;
+    estacionamiento = cafe.estacionamiento;
+    accesible = cafe.accesible;
+    cambiadorBebes = cafe.cambiadorBebes;
+    petFriendly = cafe.petFriendly;
+    kidsFriendly = cafe.kidsFriendly;
+
+    cafeEspecialidad = cafe.cafeEspecialidad;
+    brunch = cafe.brunch;
+    desayuno = cafe.desayuno;
+    alcohol = cafe.alcohol;
+    pasteleriaArtesanal = cafe.pasteleriaArtesanal;
+
+    veganFriendly = cafe.veganFriendly;
+    vegetariano = cafe.vegetariano;
+    sinTacc = cafe.sinTacc;
+    opcionesSaludables = cafe.opcionesSaludables;
+    sinAzucar = cafe.sinAzucar;
+    lechesVegetales = cafe.lechesVegetales;
+
+    jardin = cafe.jardin;
+    vistaAgua = cafe.vistaAgua;
+    vistaMontanas = cafe.vistaMontanas;
+    rodeadoNaturaleza = cafe.rodeadoNaturaleza;
+    terrazaRooftop = cafe.terrazaRooftop;
+    ventanalesGrandes = cafe.ventanalesGrandes;
+    casaAntigua = cafe.casaAntigua;
+    edificioHistorico = cafe.edificioHistorico;
+    dentroLibreria = cafe.dentroLibreria;
+    espacioCultural = cafe.espacioCultural;
+
+    librosOJuegos = cafe.librosOJuegos;
+  }
+
+  Future<void> cargarDatosEdicion() async {
+    final cafe = widget.cafe;
+
+    if (cafe == null || cafe.id == null) {
+      return;
+    }
+
+    try {
+      final data =
+          await CafeService.obtenerCafeDetalle(
+        cafe.id!,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        nombreController.text =
+            data['name']?.toString() ?? '';
+
+        direccionController.text =
+            data['address']?.toString() ?? '';
+
+        localidadController.text =
+            data['location']?.toString() ?? '';
+
+        provinciaSeleccionada =
+            data['province']?.toString() ?? '';
+
+        descripcionController.text =
+            data['description']?.toString() ?? '';
+
+        telefonoController.text =
+            data['phone']?.toString() ?? '';
+
+        instagramController.text =
+            data['instagram']?.toString() ?? '';
+
+        googleMapsController.text =
+            data['google_maps_url']?.toString() ?? '';
+
+        latitude =
+            (data['latitude'] as num?)?.toDouble();
+
+        longitude =
+            (data['longitude'] as num?)?.toDouble();
+
+        final fotos = data['photos'];
+
+        if (fotos is List) {
+          fotoPrincipalUrl =
+              fotos.isNotEmpty
+                  ? fotos[0]?.toString()
+                  : null;
+
+          foto2Url =
+              fotos.length > 1
+                  ? fotos[1]?.toString()
+                  : null;
+
+          foto3Url =
+              fotos.length > 2
+                  ? fotos[2]?.toString()
+                  : null;
+        }
+
+        tieneWifi =
+            data['has_wifi'] == true;
+
+        aireAcondicionado =
+            data['has_air_conditioning'] == true;
+
+        enchufes =
+            data['has_power_outlets'] == true;
+
+        mesasAlAireLibre =
+            data['has_outdoor_seating'] == true;
+
+        estacionamiento =
+            data['has_parking'] == true;
+
+        accesible =
+            data['is_accessible'] == true;
+
+        cambiadorBebes =
+            data['has_baby_changing'] == true;
+
+        petFriendly =
+            data['is_pet_friendly'] == true;
+
+        kidsFriendly =
+            data['is_kids_friendly'] == true;
+
+        cafeEspecialidad =
+            data['has_specialty_coffee'] == true;
+
+        brunch =
+            data['serves_brunch'] == true;
+
+        desayuno =
+            data['serves_breakfast'] == true;
+
+        alcohol =
+            data['serves_alcohol'] == true;
+
+        pasteleriaArtesanal =
+            data['has_artisanal_pastries'] == true;
+
+        veganFriendly =
+            data['is_vegan_friendly'] == true;
+
+        vegetariano =
+            data['has_vegetarian_options'] == true;
+
+        sinTacc =
+            data['has_gluten_free_options'] == true;
+
+        opcionesSaludables =
+            data['has_healthy_options'] == true;
+
+        sinAzucar =
+            data['has_sugar_free_options'] == true;
+
+        lechesVegetales =
+            data['has_plant_based_milk'] == true;
+
+        jardin =
+            data['has_garden'] == true;
+
+        vistaAgua =
+            data['has_water_view'] == true;
+
+        vistaMontanas =
+            data['has_mountain_view'] == true;
+
+        rodeadoNaturaleza =
+            data['surrounded_by_nature'] == true;
+
+        terrazaRooftop =
+            data['has_rooftop'] == true;
+
+        ventanalesGrandes =
+            data['has_large_windows'] == true;
+
+        casaAntigua =
+            data['is_old_house'] == true;
+
+        edificioHistorico =
+            data['is_historic_building'] == true;
+
+        dentroLibreria =
+            data['inside_bookstore'] == true;
+
+        espacioCultural =
+            data['inside_cultural_space'] == true;
+
+        librosOJuegos =
+            data['has_books_or_games'] == true;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      mostrarError(
+        'No pudimos cargar los datos de la cafetería.',
+      );
+    }
+  }
+
+  @override
   void dispose() {
     nombreController.dispose();
     direccionController.dispose();
@@ -162,12 +398,14 @@ class _CreateCafeScreenState
           return;
         }
 
-        if (fotoPrincipal == null) {
+        if (fotoPrincipal == null &&
+          (fotoPrincipalUrl == null ||
+              fotoPrincipalUrl!.isEmpty)) {
         mostrarError(
-            'Elegí una foto principal de la cafetería.',
+          'Elegí una foto principal de la cafetería.',
         );
         return;
-        }
+      }
     }
 
     if (pasoActual < 2) {
@@ -310,11 +548,19 @@ class _CreateCafeScreenState
   Future<void> enviarCafe() async {
     if (enviandoCafe) return;
 
-    if (fotoPrincipal == null ||
-        latitude == null ||
+    if (latitude == null ||
         longitude == null) {
       mostrarError(
         'Faltan datos obligatorios para enviar la cafetería.',
+      );
+      return;
+    }
+
+    if (fotoPrincipal == null &&
+        (fotoPrincipalUrl == null ||
+            fotoPrincipalUrl!.isEmpty)) {
+      mostrarError(
+        'Falta la foto principal de la cafetería.',
       );
       return;
     }
@@ -324,68 +570,180 @@ class _CreateCafeScreenState
     });
 
     try {
-      await CafeService.crearCafe(
-        nombre: nombreController.text.trim(),
-        direccion: direccionController.text.trim(),
-        localidad: localidadController.text.trim(),
-        provincia: provinciaSeleccionada,
-        descripcion: descripcionController.text.trim(),
-        telefono: telefonoController.text.trim(),
-        instagram: instagramController.text.trim(),
-        googleMapsUrl: googleMapsController.text.trim(),
-        latitude: latitude!,
-        longitude: longitude!,
-        fotoPrincipal: fotoPrincipal!,
-        foto2: foto2,
-        foto3: foto3,
+      if (widget.esEdicion) {
+        final cafeId = widget.cafe?.id;
 
-        tieneWifi: tieneWifi,
-        aireAcondicionado: aireAcondicionado,
-        enchufes: enchufes,
-        mesasAlAireLibre: mesasAlAireLibre,
-        estacionamiento: estacionamiento,
-        accesible: accesible,
-        cambiadorBebes: cambiadorBebes,
-        petFriendly: petFriendly,
-        kidsFriendly: kidsFriendly,
+        if (cafeId == null) {
+          throw Exception(
+            'No pudimos identificar la cafetería.',
+          );
+        }
 
-        cafeEspecialidad: cafeEspecialidad,
-        brunch: brunch,
-        desayuno: desayuno,
-        alcohol: alcohol,
-        pasteleriaArtesanal: pasteleriaArtesanal,
-        veganFriendly: veganFriendly,
-        vegetariano: vegetariano,
-        sinTacc: sinTacc,
-        opcionesSaludables: opcionesSaludables,
-        sinAzucar: sinAzucar,
-        lechesVegetales: lechesVegetales,
+        await CafeService.actualizarCafe(
+          cafeId: cafeId,
+          nombre: nombreController.text.trim(),
+          direccion:
+              direccionController.text.trim(),
+          localidad:
+              localidadController.text.trim(),
+          provincia: provinciaSeleccionada,
+          descripcion:
+              descripcionController.text.trim(),
+          telefono:
+              telefonoController.text.trim(),
+          instagram:
+              instagramController.text.trim(),
+          googleMapsUrl:
+              googleMapsController.text.trim(),
+          latitude: latitude!,
+          longitude: longitude!,
+          fotoPrincipal: fotoPrincipal,
+          foto2: foto2,
+          foto3: foto3,
 
-        jardin: jardin,
-        vistaAgua: vistaAgua,
-        vistaMontanas: vistaMontanas,
-        rodeadoNaturaleza: rodeadoNaturaleza,
-        terrazaRooftop: terrazaRooftop,
-        ventanalesGrandes: ventanalesGrandes,
-        casaAntigua: casaAntigua,
-        edificioHistorico: edificioHistorico,
-        dentroLibreria: dentroLibreria,
-        espacioCultural: espacioCultural,
+          tieneWifi: tieneWifi,
+          aireAcondicionado:
+              aireAcondicionado,
+          enchufes: enchufes,
+          mesasAlAireLibre:
+              mesasAlAireLibre,
+          estacionamiento:
+              estacionamiento,
+          accesible: accesible,
+          cambiadorBebes:
+              cambiadorBebes,
+          petFriendly: petFriendly,
+          kidsFriendly: kidsFriendly,
 
-        librosOJuegos: librosOJuegos,
-      );
+          cafeEspecialidad:
+              cafeEspecialidad,
+          brunch: brunch,
+          desayuno: desayuno,
+          alcohol: alcohol,
+          pasteleriaArtesanal:
+              pasteleriaArtesanal,
+
+          veganFriendly: veganFriendly,
+          vegetariano: vegetariano,
+          sinTacc: sinTacc,
+          opcionesSaludables:
+              opcionesSaludables,
+          sinAzucar: sinAzucar,
+          lechesVegetales:
+              lechesVegetales,
+
+          jardin: jardin,
+          vistaAgua: vistaAgua,
+          vistaMontanas:
+              vistaMontanas,
+          rodeadoNaturaleza:
+              rodeadoNaturaleza,
+          terrazaRooftop:
+              terrazaRooftop,
+          ventanalesGrandes:
+              ventanalesGrandes,
+          casaAntigua: casaAntigua,
+          edificioHistorico:
+              edificioHistorico,
+          dentroLibreria:
+              dentroLibreria,
+          espacioCultural:
+              espacioCultural,
+
+          librosOJuegos:
+              librosOJuegos,
+        );
+      } else {
+        await CafeService.crearCafe(
+          nombre: nombreController.text.trim(),
+          direccion:
+              direccionController.text.trim(),
+          localidad:
+              localidadController.text.trim(),
+          provincia: provinciaSeleccionada,
+          descripcion:
+              descripcionController.text.trim(),
+          telefono:
+              telefonoController.text.trim(),
+          instagram:
+              instagramController.text.trim(),
+          googleMapsUrl:
+              googleMapsController.text.trim(),
+          latitude: latitude!,
+          longitude: longitude!,
+          fotoPrincipal: fotoPrincipal!,
+          foto2: foto2,
+          foto3: foto3,
+
+          tieneWifi: tieneWifi,
+          aireAcondicionado:
+              aireAcondicionado,
+          enchufes: enchufes,
+          mesasAlAireLibre:
+              mesasAlAireLibre,
+          estacionamiento:
+              estacionamiento,
+          accesible: accesible,
+          cambiadorBebes:
+              cambiadorBebes,
+          petFriendly: petFriendly,
+          kidsFriendly: kidsFriendly,
+
+          cafeEspecialidad:
+              cafeEspecialidad,
+          brunch: brunch,
+          desayuno: desayuno,
+          alcohol: alcohol,
+          pasteleriaArtesanal:
+              pasteleriaArtesanal,
+          veganFriendly: veganFriendly,
+          vegetariano: vegetariano,
+          sinTacc: sinTacc,
+          opcionesSaludables:
+              opcionesSaludables,
+          sinAzucar: sinAzucar,
+          lechesVegetales:
+              lechesVegetales,
+
+          jardin: jardin,
+          vistaAgua: vistaAgua,
+          vistaMontanas:
+              vistaMontanas,
+          rodeadoNaturaleza:
+              rodeadoNaturaleza,
+          terrazaRooftop:
+              terrazaRooftop,
+          ventanalesGrandes:
+              ventanalesGrandes,
+          casaAntigua: casaAntigua,
+          edificioHistorico:
+              edificioHistorico,
+          dentroLibreria:
+              dentroLibreria,
+          espacioCultural:
+              espacioCultural,
+
+          librosOJuegos:
+              librosOJuegos,
+        );
+      }
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Cafetería agregada correctamente.',
+            widget.esEdicion
+                ? 'Cafetería actualizada correctamente.'
+                : 'Cafetería agregada correctamente.',
           ),
         ),
       );
 
-      Navigator.pop(context);
+      Navigator.pop(
+        context,
+        true,
+      );
     } catch (e) {
       if (!mounted) return;
 
@@ -406,6 +764,8 @@ class _CreateCafeScreenState
     }
   }
 
+
+
   void pasoAnterior() {
     if (pasoActual > 0) {
       setState(() {
@@ -418,8 +778,10 @@ class _CreateCafeScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Sumar cafetería',
+        title: Text(
+          widget.esEdicion
+              ? 'Editar cafetería'
+              : 'Sumar cafetería',
         ),
       ),
       body: SafeArea(
@@ -473,6 +835,9 @@ class _CreateCafeScreenState
             fotoPrincipal: fotoPrincipal,
             foto2: foto2,
             foto3: foto3,
+            fotoPrincipalUrl: fotoPrincipalUrl,
+            foto2Url: foto2Url,
+            foto3Url: foto3Url,
             latitude: latitude,
             longitude: longitude,
             onSeleccionarUbicacion: seleccionarUbicacionMapa,
@@ -847,6 +1212,10 @@ class _PasoDatos extends StatelessWidget {
   final XFile? fotoPrincipal;
   final XFile? foto2;
   final XFile? foto3;
+
+  final String? fotoPrincipalUrl;
+  final String? foto2Url;
+  final String? foto3Url;
   final double? latitude;
   final double? longitude;
   final VoidCallback onSeleccionarUbicacion;
@@ -870,6 +1239,9 @@ class _PasoDatos extends StatelessWidget {
     required this.onProvinciaChanged,
     required this.onContinuar,
     required this.fotoPrincipal,
+    required this.fotoPrincipalUrl,
+    required this.foto2Url,
+    required this.foto3Url,
     required this.latitude,
     required this.longitude,
     required this.onSeleccionarUbicacion,
@@ -1082,9 +1454,10 @@ class _PasoDatos extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 _FotoSelector(
-                foto: fotoPrincipal,
-                titulo: 'Foto principal *',
-                onTap: onSeleccionarFotoPrincipal,
+                  foto: fotoPrincipal,
+                  fotoUrl: fotoPrincipalUrl,
+                  titulo: 'Foto principal *',
+                  onTap: onSeleccionarFotoPrincipal,
                 ),
 
                 const SizedBox(height: 12),
@@ -1093,21 +1466,23 @@ class _PasoDatos extends StatelessWidget {
                 children: [
                     Expanded(
                     child: _FotoSelector(
-                        foto: foto2,
-                        titulo: 'Foto 2',
-                        onTap: onSeleccionarFoto2,
-                        compacto: true,
+                      foto: foto2,
+                      fotoUrl: foto2Url,
+                      titulo: 'Foto 2',
+                      onTap: onSeleccionarFoto2,
+                      compacto: true,
                     ),
                     ),
 
                     const SizedBox(width: 12),
 
                     Expanded(
-                    child: _FotoSelector(
-                        foto: foto3,
-                        titulo: 'Foto 3',
-                        onTap: onSeleccionarFoto3,
-                        compacto: true,
+                      child: _FotoSelector(
+                      foto: foto3,
+                      fotoUrl: foto3Url,
+                      titulo: 'Foto 3',
+                      onTap: onSeleccionarFoto3,
+                      compacto: true,
                     ),
                     ),
                 ],
@@ -1128,12 +1503,14 @@ class _PasoDatos extends StatelessWidget {
 
 class _FotoSelector extends StatelessWidget {
   final XFile? foto;
+  final String? fotoUrl;
   final String titulo;
   final VoidCallback onTap;
   final bool compacto;
 
   const _FotoSelector({
     required this.foto,
+    this.fotoUrl,
     required this.titulo,
     required this.onTap,
     this.compacto = false,
@@ -1156,8 +1533,9 @@ class _FotoSelector extends StatelessWidget {
             color: const Color(0xFFE5E7EB),
           ),
         ),
-        child: foto == null
-            ? Column(
+        child: foto == null &&
+              (fotoUrl == null || fotoUrl!.isEmpty)
+          ? Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(
@@ -1195,10 +1573,26 @@ class _FotoSelector extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.file(
-                      File(foto!.path),
-                      fit: BoxFit.cover,
-                    ),
+                    foto != null
+                      ? Image.file(
+                          File(foto!.path),
+                          fit: BoxFit.cover,
+                        )
+                      : Image.network(
+                          fotoUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (
+                            context,
+                            error,
+                            stackTrace,
+                          ) {
+                            return const Center(
+                              child: Icon(
+                                Icons.broken_image_outlined,
+                              ),
+                            );
+                          },
+                        ),
 
                     Positioned(
                       right: 8,

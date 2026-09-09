@@ -292,6 +292,71 @@ class ApiService {
     return resultado;
   }
 
+  static Future<Map<String, dynamic>> checkInCafe({
+    required int cafeId,
+    required double latitude,
+    required double longitude,
+  }) async {
+    final token = await AuthService.obtenerToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception(
+        'No hay una sesión iniciada',
+      );
+    }
+
+    final response = await http
+        .post(
+          Uri.parse(
+            '$baseUrl/mobile/cafes/$cafeId/check-in/',
+          ),
+          headers: {
+            'Authorization': 'Token $token',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'latitude': latitude,
+            'longitude': longitude,
+          }),
+        )
+        .timeout(
+          const Duration(seconds: 15),
+        );
+
+    Map<String, dynamic>? decodedData;
+
+    try {
+      final dynamic decoded =
+          jsonDecode(response.body);
+
+      if (decoded is Map<String, dynamic>) {
+        decodedData = decoded;
+      }
+    } catch (_) {}
+
+    if (response.statusCode != 200) {
+      final message = decodedData?['message'];
+
+      if (message is String && message.isNotEmpty) {
+        throw Exception(message);
+      }
+
+      throw Exception(
+        'No pudimos validar tu ubicación.',
+      );
+    }
+
+    if (decodedData == null) {
+      throw Exception(
+        'La respuesta de ubicación no es válida.',
+      );
+    }
+
+    return decodedData;
+  }
+
+
   static Future<Map<String, dynamic>> setCafeCollection({
     required int cafeId,
     required String collection,

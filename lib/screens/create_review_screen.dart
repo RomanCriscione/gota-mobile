@@ -701,8 +701,10 @@ Future<void> publicarReview() async {
     final existingReview =
         widget.existingReview;
 
+    Map<String, dynamic>? resultadoCreacion;
+
     if (existingReview == null) {
-      await ReviewService.crearReview(
+    resultadoCreacion = await ReviewService.crearReview(
         cafeId: widget.cafeId,
         rating: rating,
         comment:
@@ -714,7 +716,7 @@ Future<void> publicarReview() async {
                 : precioController.text.trim(),
         tagIds:
             tagsSeleccionados.toList(),
-      );
+    );
     } else {
       final dynamic reviewIdData =
           existingReview['id'];
@@ -749,14 +751,31 @@ Future<void> publicarReview() async {
 
     if (!mounted) return;
 
+    String mensajeExito;
+
+    if (existingReview == null) {
+    final reward =
+        resultadoCreacion?['reward'];
+
+    final totalPoints =
+        reward is Map
+            ? int.tryParse(
+                    reward['total_points']?.toString() ?? '0',
+                ) ??
+                0
+            : 0;
+
+    mensajeExito = totalPoints > 0
+        ? '¡Gracias por tu reseña! · +$totalPoints Gotas'
+        : '¡Gracias por tu reseña!';
+    } else {
+    mensajeExito = 'Reseña actualizada.';
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          widget.existingReview == null
-              ? '¡Gracias por tu reseña!'
-              : 'Reseña actualizada.',
-        ),
-      ),
+    SnackBar(
+        content: Text(mensajeExito),
+    ),
     );
 
     Navigator.pop(

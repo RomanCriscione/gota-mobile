@@ -1,4 +1,5 @@
 import 'package:url_launcher/url_launcher.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -10,6 +11,7 @@ import '../models/cafe.dart';
 import '../widgets/feature_card.dart';
 import '../widgets/mini_cafe_card.dart';
 import 'create_review_screen.dart';
+
 
 class CafeDetailScreen extends StatefulWidget {
   final int cafeId;
@@ -48,6 +50,7 @@ class _CafeDetailScreenState extends State<CafeDetailScreen> {
       TextEditingController();
 
   bool publicandoHuella = false;
+  bool validandoUbicacion = false;
   bool descripcionExpandida = false;
 
   int fotoActual = 0;
@@ -479,14 +482,37 @@ double? get longitudeCafe {
         estadoActual = response['status'];
       });
 
+      final bool removed = response['removed'] == true;
+
+      final rewardData = response['reward'];
+      final Map<String, dynamic>? reward =
+          rewardData is Map
+              ? Map<String, dynamic>.from(rewardData)
+              : null;
+
       String mensaje = '';
 
-      if (estado == 'quiero_ir') {
-        mensaje = 'Agregado a Quiero ir';
-      } else if (estado == 'quiero_volver') {
-        mensaje = 'Agregado a Quiero volver';
-      } else if (estado == 'ya_fui') {
-        mensaje = 'Agregado a Ya fui';
+      if (removed) {
+        if (estado == 'quiero_ir') {
+          mensaje = 'Quitado de Quiero ir';
+        } else if (estado == 'quiero_volver') {
+          mensaje = 'Quitado de Quiero volver';
+        } else if (estado == 'ya_fui') {
+          mensaje = 'Quitado de Ya fui';
+        }
+      } else {
+        if (estado == 'quiero_ir') {
+          mensaje = 'Agregado a Quiero ir';
+        } else if (estado == 'quiero_volver') {
+          mensaje = 'Agregado a Quiero volver';
+        } else if (estado == 'ya_fui') {
+          mensaje = 'Agregado a Ya fui';
+        }
+      }
+
+      if (reward?['awarded'] == true) {
+        final int points = reward?['points'] ?? 0;
+        mensaje = '$mensaje · +$points Gotas';
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -504,6 +530,121 @@ double? get longitudeCafe {
           ),
         ),
       );
+    }
+  }
+
+  Future<void> estoyAca() async {
+    if (!estaLogueado) {
+      Navigator.pushNamed(
+        context,
+        '/login',
+      );
+      return;
+    }
+
+    if (validandoUbicacion) return;
+
+    setState(() {
+      validandoUbicacion = true;
+    });
+
+    try {
+      final servicioActivo =
+          await Geolocator.isLocationServiceEnabled();
+
+      if (!servicioActivo) {
+        throw Exception(
+          'Activá la ubicación de tu celular para confirmar que estás acá.',
+        );
+      }
+
+      var permiso = await Geolocator.checkPermission();
+
+      if (permiso == LocationPermission.denied) {
+        permiso = await Geolocator.requestPermission();
+      }
+
+      if (permiso == LocationPermission.denied) {
+        throw Exception(
+          'Necesitamos permiso para usar tu ubicación.',
+        );
+      }
+
+      if (permiso == LocationPermission.deniedForever) {
+        throw Exception(
+          'El permiso de ubicación está bloqueado. Podés habilitarlo desde la configuración del celular.',
+        );
+      }
+
+      final posicion = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+
+      final response = await ApiService.checkInCafe(
+        cafeId: widget.cafeId,
+        latitude: posicion.latitude,
+        longitude: posicion.longitude,
+      );
+
+      if (!mounted) return;
+
+      final bool esValido =
+          response['is_valid'] == true;
+
+      if (!esValido) {
+        final distancia = response['distance_meters'];
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              distancia != null
+                  ? 'Parece que todavía no estás en esta cafetería. Estás a ${distancia.toString()} m.'
+                  : 'Parece que todavía no estás en esta cafetería.',
+            ),
+          ),
+        );
+
+        return;
+      }
+
+      final rewardData = response['reward'];
+      final Map<String, dynamic>? reward =
+          rewardData is Map
+              ? Map<String, dynamic>.from(rewardData)
+              : null;
+
+      String mensaje = 'Ubicación confirmada · Estás acá';
+
+      if (reward?['awarded'] == true) {
+        final int points = reward?['points'] ?? 0;
+        mensaje = '$mensaje · +$points Gota';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(mensaje),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      final mensaje = e
+          .toString()
+          .replaceFirst('Exception: ', '');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(mensaje),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          validandoUbicacion = false;
+        });
+      }
     }
   }
 
@@ -1465,6 +1606,32 @@ double? get longitudeCafe {
                   miReview == null
                       ? 'Contá cómo fue'
                       : 'Editar mi reseña',
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed:
+                    validandoUbicacion ? null : estoyAca,
+                icon: validandoUbicacion
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.my_location_rounded,
+                      ),
+                label: Text(
+                  validandoUbicacion
+                      ? 'Validando ubicación...'
+                      : 'Estoy acá',
                 ),
               ),
             ),
