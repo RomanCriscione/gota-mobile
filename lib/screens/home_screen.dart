@@ -10,6 +10,7 @@ import '../widgets/section_title.dart';
 import '../widgets/loading_skeleton.dart';
 import 'cafes_map_screen.dart';
 import 'cafe_detail_screen.dart';
+import 'my_gotas_screen.dart';
 
 class RadarRecommendation {
   final Cafe cafe;
@@ -32,6 +33,7 @@ class HomeScreen extends StatefulWidget {
 
     late Future<List<Cafe>> cafesFuture;
     late Future<List<CafeRelationship>> mapaFuture;
+    late Future<Map<String, dynamic>> gotasFuture;
     bool estaLogueado = false;
     late Future<RadarRecommendation?> radarFuture;
   
@@ -43,8 +45,15 @@ class HomeScreen extends StatefulWidget {
     cafesFuture = ApiService.obtenerCafes();
 
     mapaFuture = Future.value(
-  <CafeRelationship>[],
-);
+      <CafeRelationship>[],
+    );
+
+    gotasFuture = Future.value(
+      <String, dynamic>{
+        'balance': 0,
+        'recent_transactions': [],
+      },
+    );
 
     radarFuture = calcularCafeEnRadar();
 
@@ -60,6 +69,7 @@ class HomeScreen extends StatefulWidget {
       setState(() {
         estaLogueado = true;
         mapaFuture = ApiService.obtenerMiMapa();
+        gotasFuture = ApiService.obtenerMisGotas();
         radarFuture = calcularCafeEnRadar();
       });
     }
@@ -410,23 +420,35 @@ class HomeScreen extends StatefulWidget {
       );
 
       final nuevoMapaFuture = estaLogueado
-          ? ApiService.obtenerMiMapa(
-              forzarActualizacion: true,
-            )
-          : Future.value(
-              <CafeRelationship>[],
-            );
+        ? ApiService.obtenerMiMapa(
+            forzarActualizacion: true,
+          )
+        : Future.value(
+            <CafeRelationship>[],
+          );
 
-      setState(() {
-        cafesFuture = nuevoCafesFuture;
-        mapaFuture = nuevoMapaFuture;
-        radarFuture = calcularCafeEnRadar();
-      });
+    final nuevoGotasFuture = estaLogueado
+        ? ApiService.obtenerMisGotas()
+        : Future.value(
+            <String, dynamic>{
+              'balance': 0,
+              'recent_transactions': [],
+              'milestones': [],
+            },
+          );
 
-      await Future.wait([
-        nuevoCafesFuture,
-        nuevoMapaFuture,
-      ]);
+    setState(() {
+      cafesFuture = nuevoCafesFuture;
+      mapaFuture = nuevoMapaFuture;
+      gotasFuture = nuevoGotasFuture;
+      radarFuture = calcularCafeEnRadar();
+    });
+
+    await Future.wait([
+      nuevoCafesFuture,
+      nuevoMapaFuture,
+      nuevoGotasFuture,
+    ]);
     }
     Future<void> abrirInstagram() async {
       final uri = Uri.parse(
@@ -798,6 +820,49 @@ class HomeScreen extends StatefulWidget {
             ),
           ],
 
+              if (estaLogueado) ...[
+                const SizedBox(height: 14),
+
+                FutureBuilder<Map<String, dynamic>>(
+                  future: gotasFuture,
+                  builder: (context, snapshot) {
+                    final data = snapshot.data;
+
+                    final balance = int.tryParse(
+                          data?['balance']?.toString() ?? '0',
+                        ) ??
+                        0;
+
+                    final rawMilestones =
+                      data?['milestones'] as List<dynamic>? ??
+                          <dynamic>[];
+
+                  final milestones = rawMilestones
+                      .map(
+                        (item) => int.tryParse(
+                          (item as Map<String, dynamic>)['points_required']
+                              .toString(),
+                        ),
+                      )
+                      .whereType<int>()
+                      .toList();
+
+                  return _GotasProgressCard(
+                    balance: balance,
+                    milestones: milestones,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const MyGotasScreen(),
+                        ),
+                      );
+                    },
+                  );
+                  },
+                ),
+              ],
+
               const SizedBox(height: 14),
 
               InkWell(
@@ -889,11 +954,17 @@ class HomeScreen extends StatefulWidget {
                 Expanded(
                   child: InkWell(
                     borderRadius: BorderRadius.circular(18),
-                    onTap: () {
-                      Navigator.pushNamed(
+                    onTap: () async {
+                      await Navigator.pushNamed(
                         context,
                         '/cafes',
                       );
+
+                      if (!mounted || !estaLogueado) return;
+
+                      setState(() {
+                        gotasFuture = ApiService.obtenerMisGotas();
+                      });
                     },
                     child: Container(
                       height: 110,
@@ -937,11 +1008,17 @@ class HomeScreen extends StatefulWidget {
                 Expanded(
                   child: InkWell(
                     borderRadius: BorderRadius.circular(18),
-                    onTap: () {
-                      Navigator.pushNamed(
+                    onTap: () async {
+                      await Navigator.pushNamed(
                         context,
                         '/nearby',
                       );
+
+                      if (!mounted || !estaLogueado) return;
+
+                      setState(() {
+                        gotasFuture = ApiService.obtenerMisGotas();
+                      });
                     },
                     child: Container(
                       height: 110,
@@ -989,7 +1066,7 @@ class HomeScreen extends StatefulWidget {
                 Expanded(
                   child: InkWell(
                     borderRadius: BorderRadius.circular(18),
-                    onTap: () {
+                    onTap: () async {
                       if (!estaLogueado) {
                         Navigator.pushNamed(
                           context,
@@ -998,10 +1075,16 @@ class HomeScreen extends StatefulWidget {
                         return;
                       }
 
-                      Navigator.pushNamed(
+                      await Navigator.pushNamed(
                         context,
                         '/my-map',
                       );
+
+                      if (!mounted) return;
+
+                      setState(() {
+                        gotasFuture = ApiService.obtenerMisGotas();
+                      });
                     },
                     child: Container(
                       height: 110,
@@ -1046,19 +1129,25 @@ class HomeScreen extends StatefulWidget {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(18),
                     onTap: () async {
-                      final cafes = await cafesFuture;
+            final cafes = await cafesFuture;
 
-                      if (!context.mounted) return;
+            if (!context.mounted) return;
 
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => CafesMapScreen(
-                            cafes: cafes,
-                          ),
-                        ),
-                      );
-                    },
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => CafesMapScreen(
+                  cafes: cafes,
+                ),
+              ),
+            );
+
+            if (!mounted || !estaLogueado) return;
+
+            setState(() {
+              gotasFuture = ApiService.obtenerMisGotas();
+            });
+          },
                     child: Container(
                       height: 110,
                       padding: const EdgeInsets.all(16),
@@ -1389,8 +1478,8 @@ class HomeScreen extends StatefulWidget {
                   padding: EdgeInsets.zero,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(12),
-                    onTap: () {
-                      Navigator.push(
+                    onTap: () async {
+                      await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) => CafeDetailScreen(
@@ -1399,6 +1488,12 @@ class HomeScreen extends StatefulWidget {
                           ),
                         ),
                       );
+
+                      if (!mounted || !estaLogueado) return;
+
+                      setState(() {
+                        gotasFuture = ApiService.obtenerMisGotas();
+                      });
                     },
                     child: Container(
                       decoration: BoxDecoration(
@@ -1556,3 +1651,310 @@ class HomeScreen extends StatefulWidget {
 );
   }
 }
+
+class _GotasProgressCard extends StatelessWidget {
+  final int balance;
+  final List<int> milestones;
+  final VoidCallback onTap;
+
+  const _GotasProgressCard({
+    required this.balance,
+    required this.milestones,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final proximos = milestones
+        .where((points) => points > balance)
+        .toList()
+      ..sort();
+
+    final proximoObjetivo =
+        proximos.isNotEmpty ? proximos.first : null;
+
+    final faltan = proximoObjetivo != null
+        ? proximoObjetivo - balance
+        : 0;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(22),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8F6F1),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: const Color(0xFFE7E2D9),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'TUS GOTAS',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.4,
+                color: Color(0xFF172C6D),
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            Text(
+              '$balance Gotas',
+              style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF172C6D),
+              ),
+            ),
+
+            const SizedBox(height: 4),
+
+            Text(
+              balance == 0
+                  ? 'Tu recorrido empieza acá.'
+                  : proximoObjetivo == null
+                      ? 'Ya alcanzaste todos los beneficios disponibles.'
+                      : faltan == 1
+                          ? 'Te falta 1 Gota para tu próximo beneficio.'
+                          : 'Te faltan $faltan Gotas para tu próximo beneficio.',
+              style: const TextStyle(
+                fontSize: 14,
+                height: 1.35,
+                color: Color(0xFF4B5563),
+              ),
+            ),
+
+            const SizedBox(height: 22),
+
+            SizedBox(
+              height: 100,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final sortedMilestones = [...milestones]..sort();
+
+                  final previousMilestones = sortedMilestones
+                      .where((points) => points <= balance)
+                      .toList();
+
+                  final previousPoint = previousMilestones.isNotEmpty
+                      ? previousMilestones.last
+                      : 0;
+
+                  final upcomingMilestones = sortedMilestones
+                      .where((points) => points > balance)
+                      .take(2)
+                      .toList();
+
+                  final endPoint = upcomingMilestones.isNotEmpty
+                    ? upcomingMilestones.last
+                    : balance;
+
+                final range = endPoint - previousPoint;
+
+                final progress = range > 0
+                    ? ((balance - previousPoint) / range)
+                        .clamp(0.0, 1.0)
+                    : balance == 0
+                        ? 0.0
+                        : 1.0;
+
+                const horizontalPadding = 22.0;
+
+                final usableWidth =
+                    constraints.maxWidth - (horizontalPadding * 2);
+
+                final cupLeft =
+                    horizontalPadding + (usableWidth * progress);
+
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Positioned(
+                        left: horizontalPadding,
+                        right: horizontalPadding,
+                        top: 38,
+                        child: Container(
+                          height: 3,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD1D5DB),
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                        ),
+                      ),
+
+                      Positioned(
+                        left: horizontalPadding,
+                        top: 38,
+                        child: Container(
+                          width: usableWidth * progress,
+                          height: 3,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF172C6D),
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                        ),
+                      ),
+
+                      Positioned(
+                        left: (cupLeft - 18).clamp(
+                          0.0,
+                          constraints.maxWidth - 36,
+                        ),
+                        top: 20,
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          padding: const EdgeInsets.all(7),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFF172C6D),
+                              width: 2,
+                            ),
+                          ),
+                          child: SvgPicture.asset(
+                            'assets/icons/rating_cup.svg',
+                          ),
+                        ),
+                      ),
+
+                      Positioned(
+                        left: (cupLeft - 20).clamp(
+                          0.0,
+                          constraints.maxWidth - 40,
+                        ),
+                        top: 61,
+                        child: SizedBox(
+                          width: 40,
+                          child: Text(
+                            '$balance',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF172C6D),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      for (int i = 0; i < upcomingMilestones.length; i++)
+                        Positioned(
+                          left: (
+                            horizontalPadding +
+                            usableWidth *
+                                (
+                                  range > 0
+                                      ? (
+                                          (upcomingMilestones[i] - previousPoint) /
+                                          range
+                                        ).clamp(0.0, 1.0)
+                                      : 1.0
+                                ) -
+                            21
+                          ).clamp(
+                            0.0,
+                            constraints.maxWidth - 42,
+                          ),
+                          top: 16,
+                          child: _GotaRewardMilestone(
+                            value: upcomingMilestones[i],
+                            isNext: i == 0,
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Ver mis Gotas y beneficios',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF172C6D),
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 19,
+                  color: Color(0xFF172C6D),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GotaRewardMilestone extends StatelessWidget {
+  final int value;
+  final bool isNext;
+
+  const _GotaRewardMilestone({
+    required this.value,
+    required this.isNext,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: const Color(0xFF172C6D),
+              width: isNext ? 2.5 : 1.5,
+            ),
+          ),
+          child: const Icon(
+            Icons.card_giftcard_rounded,
+            size: 22,
+            color: Color(0xFF172C6D),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '$value',
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF172C6D),
+          ),
+        ),
+        if (isNext)
+          const Text(
+            'PRÓXIMO',
+            style: TextStyle(
+              fontSize: 8,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.6,
+              color: Color(0xFF6B7280),
+            ),
+          ),
+      ],
+    );
+  }
+}
+

@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/user.dart';
 import '../services/auth_service.dart';
 import 'my_cafes_screen.dart';
+import 'my_gotas_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -835,6 +836,53 @@ Future<void> eliminarCuenta() async {
                 ),
                         
                 const SizedBox(height: 24),
+
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(18),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF9FAFB),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: const Color(0xFFE5E7EB),
+                                    ),
+                                  ),
+                                  child: ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    leading: const Icon(
+                                      Icons.water_drop_outlined,
+                                      color: Color(0xFF1E3A8A),
+                                      size: 30,
+                                    ),
+                                    title: const Text(
+                                      'Mis Gotas',
+                                      style: TextStyle(
+                                        fontSize: 19,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF111827),
+                                      ),
+                                    ),
+                                    subtitle: const Padding(
+                                      padding: EdgeInsets.only(top: 5),
+                                      child: Text(
+                                        'Tus Gotas, beneficios y movimientos.',
+                                      ),
+                                    ),
+                                    trailing: const Icon(
+                                      Icons.chevron_right_rounded,
+                                    ),
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              const MyGotasScreen(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+
+                                const SizedBox(height: 24),
 
                 Container(
                   width: double.infinity,

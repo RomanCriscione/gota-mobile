@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../services/review_service.dart';
+import '../widgets/reward_unlocked_dialog.dart';
 
 class CreateReviewScreen extends StatefulWidget {
   final int cafeId;
@@ -773,15 +774,58 @@ Future<void> publicarReview() async {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-        content: Text(mensajeExito),
-    ),
-    );
+        SnackBar(
+            content: Text(mensajeExito),
+        ),
+        );
 
-    Navigator.pop(
-      context,
-      true,
-    );
+        if (existingReview == null) {
+        final rewardData =
+            resultadoCreacion?['reward'];
+
+        if (rewardData is Map) {
+            final List<dynamic> unlockedRewards = [];
+
+            final baseReward = rewardData['base'];
+
+            if (baseReward is Map) {
+            final baseUnlocked =
+                baseReward['unlocked_rewards'];
+
+            if (baseUnlocked is List) {
+                unlockedRewards.addAll(baseUnlocked);
+            }
+            }
+
+            final tagBonusReward =
+                rewardData['tag_bonus'];
+
+            if (tagBonusReward is Map) {
+            final tagBonusUnlocked =
+                tagBonusReward['unlocked_rewards'];
+
+            if (tagBonusUnlocked is List) {
+                unlockedRewards.addAll(
+                tagBonusUnlocked,
+                );
+            }
+            }
+
+            if (unlockedRewards.isNotEmpty) {
+            await mostrarBeneficiosDesbloqueados(
+                context,
+                unlockedRewards,
+            );
+            }
+        }
+        }
+
+        if (!mounted) return;
+
+        Navigator.pop(
+        context,
+        true,
+        );
   } catch (error) {
     if (!mounted) return;
 

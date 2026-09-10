@@ -5,6 +5,7 @@ import '../services/cafe_service.dart';
 import 'cafe_detail_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'create_cafe_screen.dart';
+import 'redeem_coupon_screen.dart';
 
 class MyCafesScreen extends StatefulWidget {
   const MyCafesScreen({super.key});
@@ -143,9 +144,32 @@ class _MyCafesScreenState
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Mis cafeterías',
+            'Mis cafeterías',
         ),
-      ),
+        actions: [
+            Padding(
+                padding: const EdgeInsets.only(
+                right: 8,
+                ),
+                child: TextButton.icon(
+                onPressed: () {
+                    Navigator.of(context).push(
+                    MaterialPageRoute(
+                        builder: (_) =>
+                            const RedeemCouponScreen(),
+                    ),
+                    );
+                },
+                icon: const Icon(
+                    Icons.qr_code_scanner_rounded,
+                ),
+                label: const Text(
+                    'Canjear',
+                ),
+                ),
+            ),
+            ],
+        ),
       body: FutureBuilder<List<Cafe>>(
         future: cafesFuture,
         builder: (context, snapshot) {

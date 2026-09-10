@@ -11,6 +11,7 @@ import '../models/cafe.dart';
 import '../widgets/feature_card.dart';
 import '../widgets/mini_cafe_card.dart';
 import 'create_review_screen.dart';
+import '../widgets/reward_unlocked_dialog.dart';
 
 
 class CafeDetailScreen extends StatefulWidget {
@@ -520,6 +521,22 @@ double? get longitudeCafe {
           content: Text(mensaje),
         ),
       );
+
+      final unlockedRewardsData =
+          reward?['unlocked_rewards'];
+
+      final List<dynamic> unlockedRewards =
+          unlockedRewardsData is List
+              ? unlockedRewardsData
+              : <dynamic>[];
+
+      if (unlockedRewards.isNotEmpty) {
+        await mostrarBeneficiosDesbloqueados(
+          context,
+          unlockedRewards,
+        );
+      }
+
     } catch (_) {
       if (!mounted) return;
 
@@ -627,6 +644,21 @@ double? get longitudeCafe {
           content: Text(mensaje),
         ),
       );
+
+      final unlockedRewardsData =
+          reward?['unlocked_rewards'];
+
+      final List<dynamic> unlockedRewards =
+          unlockedRewardsData is List
+              ? unlockedRewardsData
+              : <dynamic>[];
+
+      if (unlockedRewards.isNotEmpty) {
+        await mostrarBeneficiosDesbloqueados(
+          context,
+          unlockedRewards,
+        );
+      }
     } catch (e) {
       if (!mounted) return;
 
@@ -703,17 +735,47 @@ double? get longitudeCafe {
       if (!mounted) return;
 
       final message =
-          response['message']?.toString();
+        response['message']?.toString();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            message != null && message.isNotEmpty
-                ? message
-                : 'Tu huella fue guardada.',
+        final reward = response['reward'];
+
+        final points =
+            reward is Map
+                ? int.tryParse(
+                      reward['points']?.toString() ?? '0',
+                    ) ??
+                    0
+                : 0;
+
+        final mensajeFinal =
+            points > 0
+                ? '${message ?? 'Tu huella fue guardada.'} · +$points Gotas'
+                : message != null && message.isNotEmpty
+                    ? message
+                    : 'Tu huella fue guardada.';
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(mensajeFinal),
           ),
-        ),
-      );
+        );
+
+        final unlockedRewardsData =
+            reward is Map
+                ? reward['unlocked_rewards']
+                : null;
+
+        final List<dynamic> unlockedRewards =
+            unlockedRewardsData is List
+                ? unlockedRewardsData
+                : <dynamic>[];
+
+        if (unlockedRewards.isNotEmpty) {
+          await mostrarBeneficiosDesbloqueados(
+            context,
+            unlockedRewards,
+          );
+        }
     } catch (e) {
       if (!mounted) return;
 

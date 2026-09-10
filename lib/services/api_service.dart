@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/cafe.dart';
 import '../models/cafe_relationship.dart';
@@ -245,6 +246,47 @@ class ApiService {
         )
         .toList();
   }
+
+    static Future<Map<String, dynamic>> obtenerMisGotas() async {
+      final token = await AuthService.obtenerToken();
+
+      if (token == null || token.isEmpty) {
+        throw Exception(
+          'No hay una sesión iniciada',
+        );
+      }
+
+      final response = await http
+          .get(
+            Uri.parse(
+              '$baseUrl/mobile/my-gotas/',
+            ),
+            headers: {
+              'Authorization': 'Token $token',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(
+            const Duration(seconds: 15),
+          );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'No pudimos cargar tus Gotas.',
+        );
+      }
+
+      final dynamic decodedData =
+          jsonDecode(response.body);
+
+      if (decodedData is! Map<String, dynamic>) {
+        throw Exception(
+          'La respuesta de Gotas no es válida.',
+        );
+      }
+
+      return decodedData;
+    }
 
   static Future<Map<String, dynamic>> setCafeStatus({
     required int cafeId,
@@ -559,6 +601,76 @@ class ApiService {
     if (decodedData == null) {
       throw Exception(
         'La respuesta de huellas no es válida.',
+      );
+    }
+
+    return decodedData;
+  }
+
+  static Future<Map<String, dynamic>> canjearBeneficio({
+    String? qrToken,
+    String? code,
+  }) async {
+    final token = await AuthService.obtenerToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception(
+        'No hay una sesión iniciada',
+      );
+    }
+
+    final response = await http
+        .post(
+          Uri.parse(
+            '$baseUrl/mobile/coupons/redeem/',
+          ),
+          headers: {
+            'Authorization': 'Token $token',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            if (qrToken != null && qrToken.isNotEmpty)
+              'qr_token': qrToken,
+            if (code != null && code.isNotEmpty)
+              'code': code,
+          }),
+        )
+        .timeout(
+          const Duration(seconds: 15),
+        );
+
+          debugPrint('REDEEM STATUS: ${response.statusCode}');
+          debugPrint('REDEEM BODY: ${response.body}');
+
+    Map<String, dynamic>? decodedData;
+
+    try {
+      final dynamic decoded =
+          jsonDecode(response.body);
+
+      if (decoded is Map<String, dynamic>) {
+        decodedData = decoded;
+      }
+    } catch (_) {}
+
+    if (response.statusCode != 200) {
+      final message =
+          decodedData?['message'];
+
+      if (message is String &&
+          message.isNotEmpty) {
+        throw Exception(message);
+      }
+
+      throw Exception(
+        'No pudimos canjear este beneficio.',
+      );
+    }
+
+    if (decodedData == null) {
+      throw Exception(
+        'La respuesta del canje no es válida.',
       );
     }
 
