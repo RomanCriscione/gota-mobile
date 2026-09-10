@@ -11,32 +11,36 @@ class RedeemCouponScreen extends StatefulWidget {
       _RedeemCouponScreenState();
 }
 
-class _RedeemCouponScreenState
-    extends State<RedeemCouponScreen> {
+class _RedeemCouponScreenState extends State<RedeemCouponScreen> {
   bool procesando = false;
+  bool scannerPausadoPorError = false;
+
+  final MobileScannerController scannerController =
+      MobileScannerController();
 
   Future<void> procesarCodigo(String qrToken) async {
-    if (procesando) return; 
+    if (procesando || scannerPausadoPorError) return;
 
     setState(() {
       procesando = true;
     });
 
+    await scannerController.stop();
+
     try {
-      final resultado =
-          await ApiService.canjearBeneficio(
+      final resultado = await ApiService.canjearBeneficio(
         qrToken: qrToken,
       );
 
       if (!mounted) return;
 
       await mostrarResultadoCanje(resultado);
-
     } catch (e) {
       if (!mounted) return;
 
       setState(() {
         procesando = false;
+        scannerPausadoPorError = true;
       });
 
       final message = e
@@ -46,8 +50,7 @@ class _RedeemCouponScreenState
             '',
           );
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
         ),
@@ -55,9 +58,19 @@ class _RedeemCouponScreenState
     }
   }
 
+  Future<void> reactivarScanner() async {
+    if (procesando) return;
+
+    setState(() {
+      scannerPausadoPorError = false;
+    });
+
+    await scannerController.start();
+  }
+
   Future<void> mostrarResultadoCanje(
     Map<String, dynamic> resultado,
-    ) async {
+  ) async {
     if (!mounted) return;
 
     final coupon =
@@ -74,146 +87,157 @@ class _RedeemCouponScreenState
         cafeData?['name']?.toString() ?? '';
 
     await showDialog<void>(
-        context: context,
-        builder: (dialogContext) {
+      context: context,
+      builder: (dialogContext) {
         return AlertDialog(
-            title: const Text(
+          title: const Text(
             'Beneficio canjeado',
-            ),
-            content: Column(
+          ),
+          content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment:
                 CrossAxisAlignment.start,
             children: [
-                Text(
+              Text(
                 rewardText,
                 style: const TextStyle(
-                    fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w700,
                 ),
-                ),
-                if (cafeName.isNotEmpty) ...[
+              ),
+              if (cafeName.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Text(cafeName),
-                ],
+              ],
             ],
-            ),
-            actions: [
+          ),
+          actions: [
             TextButton(
-                onPressed: () {
+              onPressed: () {
                 Navigator.pop(dialogContext);
-                },
-                child: const Text('Listo'),
+              },
+              child: const Text('Listo'),
             ),
-            ],
+          ],
         );
-        },
+      },
     );
 
     if (!mounted) return;
 
     Navigator.pop(context, true);
-    }
+  }
 
   Future<void> ingresarCodigoManual() async {
     final controller = TextEditingController();
 
     final code = await showDialog<String>(
-        context: context,
-        builder: (dialogContext) {
+      context: context,
+      builder: (dialogContext) {
         return AlertDialog(
-            title: const Text(
+          title: const Text(
             'Ingresar código',
-            ),
-            content: TextField(
+          ),
+          content: TextField(
             controller: controller,
             autofocus: true,
             textCapitalization:
                 TextCapitalization.characters,
             decoration: const InputDecoration(
-                labelText: 'Código del beneficio',
-                hintText: 'GOTA-XXXXXX',
-                border: OutlineInputBorder(),
+              labelText: 'Código del beneficio',
+              hintText: 'GOTA-XXXXXX',
+              border: OutlineInputBorder(),
             ),
             onSubmitted: (value) {
-                final code = value.trim();
+              final code = value.trim();
 
-                if (code.isNotEmpty) {
+              if (code.isNotEmpty) {
                 Navigator.pop(
-                    dialogContext,
-                    code,
+                  dialogContext,
+                  code,
                 );
-                }
+              }
             },
-            ),
-            actions: [
+          ),
+          actions: [
             TextButton(
-                onPressed: () {
+              onPressed: () {
                 Navigator.pop(dialogContext);
-                },
-                child: const Text('Cancelar'),
+              },
+              child: const Text('Cancelar'),
             ),
             FilledButton(
-                onPressed: () {
+              onPressed: () {
                 final code =
                     controller.text.trim();
 
                 if (code.isNotEmpty) {
-                    Navigator.pop(
+                  Navigator.pop(
                     dialogContext,
                     code,
-                    );
+                  );
                 }
-                },
-                child: const Text('Validar'),
+              },
+              child: const Text('Validar'),
             ),
-            ],
+          ],
         );
-        },
+      },
     );
 
     controller.dispose();
 
     if (code == null || code.isEmpty) {
-        return;
+      return;
     }
 
     await procesarCodigoManual(code);
-    }
+  }
 
-    Future<void> procesarCodigoManual(
+  Future<void> procesarCodigoManual(
     String code,
-    ) async {
+  ) async {
     if (procesando) return;
 
     setState(() {
-        procesando = true;
+      procesando = true;
     });
 
     try {
-        final resultado =
-            await ApiService.canjearBeneficio(
+      final resultado =
+          await ApiService.canjearBeneficio(
         code: code,
-        );
+      );
 
-        await mostrarResultadoCanje(resultado);
+      if (!mounted) return;
+
+      await mostrarResultadoCanje(resultado);
     } catch (e) {
-        if (!mounted) return;
+      if (!mounted) return;
 
-        setState(() {
+      setState(() {
         procesando = false;
-        });
+      });
 
-        final message = e
-            .toString()
-            .replaceFirst('Exception: ', '');
+      final message = e
+          .toString()
+          .replaceFirst(
+            'Exception: ',
+            '',
+          );
 
-        ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(message),
+          content: Text(message),
         ),
-        );
+      );
     }
-    }
+  }
+
+  @override
+  void dispose() {
+    scannerController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -226,8 +250,11 @@ class _RedeemCouponScreenState
       body: Stack(
         children: [
           MobileScanner(
+            controller: scannerController,
             onDetect: (capture) {
-              if (procesando) return;
+              if (procesando || scannerPausadoPorError) {
+                return;
+              }
 
               final barcodes =
                   capture.barcodes;
@@ -249,56 +276,75 @@ class _RedeemCouponScreenState
           ),
           Align(
             alignment: Alignment.bottomCenter,
-            child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            color: Colors.black54,
-            child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                Text(
-                    procesando
-                        ? 'Validando beneficio...'
-                        : 'Apuntá la cámara al QR del beneficio.',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    ),
-                ),
-                if (!procesando) ...[
-                    const SizedBox(height: 12),
-                    const Text(
-                        'o',
-                        style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                        ),
-                    ),
-                    const SizedBox(height: 8),
-                    OutlinedButton.icon(
-                        onPressed: ingresarCodigoManual,
-                        icon: const Icon(
-                        Icons.keyboard_outlined,
+            child: SafeArea(
+              top: false,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                color: Colors.black54,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      procesando
+                          ? 'Validando beneficio...'
+                          : scannerPausadoPorError
+                              ? 'El QR no pudo validarse.'
+                              : 'Apuntá la cámara al QR del beneficio.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
                         color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (scannerPausadoPorError &&
+                        !procesando) ...[
+                      const SizedBox(height: 12),
+                      FilledButton.icon(
+                        onPressed: reactivarScanner,
+                        icon: const Icon(
+                          Icons.qr_code_scanner_rounded,
                         ),
                         label: const Text(
-                        'Ingresar código',
+                          'Escanear otro QR',
+                        ),
+                      ),
+                    ],
+                    if (!procesando &&
+                        !scannerPausadoPorError) ...[
+                      const SizedBox(height: 12),
+                      const Text(
+                        'o',
                         style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: ingresarCodigoManual,
+                        icon: const Icon(
+                          Icons.keyboard_outlined,
+                          color: Colors.white,
+                        ),
+                        label: const Text(
+                          'Ingresar código',
+                          style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
-                        ),
+                          ),
                         ),
                         style: OutlinedButton.styleFrom(
-                        side: const BorderSide(
+                          side: const BorderSide(
                             color: Colors.white,
+                          ),
                         ),
-                        ),
-                    ),
+                      ),
                     ],
-                ],
-            ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],

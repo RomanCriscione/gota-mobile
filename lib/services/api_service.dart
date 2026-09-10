@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/cafe.dart';
 import '../models/cafe_relationship.dart';
@@ -640,8 +639,6 @@ class ApiService {
           const Duration(seconds: 15),
         );
 
-          debugPrint('REDEEM STATUS: ${response.statusCode}');
-          debugPrint('REDEEM BODY: ${response.body}');
 
     Map<String, dynamic>? decodedData;
 
