@@ -894,6 +894,169 @@ double? get longitudeCafe {
       }
     }
 
+  Future<void> _mostrarReporteHuella(int whisperId) async {
+    if (!estaLogueado) {
+      Navigator.pushNamed(
+        context,
+        '/login',
+      );
+      return;
+    }
+
+    final motivo = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Reportar huella',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  '¿Por qué querés reportar esta huella?',
+                  style: TextStyle(
+                    color: Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                ListTile(
+                  leading: const Icon(Icons.block_outlined),
+                  title: const Text('Spam'),
+                  onTap: () => Navigator.pop(context, 'spam'),
+                ),
+
+                ListTile(
+                  leading: const Icon(Icons.warning_amber_rounded),
+                  title: const Text('Contenido ofensivo'),
+                  onTap: () => Navigator.pop(context, 'offensive'),
+                ),
+
+                ListTile(
+                  leading: const Icon(Icons.info_outline_rounded),
+                  title: const Text('Información falsa'),
+                  onTap: () => Navigator.pop(context, 'false_info'),
+                ),
+
+                ListTile(
+                  leading: const Icon(Icons.more_horiz_rounded),
+                  title: const Text('Otro motivo'),
+                  onTap: () => Navigator.pop(context, 'other'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (motivo == null || !mounted) return;
+
+    try {
+      await ApiService.reportarHuella(
+        whisperId: whisperId,
+        reason: motivo,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Gracias. Recibimos tu reporte y lo vamos a revisar.',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      final mensaje = e
+          .toString()
+          .replaceFirst('Exception: ', '');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(mensaje),
+        ),
+      );
+    }
+  }
+
+  Future<void> _bloquearUsuario(int userId) async {
+    if (!estaLogueado) {
+      Navigator.pushNamed(
+        context,
+        '/login',
+      );
+      return;
+    }
+
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Bloquear usuario'),
+          content: const Text(
+            'Ya no vas a ver sus reseñas ni sus huellas.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Bloquear'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmar != true || !mounted) return;
+
+    try {
+      await ApiService.bloquearUsuario(
+        userId: userId,
+      );
+
+      await cargarDetalleCafe();
+      await cargarHuellas();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Usuario bloqueado. Ya no vas a ver su contenido.',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      final mensaje = e
+          .toString()
+          .replaceFirst('Exception: ', '');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(mensaje),
+        ),
+      );
+    }
+  }
+
 
   Future<void> guardarColeccion(String collection) async {
     String apiCollection = '';
@@ -1965,8 +2128,16 @@ double? get longitudeCafe {
                 spacing: 10,
                 runSpacing: 10,
                 children: huellas.take(6).map((huella) {
-                  final texto =
+                  final String texto =
                       huella['text']?.toString() ?? '';
+
+                  final int? whisperId = huella['id'] is num
+                      ? (huella['id'] as num).toInt()
+                      : int.tryParse(huella['id']?.toString() ?? '');
+
+                  final int? whisperUserId = huella['user_id'] is num
+                      ? (huella['user_id'] as num).toInt()
+                      : int.tryParse(huella['user_id']?.toString() ?? '');
 
                   return Container(
                     constraints: const BoxConstraints(
@@ -1995,16 +2166,73 @@ double? get longitudeCafe {
                         ),
                       ],
                     ),
-                    child: Text(
-                      '“$texto”',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        height: 1.35,
-                        fontStyle: FontStyle.italic,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF5A472A),
-                      ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: PopupMenuButton<String>(
+                            padding: EdgeInsets.zero,
+                            tooltip: 'Opciones',
+                            icon: const Icon(
+                              Icons.more_vert_rounded,
+                              size: 20,
+                              color: Colors.black45,
+                            ),
+                            onSelected: (value) {
+                              if (value == 'report' && whisperId != null) {
+                                _mostrarReporteHuella(whisperId);
+                              } else if (
+                                  value == 'block' &&
+                                  whisperUserId != null) {
+                                _bloquearUsuario(whisperUserId);
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              if (whisperId != null)
+                                const PopupMenuItem<String>(
+                                  value: 'report',
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.flag_outlined,
+                                        size: 20,
+                                      ),
+                                      SizedBox(width: 10),
+                                      Text('Reportar huella'),
+                                    ],
+                                  ),
+                                ),
+                              if (whisperUserId != null)
+                                const PopupMenuItem<String>(
+                                  value: 'block',
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.block_rounded,
+                                        size: 20,
+                                      ),
+                                      SizedBox(width: 10),
+                                      Text('Bloquear usuario'),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+
+                        Text(
+                          '“$texto”',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            height: 1.35,
+                            fontStyle: FontStyle.italic,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF5A472A),
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 }).toList(),
@@ -2579,9 +2807,13 @@ double? get longitudeCafe {
                 final String respuestaDueno =
                     reviewMap['owner_reply']?.toString() ?? '';
 
-                final int? reviewId = reviewMap['id'] is num
+                  final int? reviewId = reviewMap['id'] is num
                     ? (reviewMap['id'] as num).toInt()
                     : int.tryParse(reviewMap['id']?.toString() ?? '');
+                  
+                  final int? reviewUserId = reviewMap['user_id'] is num
+                  ? (reviewMap['user_id'] as num).toInt()
+                  : int.tryParse(reviewMap['user_id']?.toString() ?? '');
 
                 return Container(
                    width: double.infinity,
@@ -2664,10 +2896,14 @@ double? get longitudeCafe {
                               onSelected: (value) {
                                 if (value == 'report') {
                                   _mostrarReporteResena(reviewId);
+                                } else if (
+                                    value == 'block' &&
+                                    reviewUserId != null) {
+                                  _bloquearUsuario(reviewUserId);
                                 }
                               },
-                              itemBuilder: (context) => const [
-                                PopupMenuItem<String>(
+                              itemBuilder: (context) => [
+                                const PopupMenuItem<String>(
                                   value: 'report',
                                   child: Row(
                                     children: [
@@ -2680,6 +2916,20 @@ double? get longitudeCafe {
                                     ],
                                   ),
                                 ),
+                                if (reviewUserId != null)
+                                  const PopupMenuItem<String>(
+                                    value: 'block',
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.block_rounded,
+                                          size: 20,
+                                        ),
+                                        SizedBox(width: 10),
+                                        Text('Bloquear usuario'),
+                                      ],
+                                    ),
+                                  ),
                               ],
                             ),
                         ],
