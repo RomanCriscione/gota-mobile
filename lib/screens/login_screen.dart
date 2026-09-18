@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../services/auth_service.dart';
 
@@ -495,25 +495,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                                if (Platform.isIOS) ...[
+                if (Platform.isIOS) ...[
                   const SizedBox(height: 12),
 
                   SizedBox(
                     width: double.infinity,
                     height: 52,
-                    child: OutlinedButton.icon(
-                      onPressed:
-                          cargando ? null : ingresarConApple,
-                      icon: const Icon(
-                        Icons.apple,
-                        size: 24,
-                      ),
-                      label: const Text(
-                        'Continuar con Apple',
-                        style: TextStyle(
-                          fontSize: 16,
-                        ),
-                      ),
+                    child: SignInWithAppleButton(
+                      onPressed: cargando ? () {} : ingresarConApple,
+                      text: 'Continuar con Apple',
+                      style: SignInWithAppleButtonStyle.black,
                     ),
                   ),
                 ],

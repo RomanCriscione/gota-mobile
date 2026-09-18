@@ -1,6 +1,7 @@
 ﻿import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../services/auth_service.dart';
 
@@ -425,19 +426,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   SizedBox(
                     width: double.infinity,
                     height: 52,
-                    child: OutlinedButton.icon(
-                      onPressed:
-                          cargando ? null : crearCuentaConApple,
-                      icon: const Icon(
-                        Icons.apple,
-                        size: 24,
-                      ),
-                      label: const Text(
-                        'Continuar con Apple',
-                        style: TextStyle(
-                          fontSize: 16,
-                        ),
-                      ),
+                    child: SignInWithAppleButton(
+                      onPressed: cargando ? () {} : crearCuentaConApple,
+                      text: 'Continuar con Apple',
+                      style: SignInWithAppleButtonStyle.black,
                     ),
                   ),
                 ],
