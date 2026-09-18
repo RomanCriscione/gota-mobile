@@ -1,3 +1,5 @@
+﻿import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
@@ -132,6 +134,43 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       final error =
           await AuthService.loginConGoogle();
+
+      if (!mounted) return;
+
+      if (error == AuthService.googleLoginCancelado) {
+        return;
+      }
+
+      if (error == null) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/home',
+          (route) => false,
+        );
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          cargando = false;
+        });
+      }
+    }
+  }
+
+  Future<void> crearCuentaConApple() async {
+    setState(() {
+      cargando = true;
+    });
+
+    try {
+      final error = await AuthService.loginConApple();
 
       if (!mounted) return;
 
@@ -379,6 +418,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                 ),
+
+                if (Platform.isIOS) ...[
+                  const SizedBox(height: 12),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: OutlinedButton.icon(
+                      onPressed:
+                          cargando ? null : crearCuentaConApple,
+                      icon: const Icon(
+                        Icons.apple,
+                        size: 24,
+                      ),
+                      label: const Text(
+                        'Continuar con Apple',
+                        style: TextStyle(
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
 
                 const SizedBox(height: 16),
 
