@@ -148,6 +148,67 @@ class ReviewService {
     return decodedData;
   }
 
+  static Future<Map<String, dynamic>> solicitarRevisionGotas({
+    required int reviewId,
+  }) async {
+    final token = await AuthService.obtenerToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception(
+        'No hay una sesión activa.',
+      );
+    }
+
+    final response = await http
+        .post(
+          Uri.parse(
+            '$baseUrl/reviews/$reviewId/reward-claim/',
+          ),
+          headers: {
+            'Authorization': 'Token $token',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        )
+        .timeout(
+          const Duration(seconds: 15),
+        );
+
+    Map<String, dynamic>? decodedData;
+
+    try {
+      final dynamic decoded =
+          jsonDecode(response.body);
+
+      if (decoded is Map<String, dynamic>) {
+        decodedData = decoded;
+      }
+    } catch (_) {}
+
+    if (response.statusCode != 200 &&
+        response.statusCode != 201) {
+      final message =
+          decodedData?['message'];
+
+      if (message is String &&
+          message.isNotEmpty) {
+        throw Exception(message);
+      }
+
+      throw Exception(
+        'No pudimos enviar la solicitud.',
+      );
+    }
+
+    if (decodedData == null) {
+      throw Exception(
+        'La respuesta del servidor no es válida.',
+      );
+    }
+
+    return decodedData;
+  }
+
   static Future<Map<String, dynamic>> actualizarReview({
     required int reviewId,
     required int rating,

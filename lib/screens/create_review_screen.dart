@@ -703,6 +703,8 @@ Future<void> publicarReview() async {
         widget.existingReview;
 
     Map<String, dynamic>? resultadoCreacion;
+    bool rewardsEnabled = false;
+    bool reviewRewardEligible = true;
 
     if (existingReview == null) {
     resultadoCreacion = await ReviewService.crearReview(
@@ -718,6 +720,12 @@ Future<void> publicarReview() async {
         tagIds:
             tagsSeleccionados.toList(),
     );
+
+    rewardsEnabled =
+        resultadoCreacion['rewards_enabled'] == true;
+
+    reviewRewardEligible =
+        resultadoCreacion['review_reward_eligible'] == true;
     } else {
       final dynamic reviewIdData =
           existingReview['id'];
@@ -751,6 +759,109 @@ Future<void> publicarReview() async {
     }
 
     if (!mounted) return;
+
+    if (existingReview == null &&
+        rewardsEnabled &&
+        !reviewRewardEligible) {
+        await showDialog<void>(
+            context: context,
+            barrierDismissible: false,
+            builder: (dialogContext) {
+                bool enviandoSolicitud = false;
+
+                return StatefulBuilder(
+                builder: (context, setDialogState) {
+                    return AlertDialog(
+                    title: const Text(
+                        'Tu reseña fue publicada',
+                    ),
+                    content: const Text(
+                        'No sumaste Gotas porque no pudimos validar tu visita.\n\n'
+                        '¿Estuviste ahí y te olvidaste de marcar Estoy acá?',
+                    ),
+                    actions: [
+                        TextButton(
+                        onPressed: enviandoSolicitud
+                            ? null
+                            : () {
+                                Navigator.pop(dialogContext);
+                                },
+                        child: const Text('Entendido'),
+                        ),
+                        FilledButton(
+                        onPressed: enviandoSolicitud
+                            ? null
+                            : () async {
+                                final reviewData =
+                                    resultadoCreacion?['review'];
+
+                                final reviewId = reviewData is Map
+                                    ? int.tryParse(
+                                        reviewData['id']?.toString() ?? '',
+                                        )
+                                    : null;
+
+                                if (reviewId == null) {
+                                    return;
+                                }
+
+                                setDialogState(() {
+                                    enviandoSolicitud = true;
+                                });
+
+                                try {
+                                    await ReviewService.solicitarRevisionGotas(
+                                    reviewId: reviewId,
+                                    );
+
+                                    if (!dialogContext.mounted) return;
+
+                                    Navigator.pop(dialogContext);
+
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                        'Solicitud enviada. Vamos a revisar tu visita.',
+                                        ),
+                                    ),
+                                    );
+                                } catch (_) {
+                                    if (!dialogContext.mounted) return;
+
+                                    setDialogState(() {
+                                    enviandoSolicitud = false;
+                                    });
+
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                        'No pudimos enviar la solicitud. Intentá nuevamente.',
+                                        ),
+                                    ),
+                                    );
+                                }
+                                },
+                        child: enviandoSolicitud
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                ),
+                                )
+                            : const Text(
+                                'Solicitar revisión',
+                                ),
+                        ),
+                    ],
+                    );
+                },
+                );
+            },
+            );
+
+        if (!mounted) return;
+        }
 
     String mensajeExito;
 
