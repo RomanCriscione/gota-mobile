@@ -246,46 +246,253 @@ class ApiService {
         .toList();
   }
 
-    static Future<Map<String, dynamic>> obtenerMisGotas() async {
-      final token = await AuthService.obtenerToken();
+  static Future<Map<String, dynamic>> obtenerMisGotas() async {
+    final token = await AuthService.obtenerToken();
 
-      if (token == null || token.isEmpty) {
-        throw Exception(
-          'No hay una sesión iniciada',
-        );
-      }
-
-      final response = await http
-          .get(
-            Uri.parse(
-              '$baseUrl/mobile/my-gotas/',
-            ),
-            headers: {
-              'Authorization': 'Token $token',
-              'Accept': 'application/json',
-            },
-          )
-          .timeout(
-            const Duration(seconds: 15),
-          );
-
-      if (response.statusCode != 200) {
-        throw Exception(
-          'No pudimos cargar tus Gotas.',
-        );
-      }
-
-      final dynamic decodedData =
-          jsonDecode(response.body);
-
-      if (decodedData is! Map<String, dynamic>) {
-        throw Exception(
-          'La respuesta de Gotas no es válida.',
-        );
-      }
-
-      return decodedData;
+    if (token == null || token.isEmpty) {
+      throw Exception(
+        'No hay una sesión iniciada',
+      );
     }
+
+    final response = await http
+        .get(
+          Uri.parse(
+            '$baseUrl/mobile/my-gotas/',
+          ),
+          headers: {
+            'Authorization': 'Token $token',
+            'Accept': 'application/json',
+          },
+        )
+        .timeout(
+          const Duration(seconds: 15),
+        );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'No pudimos cargar tus Gotas.',
+      );
+    }
+
+    final dynamic decodedData =
+        jsonDecode(response.body);
+
+    if (decodedData is! Map<String, dynamic>) {
+      throw Exception(
+        'La respuesta de Gotas no es válida.',
+      );
+    }
+
+    return decodedData;
+  }
+
+  static Future<Map<String, dynamic>> obtenerOpcionesRewardUnlock({
+    required int unlockId,
+  }) async {
+    final token = await AuthService.obtenerToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception(
+        'No hay una sesión iniciada',
+      );
+    }
+
+    final response = await http
+        .get(
+          Uri.parse(
+            '$baseUrl/mobile/reward-unlocks/$unlockId/options/',
+          ),
+          headers: {
+            'Authorization': 'Token $token',
+            'Accept': 'application/json',
+          },
+        )
+        .timeout(
+          const Duration(seconds: 15),
+        );
+
+    final dynamic decodedData =
+        jsonDecode(response.body);
+
+    if (response.statusCode != 200) {
+      final message = decodedData is Map
+          ? decodedData['message']?.toString()
+          : null;
+
+      throw Exception(
+        message ?? 'No pudimos cargar los beneficios.',
+      );
+    }
+
+    if (decodedData is! Map<String, dynamic>) {
+      throw Exception(
+        'La respuesta de beneficios no es válida.',
+      );
+    }
+
+    return decodedData;
+  }
+
+  static Future<Map<String, dynamic>> obtenerLocalidadesRewardUnlock({
+    required int unlockId,
+  }) async {
+    final token = await AuthService.obtenerToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception(
+        'No hay una sesión iniciada',
+      );
+    }
+
+    final response = await http
+        .get(
+          Uri.parse(
+            '$baseUrl/mobile/reward-unlocks/$unlockId/locations/',
+          ),
+          headers: {
+            'Authorization': 'Token $token',
+            'Accept': 'application/json',
+          },
+        )
+        .timeout(
+          const Duration(seconds: 15),
+        );
+
+    final dynamic decodedData =
+        jsonDecode(response.body);
+
+    if (response.statusCode != 200) {
+      final message = decodedData is Map
+          ? decodedData['message']?.toString()
+          : null;
+
+      throw Exception(
+        message ?? 'No pudimos cargar las localidades.',
+      );
+    }
+
+    if (decodedData is! Map<String, dynamic>) {
+      throw Exception(
+        'La respuesta de localidades no es válida.',
+      );
+    }
+
+    return decodedData;
+  }
+
+  static Future<Map<String, dynamic>> obtenerOpcionesRewardUnlockPorLocalidad({
+    required int unlockId,
+    required String location,
+  }) async {
+    final token = await AuthService.obtenerToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception(
+        'No hay una sesión iniciada',
+      );
+    }
+
+    final uri = Uri.parse(
+      '$baseUrl/mobile/reward-unlocks/$unlockId/options/location/',
+    ).replace(
+      queryParameters: {
+        'location': location,
+      },
+    );
+
+    final response = await http
+        .get(
+          uri,
+          headers: {
+            'Authorization': 'Token $token',
+            'Accept': 'application/json',
+          },
+        )
+        .timeout(
+          const Duration(seconds: 15),
+        );
+
+    final dynamic decodedData =
+        jsonDecode(response.body);
+
+    if (response.statusCode != 200) {
+      final message = decodedData is Map
+          ? decodedData['message']?.toString()
+          : null;
+
+      throw Exception(
+        message ?? 'No pudimos cargar los beneficios.',
+      );
+    }
+
+    if (decodedData is! Map<String, dynamic>) {
+      throw Exception(
+        'La respuesta de beneficios no es válida.',
+      );
+    }
+
+    return decodedData;
+  }
+
+  static Future<Map<String, dynamic>> elegirRewardUnlock({
+    required int unlockId,
+    required int rewardId,
+    String? location,
+  }) async {
+    final token = await AuthService.obtenerToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception(
+        'No hay una sesión iniciada',
+      );
+    }
+
+    final body = <String, dynamic>{
+      'reward_id': rewardId,
+    };
+
+    if (location != null && location.trim().isNotEmpty) {
+      body['location'] = location.trim();
+    }
+
+    final response = await http
+        .post(
+          Uri.parse(
+            '$baseUrl/mobile/reward-unlocks/$unlockId/claim/',
+          ),
+          headers: {
+            'Authorization': 'Token $token',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode(body),
+        )
+        .timeout(
+          const Duration(seconds: 15),
+        );
+
+    final dynamic decodedData =
+        jsonDecode(response.body);
+
+    if (response.statusCode != 201) {
+      final message = decodedData is Map
+          ? decodedData['message']?.toString()
+          : null;
+
+      throw Exception(
+        message ?? 'No pudimos elegir el beneficio.',
+      );
+    }
+
+    if (decodedData is! Map<String, dynamic>) {
+      throw Exception(
+        'La respuesta del beneficio no es válida.',
+      );
+    }
+
+    return decodedData;
+  }
 
   static Future<Map<String, dynamic>> setCafeStatus({
     required int cafeId,
